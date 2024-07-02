@@ -117,23 +117,15 @@ async def get_reductions_for_instrument(
     """
     user = get_user_from_token(credentials.credentials)
     instrument = instrument.upper()
-    if user.role == "staff":
-        reductions = get_reductions_by_instrument(
-            instrument,
-            limit=limit,
-            offset=offset,
-            order_by=order_by,
-            order_direction=order_direction,
-        )
-    else:
-        reductions = get_reductions_by_instrument(
-            instrument,
-            limit=limit,
-            offset=offset,
-            order_by=order_by,
-            order_direction=order_direction,
-            user_number=user.user_number,
-        )
+    user_number = None if user.role == "staff" else user.user_number
+    reductions = get_reductions_by_instrument(
+        instrument,
+        limit=limit,
+        offset=offset,
+        order_by=order_by,
+        order_direction=order_direction,
+        user_number=user_number,
+    )
 
     if include_runs:
         return [ReductionWithRunsResponse.from_reduction(r) for r in reductions]
