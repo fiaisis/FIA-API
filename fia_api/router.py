@@ -101,7 +101,7 @@ async def get_reductions(
     order_by: OrderField = "reduction_start",
     order_direction: Literal["asc", "desc"] = "desc",
     include_runs: bool = False,
-) -> list[ReductionResponse] | list[ReductionResponse]:
+) -> list[ReductionResponse] | list[ReductionWithRunsResponse]:
     """
     Retrive all reductions.
     \f
