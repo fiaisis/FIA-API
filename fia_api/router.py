@@ -20,6 +20,7 @@ from fia_api.core.responses import (
 from fia_api.core.services.reduction import (
     count_reductions,
     count_reductions_by_instrument,
+    get_all_reductions,
     get_reduction_by_id,
     get_reductions_by_instrument,
 )
@@ -90,6 +91,38 @@ OrderField = Literal[
     "experiment_title",
     "filename",
 ]
+
+
+@ROUTER.get("/reductions")
+async def get_reductions(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+    limit: int = 0,
+    offset: int = 0,
+    order_by: OrderField = "reduction_start",
+    order_direction: Literal["asc", "desc"] = "desc",
+    include_runs: bool = False,
+) -> list[ReductionResponse] | list[ReductionResponse]:
+    """
+    Retrive all reductions.
+    \f
+    :param credentials: Dependency injected HTTPAuthorizationCredentials
+    :param limit: optional limit for the number of reductions returned (default is 0, which can be interpreted as
+    no limit)
+    :param offset: optional offset for the list of reductions (default is 0)
+    :param order_by: Literal["reduction_start", "reduction_end", "reduction_state", "id"]
+    :param order_direction: Literal["asc", "desc"]
+    :param include_runs: bool
+    :return: List of ReductionResponse objects
+    """
+    user = get_user_from_token(credentials.credentials)
+    user_number = None if user.role == "staff" else user.user_number
+    reductions = get_all_reductions(
+        limit=limit, offset=offset, order_by=order_by, order_direction=order_direction, user_number=user_number
+    )
+
+    if include_runs:
+        return [ReductionWithRunsResponse.from_reduction(r) for r in reductions]
+    return [ReductionResponse.from_reduction(r) for r in reductions]
 
 
 @ROUTER.get("/instrument/{instrument}/reductions")

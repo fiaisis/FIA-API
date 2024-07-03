@@ -37,6 +37,28 @@ def test_get_reduction_by_id_no_token_results_in_http_forbidden():
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
+def test_get_all_reduction_for_staff(mock_post):
+    """Test get all reductions for staff"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get("/reductions?limit=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    assert response.status_code == HTTPStatus.OK
+    expected_number_of_reductions = 10
+    assert len(response.json()) == expected_number_of_reductions
+
+
+@patch("fia_api.core.services.reduction.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_all_reduction_for_user(mock_post, mock_get_experiment_numbers_for_user_number):
+    """Test get all reductions for staff"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+    response = client.get("/reductions", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    assert response.status_code == HTTPStatus.OK
+    expected_number_of_reductions = 1
+    assert len(response.json()) == expected_number_of_reductions
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
 def test_get_reduction_by_id_reduction_exists_for_staff(mock_post):
     """
     Test reduction returned for id that exists
