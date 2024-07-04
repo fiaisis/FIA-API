@@ -71,8 +71,6 @@ class JWTBearer(HTTPBearer):
         :return: `True` if the JWT access token is valid and its payload contains a username, `False` otherwise.
         """
         logger.info("Checking if JWT access token is valid")
-        if DEV_MODE:
-            return True
         try:
             response = requests.post(f"{AUTH_URL}/api/jwt/checkToken", json={"token": access_token}, timeout=30)
             if response.status_code == HTTPStatus.OK:
