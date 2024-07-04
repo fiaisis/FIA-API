@@ -18,6 +18,8 @@ uvicorn fia_api.fia_api:app --reload
 
 The reload option will reload the api on code changes.
 
+To run the API with no authentication for development, the DEV_MODE env var must be set to True
+
 
 ## How to container
 

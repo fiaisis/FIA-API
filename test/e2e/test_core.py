@@ -46,6 +46,15 @@ def test_get_all_reduction_for_staff(mock_post):
     assert len(response.json()) == expected_number_of_reductions
 
 
+def test_get_all_reductions_for_dev_mode():
+    """Test get all reductions for staff"""
+    with patch("fia_api.core.auth.tokens.DEV_MODE", True):
+        response = client.get("/reductions?limit=10")
+        assert response.status_code == HTTPStatus.OK
+        expected_number_of_reductions = 10
+        assert len(response.json()) == expected_number_of_reductions
+
+
 @patch("fia_api.core.services.reduction.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_get_all_reduction_for_user(mock_post, mock_get_experiment_numbers_for_user_number):
@@ -248,6 +257,40 @@ def test_get_reductions_for_instrument_no_token_results_in_forbidden():
     """
     response = client.get("/instrument/test/reductions")
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_get_reductions_for_instrument_reductions_exist_for_dev_mode():
+    """
+    Test array of reductions returned for given instrument when the instrument and reductions exist
+    :return: None
+    """
+    with patch("fia_api.core.auth.tokens.DEV_MODE", True):
+        response = client.get("/instrument/test/reductions", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+        assert response.status_code == HTTPStatus.OK
+        assert response.json() == [
+            {
+                "id": 5001,
+                "reduction_end": None,
+                "reduction_inputs": {
+                    "ei": "'auto'",
+                    "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
+                    "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
+                    "monovan": 0,
+                    "remove_bkg": True,
+                    "runno": 25581,
+                    "sam_mass": 0.0,
+                    "sam_rmm": 0.0,
+                    "sum_runs": False,
+                    "wbvan": 12345,
+                },
+                "reduction_outputs": None,
+                "reduction_start": None,
+                "reduction_state": "NOT_STARTED",
+                "reduction_status_message": None,
+                "script": None,
+                "stacktrace": None,
+            }
+        ]
 
 
 @patch("fia_api.core.auth.tokens.requests.post")

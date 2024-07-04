@@ -1,4 +1,5 @@
 import logging
+import os
 from dataclasses import dataclass
 from http import HTTPStatus
 from typing import Literal
@@ -13,6 +14,8 @@ from fia_api.core.exceptions import AuthenticationError
 
 logger = logging.getLogger(__name__)
 
+DEV_MODE = bool(os.environ.get("DEV_MODE", False))
+
 
 @dataclass
 class User:
@@ -21,6 +24,8 @@ class User:
 
 
 def get_user_from_token(token: str) -> User:
+    if DEV_MODE:
+        return User(user_number=123, role="staff")
     try:
         payload = jwt.decode(token, options={"verify_signature": False})
         return User(user_number=payload.get("usernumber"), role=payload.get("role"))
@@ -43,6 +48,8 @@ class JWTBearer(HTTPBearer):
         :return: The JWT access token if authentication is successful.
         :raises HTTPException: If the supplied JWT access token is invalid or has expired.
         """
+        if DEV_MODE:
+            return HTTPAuthorizationCredentials(scheme="Bearer", credentials="foo")
         credentials: HTTPAuthorizationCredentials | None = await super().__call__(request)
         try:
             token = credentials.credentials  # type: ignore # if credentials is None, it will raise here and be caught immediately
