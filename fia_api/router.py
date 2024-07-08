@@ -8,6 +8,7 @@ from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials
+from sqlalchemy.dialects.postgresql import JSONB
 from starlette.background import BackgroundTasks
 
 from fia_api.core.auth.api_keys import APIKeyBearer
@@ -210,10 +211,10 @@ async def count_all_reductions() -> CountResponse:
     return CountResponse(count=count_reductions())
 
 
-@ROUTER.get("/instrument/{instrument_name}/specification", tags=["instrument"])
+@ROUTER.get("/instrument/{instrument_name}/specification", tags=["instrument"], response_model=None)
 async def get_instrument_specification(
     instrument_name: str, _: Annotated[HTTPAuthorizationCredentials, Depends(api_key_security)]
-) -> dict[str, Any]:
+) -> JSONB:
     """
     Return the specification for the given instrument
     \f

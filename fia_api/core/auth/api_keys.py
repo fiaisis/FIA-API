@@ -15,7 +15,7 @@ class APIKeyBearer(HTTPBearer):
     Extends the FastAPI `HTTPBearer` class to provide APIKey based authentication/authorization.
     """
 
-    async def __call__(self, request: Request) -> str:
+    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials | None:
         """
         Callable method for JWT access token authentication/authorization.
 
@@ -25,9 +25,9 @@ class APIKeyBearer(HTTPBearer):
         :return: The JWT access token if authentication is successful.
         :raises HTTPException: If the supplied JWT access token is invalid or has expired.
         """
-        credentials: HTTPAuthorizationCredentials = await super().__call__(request)
+        credentials: HTTPAuthorizationCredentials | None = await super().__call__(request)
         try:
-            api_key = credentials.credentials
+            api_key = credentials.credentials  # type: ignore # if credentials is None, it will raise here and be caught immediately
         except RuntimeError as exc:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -40,7 +40,7 @@ class APIKeyBearer(HTTPBearer):
                 detail="Invalid token or expired token",
             )
 
-        return credentials.credentials
+        return credentials
 
     def _is_api_key_valid(self, api_key: str) -> bool:
         """
