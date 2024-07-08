@@ -34,8 +34,8 @@ TEST_REDUCTION_3 = Reduction(
     reduction_inputs={"input": "value"},
     script=TEST_SCRIPT,
 )
-TEST_INSTRUMENT_1 = Instrument(instrument_name="instrument 1")
-TEST_INSTRUMENT_2 = Instrument(instrument_name="instrument 2")
+TEST_INSTRUMENT_1 = Instrument(instrument_name="instrument 1", specification={"foo": "bar"})
+TEST_INSTRUMENT_2 = Instrument(instrument_name="instrument 2", specification={"foo": "bar"})
 
 TEST_RUN_1 = Run(
     filename="test_run",
