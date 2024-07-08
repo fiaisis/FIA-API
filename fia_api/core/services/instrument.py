@@ -2,7 +2,6 @@
 Service Layer for instruments
 """
 
-from collections.abc import Sequence
 from typing import Any
 
 from sqlalchemy.dialects.postgresql import JSONB
@@ -13,11 +12,6 @@ from fia_api.core.repositories import Repo
 from fia_api.core.specifications.instrument import InstrumentSpecification
 
 _REPO: Repo[Instrument] = Repo()
-
-
-def get_all_instruments() -> Sequence[Instrument]:
-    """Return all instruments"""
-    return _REPO.find(InstrumentSpecification().all())
 
 
 def get_specification_by_instrument_name(instrument_name: str) -> JSONB:
