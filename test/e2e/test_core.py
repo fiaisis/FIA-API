@@ -463,3 +463,52 @@ def test_readiness_and_liveness_probes():
     response = client.get("/healthz")
     assert response.status_code == HTTPStatus.OK
     assert response.text == '"ok"'
+
+
+def test_get_instrument_specification():
+    """
+    Test correct spec for instrument returned
+    :return:
+    """
+
+    response = client.get("/instrument/het/specification", headers={"Authorization": "Bearer shh"})
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"stop": False}
+
+
+def test_get_instrument_specification_no_api_key_returns_403():
+    """
+    Test correct spec for instrument returned
+    :return:
+    """
+
+    response = client.get("/instrument/het/specification")
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_get_instrument_specification_bad_api_key_returns_403():
+    """
+    Test correct spec for instrument returned
+    :return:
+    """
+
+    response = client.get("/instrument/het/specification", headers={"Authorization": "foo"})
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+    response = client.get("/instrument/het/specification", headers={"Authorization": "Bearer foo"})
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_put_instrument_specification():
+    """Test instrument put is updated"""
+    client.put("/instrument/het/specification", json={"foo": "bar"}, headers={"Authorization": "Bearer shh"})
+    response = client.get("/instrument/het/specification")
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"foo": "bar"}
+
+
+def test_put_instrument_specification_no_api_key():
+    """Test instrument put is updated"""
+    client.put("/instrument/het/specification", json={"foo": "bar"})
+    response = client.get("/instrument/het/specification")
+    assert response.status_code == HTTPStatus.FORBIDDEN
