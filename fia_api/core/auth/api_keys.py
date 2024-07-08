@@ -31,13 +31,13 @@ class APIKeyBearer(HTTPBearer):
         except RuntimeError as exc:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Invalid token or expired token",
+                detail="Bad or missing APIKey",
             ) from exc
 
         if not self._is_api_key_valid(api_key):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Invalid token or expired token",
+                detail="Invalid APIKey",
             )
 
         return credentials
