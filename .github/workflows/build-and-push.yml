@@ -29,7 +29,7 @@ jobs:
 
     - name: Build and push fia-api Docker image
       id: docker_build
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         file: ./container/fia_api.D
         push: true
@@ -42,7 +42,7 @@ jobs:
         token: ${{ secrets.GITOPS_STAGING_EDIT_TOKEN }}
 
     - name: Edit the YAML fia-api file for staging
-      uses: mikefarah/yq@v4.44.1
+      uses: mikefarah/yq@v4.44.2
       with:
         cmd: yq e -i '.spec.template.spec.containers[] |= select(.name == "fia-api").image = "ghcr.io/fiaisis/fia-api@${{ steps.docker_build.outputs.digest }}"' './components/fia-api/envs/staging/fia-api.yml'
 
