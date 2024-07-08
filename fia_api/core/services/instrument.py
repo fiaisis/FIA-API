@@ -42,5 +42,5 @@ def update_specification_for_instrument(instrument_name: str, specification: dic
     instrument = _REPO.find_one(InstrumentSpecification().by_name(instrument_name))
     if instrument is None:
         raise MissingRecordError(f"Instrument {instrument_name} does not exist")
-    instrument.specification = specification
+    instrument.specification = specification  # type: ignore  # Problem with sqlalchemy typing
     _REPO.update_one(instrument)
