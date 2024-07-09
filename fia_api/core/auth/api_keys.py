@@ -7,7 +7,7 @@ from starlette import status
 from starlette.requests import Request
 
 logger = logging.getLogger(__name__)
-API_KEY = os.environ.get("FIA_API_API_KEY", "shh")
+API_KEY = os.environ["FIA_API_API_KEY"]
 
 
 class APIKeyBearer(HTTPBearer):
