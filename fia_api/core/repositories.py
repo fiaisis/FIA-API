@@ -88,3 +88,15 @@ class Repo(Generic[T]):
             result = session.execute(select(func.count()).select_from(spec.value))  # type: ignore
             # pylint: enable = not-callable
             return result.scalar() if result else 0  # type: ignore
+
+    def update_one(self, entity: T) -> T:
+        """
+        Updates the given entity
+        :param entity: The entity to be updated
+        :return: The updated Entity
+        """
+        with self._session() as session:
+            session.add(entity)
+            session.commit()
+            session.refresh(entity)
+        return entity

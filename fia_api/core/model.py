@@ -114,6 +114,7 @@ class Instrument(Base):
 
     __tablename__ = "instruments"
     instrument_name: Mapped[str] = mapped_column(String())
+    specification: Mapped[JSONB] = mapped_column(JSONB)
 
     def __repr__(self) -> str:
         return f"Instrument(id={self.id}, instrument_name={self.instrument_name})"

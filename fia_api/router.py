@@ -4,12 +4,14 @@ Module containing the REST endpoints
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials
+from sqlalchemy.dialects.postgresql import JSONB
 from starlette.background import BackgroundTasks
 
+from fia_api.core.auth.api_keys import APIKeyBearer
 from fia_api.core.auth.tokens import JWTBearer, get_user_from_token
 from fia_api.core.responses import (
     CountResponse,
@@ -17,6 +19,7 @@ from fia_api.core.responses import (
     ReductionResponse,
     ReductionWithRunsResponse,
 )
+from fia_api.core.services.instrument import get_specification_by_instrument_name, update_specification_for_instrument
 from fia_api.core.services.reduction import (
     count_reductions,
     count_reductions_by_instrument,
@@ -33,15 +36,16 @@ from fia_api.scripts.pre_script import PreScript
 
 ROUTER = APIRouter()
 jwt_security = JWTBearer()
+api_key_security = APIKeyBearer()
 
 
-@ROUTER.get("/healthz")
+@ROUTER.get("/healthz", tags=["k8s"])
 async def get() -> Literal["ok"]:
     """Health Check endpoint."""
     return "ok"
 
 
-@ROUTER.get("/instrument/{instrument}/script")
+@ROUTER.get("/instrument/{instrument}/script", tags=["scripts"])
 async def get_pre_script(
     instrument: str,
     background_tasks: BackgroundTasks,
@@ -65,7 +69,7 @@ async def get_pre_script(
         # write the script after to not slow down request
 
 
-@ROUTER.get("/instrument/{instrument}/script/sha/{sha}")
+@ROUTER.get("/instrument/{instrument}/script/sha/{sha}", tags=["scripts"])
 async def get_pre_script_by_sha(instrument: str, sha: str, reduction_id: int | None = None) -> PreScriptResponse:
     """
     Given an instrument and the commit sha of a script, obtain the pre script. Optionally providing a reduction id to
@@ -93,7 +97,7 @@ OrderField = Literal[
 ]
 
 
-@ROUTER.get("/reductions")
+@ROUTER.get("/reductions", tags=["reductions"])
 async def get_reductions(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
     limit: int = 0,
@@ -125,7 +129,7 @@ async def get_reductions(
     return [ReductionResponse.from_reduction(r) for r in reductions]
 
 
-@ROUTER.get("/instrument/{instrument}/reductions")
+@ROUTER.get("/instrument/{instrument}/reductions", tags=["reductions"])
 async def get_reductions_for_instrument(
     instrument: str,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
@@ -165,7 +169,7 @@ async def get_reductions_for_instrument(
     return [ReductionResponse.from_reduction(r) for r in reductions]
 
 
-@ROUTER.get("/instrument/{instrument}/reductions/count")
+@ROUTER.get("/instrument/{instrument}/reductions/count", tags=["reductions"])
 async def count_reductions_for_instrument(
     instrument: str,
 ) -> CountResponse:
@@ -179,7 +183,7 @@ async def count_reductions_for_instrument(
     return CountResponse(count=count_reductions_by_instrument(instrument))
 
 
-@ROUTER.get("/reduction/{reduction_id}")
+@ROUTER.get("/reduction/{reduction_id}", tags=["reductions"])
 async def get_reduction(
     reduction_id: int, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
 ) -> ReductionWithRunsResponse:
@@ -197,7 +201,7 @@ async def get_reduction(
     return ReductionWithRunsResponse.from_reduction(reduction)
 
 
-@ROUTER.get("/reductions/count")
+@ROUTER.get("/reductions/count", tags=["reductions"])
 async def count_all_reductions() -> CountResponse:
     """
     Count all reductions
@@ -205,3 +209,33 @@ async def count_all_reductions() -> CountResponse:
     :return: CountResponse containing the count
     """
     return CountResponse(count=count_reductions())
+
+
+@ROUTER.get("/instrument/{instrument_name}/specification", tags=["instrument"], response_model=None)
+async def get_instrument_specification(
+    instrument_name: str, _: Annotated[HTTPAuthorizationCredentials, Depends(api_key_security)]
+) -> JSONB:
+    """
+    Return the specification for the given instrument
+    \f
+    :param instrument_name: The instrument
+    :return: The specificaiton
+    """
+    return get_specification_by_instrument_name(instrument_name.upper())
+
+
+@ROUTER.put("/instrument/{instrument_name}/specification", tags=["instrument"])
+async def update_instrument_specification(
+    instrument_name: str,
+    specification: dict[str, Any],
+    _: Annotated[HTTPAuthorizationCredentials, Depends(api_key_security)],
+) -> dict[str, Any]:
+    """
+    Replace the current specification with the given specification for the given instrument
+    \f
+    :param instrument_name: The instrument name
+    :param specification: The new specification
+    :return: The new specification
+    """
+    update_specification_for_instrument(instrument_name.upper(), specification)
+    return specification

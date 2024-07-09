@@ -31,7 +31,8 @@ test = [
     "httpx==0.27.0",
     "pytest-cov==5.0.0",
     "pytest-random-order==1.1.1",
-    "Faker==26.0.0"
+    "Faker==26.0.0",
+    "pytest-env==1.1.3"
 
 ]
 
@@ -90,3 +91,7 @@ max-args = 10
 "test/scripts/transforms/test_mari_transforms.py" = ["E501"]  # Long script lines in this file
 "test/scripts/transforms/test_osiris_transform.py" = ["E501"]  # Long script lines in this file
 "test/scripts/transforms/test_tosca_transform.py" = ["E501"]  # Long script lines in this file
+
+[tool.pytest.ini_options]
+required_plugins = "pytest-env"
+env = ["FIA_API_API_KEY=shh"]
