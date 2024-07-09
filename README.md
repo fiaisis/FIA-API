@@ -12,6 +12,14 @@ You may need to escape the square brackets e.g. \[all\]
 
 ## Running Directly for development
 
+### Env Vars
+The required env vars to run are:
+ - FIA_API_API_KEY - This sets the api key needed to use the specification endpoints
+ - DB_USERNAME - the database username - default: postgres
+ - DB_PASSWORD - The database password - default: password
+ - DB_IP - The database host - default: localhost:5432
+ - DEV_MODE - When true will disable auth - default: False
+
 ```shell
 uvicorn fia_api.fia_api:app --reload  
 ```
