@@ -33,8 +33,8 @@ class OsirisTransform(Transform):
                 )
                 continue
             if line.startswith("calibration_run_number ="):
-                lines[index] = (
-                    f"calibration_run_number = "  # type:ignore
+                lines[index] = (  # type:ignore
+                    f"calibration_run_number = "
                     f"\"{reduction.reduction_inputs['calibration_run_number']}\""
                 )
                 continue
@@ -48,14 +48,14 @@ class OsirisTransform(Transform):
                 lines[index] = f"reflection = \"{reduction.reduction_inputs['reflection']}\""  # type:ignore
                 continue
             if line.startswith("spectroscopy_reduction ="):
-                lines[index] = (
-                    f"spectroscopy_reduction = "  # type:ignore
+                lines[index] = (  # type:ignore
+                    f"spectroscopy_reduction = "
                     f"{reduction.reduction_inputs['spectroscopy_reduction'] == 'true'}"
                 )
                 continue
             if line.startswith("diffraction_reduction = "):
-                lines[index] = (
-                    f"diffraction_reduction = "  # type:ignore
+                lines[index] = (  # type:ignore
+                    f"diffraction_reduction = "
                     f"{reduction.reduction_inputs['diffraction_reduction'] == 'true'}"
                 )
                 continue
