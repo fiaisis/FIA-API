@@ -33,8 +33,10 @@ class OsirisTransform(Transform):
                 )
                 continue
             if line.startswith("calibration_run_number ="):
-                lines[index] = (f"calibration_run_number = "  # type:ignore
-                                f"\"{reduction.reduction_inputs['calibration_run_number']}\"")
+                lines[index] = (
+                    f"calibration_run_number = "  # type:ignore
+                    f"\"{reduction.reduction_inputs['calibration_run_number']}\""
+                )
                 continue
             if line.startswith("cycle ="):
                 lines[index] = f"cycle = \"{reduction.reduction_inputs['cycle_string']}\""  # type:ignore
@@ -46,12 +48,16 @@ class OsirisTransform(Transform):
                 lines[index] = f"reflection = \"{reduction.reduction_inputs['reflection']}\""  # type:ignore
                 continue
             if line.startswith("spectroscopy_reduction ="):
-                lines[index] = (f"spectroscopy_reduction = "  # type:ignore
-                                f"{reduction.reduction_inputs['spectroscopy_reduction'] == 'true'}")
+                lines[index] = (
+                    f"spectroscopy_reduction = "  # type:ignore
+                    f"{reduction.reduction_inputs['spectroscopy_reduction'] == 'true'}"
+                )
                 continue
             if line.startswith("diffraction_reduction = "):
-                lines[index] = (f"diffraction_reduction = "  # type:ignore
-                                f"{reduction.reduction_inputs['diffraction_reduction'] == 'true'}")
+                lines[index] = (
+                    f"diffraction_reduction = "  # type:ignore
+                    f"{reduction.reduction_inputs['diffraction_reduction'] == 'true'}"
+                )
                 continue
 
         script.value = "\n".join(lines)
