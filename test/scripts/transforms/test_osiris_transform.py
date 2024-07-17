@@ -260,6 +260,11 @@ def test_osiris_transform_spectroscopy():
     OsirisTransform().apply(script, reduction)
 
     assert script.value == create_expected_script(
-            input_runs="[1, 2, 3]", calibration_run_number="0123456",
-            cycle="cycle_1_2", analyser="silicon", reflection="011",
-            spectroscopy_reduction=True, diffraction_reduction=False)
+        input_runs="[1, 2, 3]",
+        calibration_run_number="0123456",
+        cycle="cycle_1_2",
+        analyser="silicon",
+        reflection="011",
+        spectroscopy_reduction=True,
+        diffraction_reduction=False,
+    )
