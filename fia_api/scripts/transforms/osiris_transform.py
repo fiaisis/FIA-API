@@ -32,20 +32,26 @@ class OsirisTransform(Transform):
                     else f"[{reduction.reduction_inputs['runno']}]"  # type:ignore
                 )
                 continue
-            if line.startswith("calibration_file_path"):
-                lines[index] = f"calibration_file_path = \"{reduction.reduction_inputs['calibration_file_path']}\""  # type:ignore
+            if line.startswith("calibration_run_number ="):
+                lines[index] = (f"calibration_run_number = "
+                                f"\"{reduction.reduction_inputs['calibration_run_number']}\"")  # type:ignore
                 continue
             if line.startswith("cycle ="):
                 lines[index] = f"cycle = \"{reduction.reduction_inputs['cycle_string']}\""  # type:ignore
                 continue
+            if line.startswith("analyser ="):
+                lines[index] = f"analyser = \"{reduction.reduction_inputs['analyser']}\""  # type:ignore
+                continue
             if line.startswith("reflection = "):
-                lines[index] = f"reflection = \"{reduction.reduction_inputs['analyser']}\""  # type:ignore
+                lines[index] = f"reflection = \"{reduction.reduction_inputs['reflection']}\""  # type:ignore
                 continue
             if line.startswith("spectroscopy_reduction ="):
-                lines[index] = f"spectroscopy_reduction = {reduction.reduction_inputs['mode'] == 'spectroscopy'}"  # type:ignore
+                lines[index] = (f"spectroscopy_reduction = "
+                                f"{reduction.reduction_inputs['spectroscopy_reduction'] == 'true'}")  # type:ignore
                 continue
             if line.startswith("diffraction_reduction = "):
-                lines[index] = f"diffraction_reduction = {reduction.reduction_inputs['mode'] == 'diffraction'}"  # type:ignore
+                lines[index] = (f"diffraction_reduction = "
+                                f"{reduction.reduction_inputs['diffraction_reduction'] == 'true'}")  # type:ignore
                 continue
 
         script.value = "\n".join(lines)
