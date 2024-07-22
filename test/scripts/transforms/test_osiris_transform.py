@@ -8,7 +8,6 @@ from fia_api.scripts.transforms.osiris_transform import OsirisTransform
 
 SCRIPT = """# import mantid algorithms, numpy and matplotlib
 from mantid.simpleapi import *
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -16,7 +15,7 @@ def generate_input_path_for_run(run_number, cycle):
     return f"/archive/ndxosiris/Instrument/data/{cycle}/OSI{run_number}.nxs"
 
 # To change by automatic script
-input_runs = ["108538", "108539"]
+input_runs = [108538, 108539]
 # This needs to be loaded from a shared repository of files
 calibration_run_number = "00148587"
 cycle = "cycle_14_1"
@@ -132,7 +131,6 @@ def create_expected_script(
     """Generate an expected script for assertion"""
     return f"""# import mantid algorithms, numpy and matplotlib
 from mantid.simpleapi import *
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -248,7 +246,7 @@ def test_osiris_transform_spectroscopy():
     """Test spectroscopy transform"""
     reduction = Mock()
     reduction.reduction_inputs = {
-        "runno": [1, 2, 3],
+        "input_runs": [1, 2, 3],
         "calibration_run_number": "0123456",
         "cycle_string": "cycle_1_2",
         "analyser": "silicon",
