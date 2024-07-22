@@ -27,9 +27,9 @@ class OsirisTransform(Transform):
         for index, line in enumerate(lines):
             if line.startswith("input_runs"):
                 lines[index] = "input_runs = " + (
-                    str(reduction.reduction_inputs["runno"])  # type: ignore
-                    if isinstance(reduction.reduction_inputs["runno"], Iterable)  # type: ignore
-                    else f"[{reduction.reduction_inputs['runno']}]"  # type: ignore
+                    str(reduction.reduction_inputs["input_runs"])  # type: ignore
+                    if isinstance(reduction.reduction_inputs["input_runs"], Iterable)  # type: ignore
+                    else f"[{reduction.reduction_inputs['input_runs']}]"  # type: ignore
                 )
                 continue
             if line.startswith("calibration_run_number ="):
