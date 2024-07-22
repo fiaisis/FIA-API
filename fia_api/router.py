@@ -107,7 +107,7 @@ async def get_reductions(
     include_runs: bool = False,
 ) -> list[ReductionResponse] | list[ReductionWithRunsResponse]:
     """
-    Retrive all reductions.
+    Retrieve all reductions.
     \f
     :param credentials: Dependency injected HTTPAuthorizationCredentials
     :param limit: optional limit for the number of reductions returned (default is 0, which can be interpreted as

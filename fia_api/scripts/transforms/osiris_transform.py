@@ -23,29 +23,36 @@ class OsirisTransform(Transform):
         logger.info("Beginning Osiris transform for reduction %s...", reduction.id)
         lines = script.value.splitlines()
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
-        # If you get here in the future, try removing the type ignore and see if it passes with newer mypy
+        # If you get here in the future, try removing the following line and see if it passes with newer mypy.
         for index, line in enumerate(lines):
             if line.startswith("input_runs"):
                 lines[index] = "input_runs = " + (
-                    str(reduction.reduction_inputs["runno"])  # type:ignore
-                    if isinstance(reduction.reduction_inputs["runno"], Iterable)  # type:ignore
-                    else f"[{reduction.reduction_inputs['runno']}]"  # type:ignore
+                    str(reduction.reduction_inputs["runno"])  # type: ignore
+                    if isinstance(reduction.reduction_inputs["runno"], Iterable)  # type: ignore
+                    else f"[{reduction.reduction_inputs['runno']}]"  # type: ignore
                 )
                 continue
-            if line.startswith("calibration_file_path"):
-                lines[index] = f"calibration_file_path = \"{reduction.reduction_inputs['calibration_file_path']}\""  # type:ignore
+            if line.startswith("calibration_run_number ="):
+                lines[index] = f"calibration_run_number = \"{reduction.reduction_inputs['calibration_run_number']}\""  # type: ignore
                 continue
             if line.startswith("cycle ="):
-                lines[index] = f"cycle = \"{reduction.reduction_inputs['cycle_string']}\""  # type:ignore
+                lines[index] = f"cycle = \"{reduction.reduction_inputs['cycle_string']}\""  # type: ignore
+                continue
+            if line.startswith("analyser ="):
+                lines[index] = f"analyser = \"{reduction.reduction_inputs['analyser']}\""  # type: ignore
                 continue
             if line.startswith("reflection = "):
-                lines[index] = f"reflection = \"{reduction.reduction_inputs['analyser']}\""  # type:ignore
+                lines[index] = f"reflection = \"{reduction.reduction_inputs['reflection']}\""  # type: ignore
                 continue
             if line.startswith("spectroscopy_reduction ="):
-                lines[index] = f"spectroscopy_reduction = {reduction.reduction_inputs['mode'] == 'spectroscopy'}"  # type:ignore
+                lines[index] = (
+                    f"spectroscopy_reduction = {reduction.reduction_inputs['spectroscopy_reduction'] == 'true'}"  # type: ignore
+                )
                 continue
             if line.startswith("diffraction_reduction = "):
-                lines[index] = f"diffraction_reduction = {reduction.reduction_inputs['mode'] == 'diffraction'}"  # type:ignore
+                lines[index] = (
+                    f"diffraction_reduction = {reduction.reduction_inputs['diffraction_reduction'] == 'true'}"  # type: ignore
+                )
                 continue
 
         script.value = "\n".join(lines)
