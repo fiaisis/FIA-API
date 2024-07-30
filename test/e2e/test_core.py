@@ -26,49 +26,49 @@ STAFF_TOKEN = (
 )
 
 
-def test_get_reduction_by_id_no_token_results_in_http_forbidden():
+def test_get_job_by_id_no_token_results_in_http_forbidden():
     """
-    Test 404 for reduction not existing
+    Test 404 for job not existing
     :return:
     """
-    response = client.get("/reduction/123144324234234234")
+    response = client.get("/job/123144324234234234")
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_get_all_reduction_for_staff(mock_post):
-    """Test get all reductions for staff"""
+def test_get_all_job_for_staff(mock_post):
+    """Test get all jobs for staff"""
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/reductions?limit=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/jobs?limit=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
-    expected_number_of_reductions = 10
-    assert len(response.json()) == expected_number_of_reductions
+    expected_number_of_jobs = 10
+    assert len(response.json()) == expected_number_of_jobs
 
 
-def test_get_all_reductions_for_dev_mode():
-    """Test get all reductions for staff"""
+def test_get_all_jobs_for_dev_mode():
+    """Test get all jobs for staff"""
     with patch("fia_api.core.auth.tokens.DEV_MODE", True):
-        response = client.get("/reductions?limit=10")
+        response = client.get("/jobs?limit=10")
         assert response.status_code == HTTPStatus.OK
-        expected_number_of_reductions = 10
-        assert len(response.json()) == expected_number_of_reductions
+        expected_number_of_jobs = 10
+        assert len(response.json()) == expected_number_of_jobs
 
 
-@patch("fia_api.core.services.reduction.get_experiments_for_user_number")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_get_all_reduction_for_user(mock_post, mock_get_experiment_numbers_for_user_number):
-    """Test get all reductions for staff"""
+def test_get_all_job_for_user(mock_post, mock_get_experiment_numbers_for_user_number):
+    """Test get all jobs for staff"""
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
-    response = client.get("/reductions", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    response = client.get("/jobs", headers={"Authorization": f"Bearer {USER_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
-    expected_number_of_reductions = 1
-    assert len(response.json()) == expected_number_of_reductions
+    expected_number_of_jobs = 1
+    assert len(response.json()) == expected_number_of_jobs
     assert response.json() == [
         {
             "id": 5001,
-            "reduction_end": None,
-            "reduction_inputs": {
+            "end": None,
+            "inputs": {
                 "ei": "'auto'",
                 "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
                 "monovan": 0,
@@ -79,44 +79,43 @@ def test_get_all_reduction_for_user(mock_post, mock_get_experiment_numbers_for_u
                 "sum_runs": False,
                 "wbvan": 12345,
             },
-            "reduction_outputs": None,
-            "reduction_start": None,
-            "reduction_state": "NOT_STARTED",
-            "reduction_status_message": None,
+            "outputs": None,
+            "start": None,
+            "state": "NOT_STARTED",
+            "status_message": None,
             "script": None,
             "stacktrace": None,
+            "runner_image": None,
         }
     ]
 
 
-@patch("fia_api.core.services.reduction.get_experiments_for_user_number")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_get_all_reduction_for_user_include_run(mock_post, mock_get_experiment_numbers_for_user_number):
+def test_get_all_job_for_user_include_run(mock_post, mock_get_experiment_numbers_for_user_number):
     """Test get all reductions for staff"""
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
-    response = client.get("/reductions?include_runs=true", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    response = client.get("/jobs?include_run=true", headers={"Authorization": f"Bearer {USER_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
-    expected_number_of_reductions = 1
-    assert len(response.json()) == expected_number_of_reductions
+    expected_number_of_jobs = 1
+    assert len(response.json()) == expected_number_of_jobs
     assert response.json() == [
         {
             "id": 5001,
-            "reduction_end": None,
-            "runs": [
-                {
-                    "experiment_number": 1820497,
-                    "filename": "MAR25581.nxs",
-                    "good_frames": 6452,
-                    "instrument_name": "TEST",
-                    "raw_frames": 8067,
-                    "run_end": "2019-03-22T10:18:26",
-                    "run_start": "2019-03-22T10:15:44",
-                    "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT " "on not on all LAB",
-                    "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
-                }
-            ],
-            "reduction_inputs": {
+            "end": None,
+            "run": {
+                "experiment_number": 1820497,
+                "filename": "MAR25581.nxs",
+                "good_frames": 6452,
+                "instrument_name": "TEST",
+                "raw_frames": 8067,
+                "run_end": "2019-03-22T10:18:26",
+                "run_start": "2019-03-22T10:15:44",
+                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT " "on not on all LAB",
+                "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
+            },
+            "inputs": {
                 "ei": "'auto'",
                 "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
                 "monovan": 0,
@@ -127,29 +126,30 @@ def test_get_all_reduction_for_user_include_run(mock_post, mock_get_experiment_n
                 "sum_runs": False,
                 "wbvan": 12345,
             },
-            "reduction_outputs": None,
-            "reduction_start": None,
-            "reduction_state": "NOT_STARTED",
-            "reduction_status_message": None,
+            "outputs": None,
+            "start": None,
+            "state": "NOT_STARTED",
+            "status_message": None,
             "script": None,
             "stacktrace": None,
+            "runner_image": None,
         }
     ]
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_get_reduction_by_id_reduction_exists_for_staff(mock_post):
+def test_get_job_by_id_job_exists_for_staff(mock_post):
     """
-    Test reduction returned for id that exists
+    Test job returned for id that exists
     :return:
     """
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/reduction/5001", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/job/5001", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
         "id": 5001,
-        "reduction_end": None,
-        "reduction_inputs": {
+        "end": None,
+        "inputs": {
             "ei": "'auto'",
             "sam_mass": 0.0,
             "sam_rmm": 0.0,
@@ -161,46 +161,45 @@ def test_get_reduction_by_id_reduction_exists_for_staff(mock_post):
             "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
             "wbvan": 12345,
         },
-        "reduction_outputs": None,
-        "reduction_start": None,
-        "reduction_state": "NOT_STARTED",
-        "reduction_status_message": None,
-        "runs": [
-            {
-                "experiment_number": 1820497,
-                "filename": "MAR25581.nxs",
-                "good_frames": 6452,
-                "instrument_name": "TEST",
-                "raw_frames": 8067,
-                "run_end": "2019-03-22T10:18:26",
-                "run_start": "2019-03-22T10:15:44",
-                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT on not on all LAB",
-                "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
-            }
-        ],
+        "outputs": None,
+        "start": None,
+        "state": "NOT_STARTED",
+        "status_message": None,
+        "run": {
+            "experiment_number": 1820497,
+            "filename": "MAR25581.nxs",
+            "good_frames": 6452,
+            "instrument_name": "TEST",
+            "raw_frames": 8067,
+            "run_end": "2019-03-22T10:18:26",
+            "run_start": "2019-03-22T10:15:44",
+            "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT on not on all LAB",
+            "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
+        },
         "script": None,
         "stacktrace": None,
+        "runner_image": None,
     }
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_get_reduction_by_id_reduction_exists_for_user_no_perms(mock_post):
+def test_get_job_by_id_job_exists_for_user_no_perms(mock_post):
     """
     Test Forbidden returned for user lacking permissions
     :return:
     """
     mock_post.return_value.status_code = HTTPStatus.FORBIDDEN
-    response = client.get("/reduction/5001", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    response = client.get("/job/5001", headers={"Authorization": f"Bearer {USER_TOKEN}"})
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
 @patch("fia_api.scripts.acquisition.LOCAL_SCRIPT_DIR", "fia_api/local_scripts")
-def test_get_prescript_when_reduction_does_not_exist():
+def test_get_prescript_when_job_does_not_exist():
     """
-    Test return 404 when requesting pre script from non existant reduction
+    Test return 404 when requesting pre script from non existant job
     :return:
     """
-    response = client.get("/instrument/mari/script?reduction_id=4324234")
+    response = client.get("/instrument/mari/script?job_id=4324234")
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {"message": "Resource not found"}
 
@@ -218,12 +217,12 @@ def test_unsafe_path_request_returns_400_status(mock_get_from_remote):
 
 
 @patch("fia_api.scripts.acquisition.LOCAL_SCRIPT_DIR", "fia_api/local_scripts")
-def test_get_test_prescript_for_reduction():
+def test_get_test_prescript_for_job():
     """
     Test the return of transformed test script
     :return: None
     """
-    response = client.get("/instrument/test/script?reduction_id=1")
+    response = client.get("/instrument/test/script?job_id=1")
     assert response.status_code == HTTPStatus.OK
     response_object = response.json()
 
@@ -249,28 +248,28 @@ something()"""
     )
 
 
-def test_get_reductions_for_instrument_no_token_results_in_forbidden():
+def test_get_jobs_for_instrument_no_token_results_in_forbidden():
     """
     Test result with no token is forbidden
     :return: None
     """
-    response = client.get("/instrument/test/reductions")
+    response = client.get("/instrument/test/jobs")
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-def test_get_reductions_for_instrument_reductions_exist_for_dev_mode():
+def test_get_jobs_for_instrument_jobs_exist_for_dev_mode():
     """
-    Test array of reductions returned for given instrument when the instrument and reductions exist
+    Test array of jobs returned for given instrument when the instrument and jobs exist
     :return: None
     """
     with patch("fia_api.core.auth.tokens.DEV_MODE", True):
-        response = client.get("/instrument/test/reductions", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+        response = client.get("/instrument/test/jobs", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
         assert response.status_code == HTTPStatus.OK
         assert response.json() == [
             {
                 "id": 5001,
-                "reduction_end": None,
-                "reduction_inputs": {
+                "end": None,
+                "inputs": {
                     "ei": "'auto'",
                     "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
                     "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
@@ -282,30 +281,31 @@ def test_get_reductions_for_instrument_reductions_exist_for_dev_mode():
                     "sum_runs": False,
                     "wbvan": 12345,
                 },
-                "reduction_outputs": None,
-                "reduction_start": None,
-                "reduction_state": "NOT_STARTED",
-                "reduction_status_message": None,
+                "outputs": None,
+                "start": None,
+                "state": "NOT_STARTED",
+                "status_message": None,
                 "script": None,
                 "stacktrace": None,
+                "runner_image": None,
             }
         ]
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_get_reductions_for_instrument_reductions_exist_for_staff(mock_post):
+def test_get_jobs_for_instrument_jobs_exist_for_staff(mock_post):
     """
-    Test array of reductions returned for given instrument when the instrument and reductions exist
+    Test array of jobs returned for given instrument when the instrument and jobs exist
     :return: None
     """
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/instrument/test/reductions", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/instrument/test/jobs", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
     assert response.json() == [
         {
             "id": 5001,
-            "reduction_end": None,
-            "reduction_inputs": {
+            "end": None,
+            "inputs": {
                 "ei": "'auto'",
                 "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
                 "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
@@ -317,44 +317,43 @@ def test_get_reductions_for_instrument_reductions_exist_for_staff(mock_post):
                 "sum_runs": False,
                 "wbvan": 12345,
             },
-            "reduction_outputs": None,
-            "reduction_start": None,
-            "reduction_state": "NOT_STARTED",
-            "reduction_status_message": None,
+            "outputs": None,
+            "start": None,
+            "state": "NOT_STARTED",
+            "status_message": None,
             "script": None,
             "stacktrace": None,
+            "runner_image": None,
         }
     ]
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.auth.experiments.requests.get")
-def test_get_reductions_for_instrument_reductions_exist_for_user(mock_get, mock_post):
+def test_get_jobs_for_instrument_jobs_dont_exist_for_user(mock_get, mock_post):
     """
-    Test empty array of reductions returned for given instrument when the instrument and reductions exist
+    Test empty array of jobs returned for given instrument when the instrument and jobs exist
     :return: None
     """
     mock_get.return_value.status_code = HTTPStatus.OK
     mock_get.return_value.json.return_value = []
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/instrument/test/reductions", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    response = client.get("/instrument/test/jobs", headers={"Authorization": f"Bearer {USER_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
     assert response.json() == []
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_get_reductions_for_instrument_runs_included_for_staff(mock_post):
-    """Test runs are included when requested for given instrument when instrument and reductions exist"""
+def test_get_jobs_for_instrument_runs_included_for_staff(mock_post):
+    """Test runs are included when requested for given instrument when instrument and jobs exist"""
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get(
-        "/instrument/test/reductions?include_runs=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"}
-    )
+    response = client.get("/instrument/test/jobs?include_run=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
     assert response.json() == [
         {
             "id": 5001,
-            "reduction_end": None,
-            "reduction_inputs": {
+            "end": None,
+            "inputs": {
                 "ei": "'auto'",
                 "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
                 "monovan": 0,
@@ -365,92 +364,89 @@ def test_get_reductions_for_instrument_runs_included_for_staff(mock_post):
                 "sum_runs": False,
                 "wbvan": 12345,
             },
-            "reduction_outputs": None,
-            "reduction_start": None,
-            "reduction_state": "NOT_STARTED",
-            "reduction_status_message": None,
-            "runs": [
-                {
-                    "experiment_number": 1820497,
-                    "filename": "MAR25581.nxs",
-                    "good_frames": 6452,
-                    "instrument_name": "TEST",
-                    "raw_frames": 8067,
-                    "run_end": "2019-03-22T10:18:26",
-                    "run_start": "2019-03-22T10:15:44",
-                    "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT " "on not on all LAB",
-                    "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
-                }
-            ],
+            "outputs": None,
+            "start": None,
+            "state": "NOT_STARTED",
+            "status_message": None,
+            "run": {
+                "experiment_number": 1820497,
+                "filename": "MAR25581.nxs",
+                "good_frames": 6452,
+                "instrument_name": "TEST",
+                "raw_frames": 8067,
+                "run_end": "2019-03-22T10:18:26",
+                "run_start": "2019-03-22T10:15:44",
+                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT " "on not on all LAB",
+                "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
+            },
             "script": None,
             "stacktrace": None,
+            "runner_image": None,
         }
     ]
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_reductions_by_instrument_no_reductions(mock_post):
+def test_jobs_by_instrument_no_jobs(mock_post):
     """
-    Test empty array returned when no reductions for instrument
+    Test empty array returned when no jobs for instrument
     :return:
     """
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/instrument/foo/reductions", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/instrument/foo/jobs", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
     assert response.json() == []
 
 
-def test_reductions_count():
+def test_jobs_count():
     """
-    Test count endpoint for all reductions
+    Test count endpoint for all jobs
     :return:
     """
-    response = client.get("/reductions/count")
+    response = client.get("/jobs/count")
     assert response.status_code == HTTPStatus.OK
     assert response.json()["count"] == 5001  # noqa: PLR2004
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_limit_reductions(mock_post):
-    """Test reductions can be limited"""
+def test_limit_jobs(mock_post):
+    """Test jobs can be limited"""
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/instrument/mari/reductions?limit=4", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/instrument/mari/jobs?limit=4", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert len(response.json()) == 4  # noqa: PLR2004
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_offset_reductions(mock_post):
+def test_offset_jobs(mock_post):
     """
     Test results are offset
     """
     mock_post.return_value.status_code = HTTPStatus.OK
-    response_one = client.get("/instrument/mari/reductions", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
-    response_two = client.get(
-        "/instrument/mari/reductions?offset=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"}
-    )
+    response_one = client.get("/instrument/mari/jobs", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response_two = client.get("/instrument/mari/jobs?offset=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response_one.json()[0] != response_two.json()[0]
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_limit_offset_reductions(mock_post):
+def test_limit_offset_jobs(mock_post):
     """
     Test offset with limit
     """
     mock_post.return_value.status_code = HTTPStatus.OK
-    response_one = client.get("/instrument/mari/reductions?limit=4", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response_one = client.get("/instrument/mari/jobs?limit=4", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     response_two = client.get(
-        "/instrument/mari/reductions?limit=4&offset=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"}
+        "/instrument/mari/jobs?limit=4&offset=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"}
     )
 
     assert len(response_two.json()) == 4  # noqa: PLR2004
     assert response_one.json() != response_two.json()
 
 
-def test_instrument_reductions_count():
+def test_instrument_jobs_count():
     """
-    Test instrument reductions count
+    Test instrument jobs count
     """
-    response = client.get("/instrument/TEST/reductions/count")
+    response = client.get("/instrument/TEST/jobs/count")
     assert response.json()["count"] == 1
 
 

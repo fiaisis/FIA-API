@@ -16,21 +16,21 @@ from fia_api.core.auth.tokens import JWTBearer, get_user_from_token
 from fia_api.core.repositories import test_connection
 from fia_api.core.responses import (
     CountResponse,
+    JobResponse,
+    JobWithRunResponse,
     PreScriptResponse,
-    ReductionResponse,
-    ReductionWithRunsResponse,
 )
 from fia_api.core.services.instrument import get_specification_by_instrument_name, update_specification_for_instrument
-from fia_api.core.services.reduction import (
-    count_reductions,
-    count_reductions_by_instrument,
-    get_all_reductions,
-    get_reduction_by_id,
-    get_reductions_by_instrument,
+from fia_api.core.services.job import (
+    count_jobs,
+    count_jobs_by_instrument,
+    get_all_jobs,
+    get_job_by_id,
+    get_job_by_instrument,
 )
 from fia_api.scripts.acquisition import (
     get_script_by_sha,
-    get_script_for_reduction,
+    get_script_for_job,
     write_script_locally,
 )
 from fia_api.scripts.pre_script import PreScript
@@ -59,20 +59,20 @@ async def ready() -> Literal["ok"]:
 async def get_pre_script(
     instrument: str,
     background_tasks: BackgroundTasks,
-    reduction_id: int | None = None,
+    job_id: int | None = None,
 ) -> PreScriptResponse:
     """
     Script URI - Not intended for calling
     \f
     :param instrument: the instrument
     :param background_tasks: handled by fastapi
-    :param reduction_id: optional query parameter of runfile, used to apply transform
+    :param job_id: optional query parameter of runfile, used to apply transform
     :return: ScriptResponse
     """
     script = PreScript(value="")
     # This will never be returned from the api, but is necessary for the background task to run
     try:
-        script = get_script_for_reduction(instrument, reduction_id)
+        script = get_script_for_job(instrument, job_id)
         return script.to_response()
     finally:
         background_tasks.add_task(write_script_locally, script, instrument)
@@ -80,92 +80,94 @@ async def get_pre_script(
 
 
 @ROUTER.get("/instrument/{instrument}/script/sha/{sha}", tags=["scripts"])
-async def get_pre_script_by_sha(instrument: str, sha: str, reduction_id: int | None = None) -> PreScriptResponse:
+async def get_pre_script_by_sha(instrument: str, sha: str, job_id: int | None = None) -> PreScriptResponse:
     """
-    Given an instrument and the commit sha of a script, obtain the pre script. Optionally providing a reduction id to
+    Given an instrument and the commit sha of a script, obtain the pre script. Optionally providing a job id to
     transform the script
     \f
     :param instrument: The instrument
     :param sha: The commit sha of the script
-    :param reduction_id: The reduction id to apply transforms
+    :param job_id: The reduction id to apply transforms
     :return:
     """
-    return get_script_by_sha(instrument, sha, reduction_id).to_response()
+    return get_script_by_sha(instrument, sha, job_id).to_response()
 
 
 OrderField = Literal[
-    "reduction_start",
-    "reduction_end",
-    "reduction_state",
+    "start",
+    "end",
+    "state",
     "id",
     "run_start",
     "run_end",
-    "reduction_outputs",
+    "outputs",
     "experiment_number",
     "experiment_title",
     "filename",
 ]
 
 
-@ROUTER.get("/reductions", tags=["reductions"])
-async def get_reductions(
+@ROUTER.get("/jobs", tags=["jobs"])
+async def get_jobs(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
     limit: int = 0,
     offset: int = 0,
-    order_by: OrderField = "reduction_start",
+    order_by: OrderField = "start",
     order_direction: Literal["asc", "desc"] = "desc",
-    include_runs: bool = False,
-) -> list[ReductionResponse] | list[ReductionWithRunsResponse]:
+    include_run: bool = False,
+) -> list[JobResponse] | list[JobWithRunResponse]:
     """
-    Retrieve all reductions.
+    Retrieve all jobs.
     \f
     :param credentials: Dependency injected HTTPAuthorizationCredentials
-    :param limit: optional limit for the number of reductions returned (default is 0, which can be interpreted as
+    :param limit: optional limit for the number of jobs returned (default is 0, which can be interpreted as
     no limit)
-    :param offset: optional offset for the list of reductions (default is 0)
-    :param order_by: Literal["reduction_start", "reduction_end", "reduction_state", "id"]
+    :param offset: optional offset for the list of jobs (default is 0)
+    :param order_by: Literal["start", "end", "state", "id", "run_start", "run_end", "outputs", "experiment_number",
+    "experiment_title", "filename",]
     :param order_direction: Literal["asc", "desc"]
-    :param include_runs: bool
-    :return: List of ReductionResponse objects
+    :param include_run: bool
+    :return: List of JobResponse objects
     """
     user = get_user_from_token(credentials.credentials)
     user_number = None if user.role == "staff" else user.user_number
-    reductions = get_all_reductions(
+    jobs = get_all_jobs(
         limit=limit, offset=offset, order_by=order_by, order_direction=order_direction, user_number=user_number
     )
 
-    if include_runs:
-        return [ReductionWithRunsResponse.from_reduction(r) for r in reductions]
-    return [ReductionResponse.from_reduction(r) for r in reductions]
+    if include_run:
+        return [JobWithRunResponse.from_job(j) for j in jobs]
+    return [JobResponse.from_job(j) for j in jobs]
 
 
-@ROUTER.get("/instrument/{instrument}/reductions", tags=["reductions"])
-async def get_reductions_for_instrument(
+@ROUTER.get("/instrument/{instrument}/jobs", tags=["jobs"])
+async def get_jobs_by_instrument(
     instrument: str,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
     limit: int = 0,
     offset: int = 0,
-    order_by: OrderField = "reduction_start",
+    order_by: OrderField = "start",
     order_direction: Literal["asc", "desc"] = "desc",
-    include_runs: bool = False,
-) -> list[ReductionResponse] | list[ReductionWithRunsResponse]:
+    include_run: bool = False,
+) -> list[JobResponse] | list[JobWithRunResponse]:
     """
-    Retrieve a list of reductions for a given instrument.
+    Retrieve a list of jobs for a given instrument.
     \f
     :param credentials: Dependency injected HTTPAuthorizationCredentials
     :param instrument: the name of the instrument
-    :param limit: optional limit for the number of reductions returned (default is 0, which can be interpreted as
+    :param limit: optional limit for the number of jobs returned (default is 0, which can be interpreted as
     no limit)
-    :param offset: optional offset for the list of reductions (default is 0)
-    :param order_by: Literal["reduction_start", "reduction_end", "reduction_state", "id"]
+    :param offset: optional offset for the list of jobs (default is 0)
+    :param order_by: Literal["start", "end", "state", "id", "run_start", "run_end", "outputs", "experiment_number",
+    "experiment_title", "filename",]
     :param order_direction: Literal["asc", "desc"]
-    :param include_runs: bool
-    :return: List of ReductionResponse objects
+    :param include_run: bool
+    :return: List of JobResponse objects
     """
     user = get_user_from_token(credentials.credentials)
     instrument = instrument.upper()
     user_number = None if user.role == "staff" else user.user_number
-    reductions = get_reductions_by_instrument(
+    jobs = get_job_by_instrument(
         instrument,
         limit=limit,
         offset=offset,
@@ -174,12 +176,12 @@ async def get_reductions_for_instrument(
         user_number=user_number,
     )
 
-    if include_runs:
-        return [ReductionWithRunsResponse.from_reduction(r) for r in reductions]
-    return [ReductionResponse.from_reduction(r) for r in reductions]
+    if include_run:
+        return [JobWithRunResponse.from_job(j) for j in jobs]
+    return [JobResponse.from_job(j) for j in jobs]
 
 
-@ROUTER.get("/instrument/{instrument}/reductions/count", tags=["reductions"])
+@ROUTER.get("/instrument/{instrument}/jobs/count", tags=["jobs"])
 async def count_reductions_for_instrument(
     instrument: str,
 ) -> CountResponse:
@@ -187,44 +189,41 @@ async def count_reductions_for_instrument(
     Count reductions for a given instrument.
     \f
     :param instrument: the name of the instrument
-    :return: List of ReductionResponse objects
+    :return: CountResponse containing the count
     """
     instrument = instrument.upper()
-    return CountResponse(count=count_reductions_by_instrument(instrument))
+    return CountResponse(count=count_jobs_by_instrument(instrument))
 
 
-@ROUTER.get("/reduction/{reduction_id}", tags=["reductions"])
+@ROUTER.get("/job/{job_id}", tags=["jobs"])
 async def get_reduction(
-    reduction_id: int, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
-) -> ReductionWithRunsResponse:
+    job_id: int, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
+) -> JobWithRunResponse:
     """
-    Retrieve a reduction with nested run data, by iD.
+    Retrieve a job with nested run data, by iD.
     \f
-    :param reduction_id: the unique identifier of the reduction
-    :return: ReductionWithRunsResponse object
+    :param job_id: the unique identifier of the reduction
+    :return: JobWithRunsResponse object
     """
     user = get_user_from_token(credentials.credentials)
-    if user.role == "staff":
-        reduction = get_reduction_by_id(reduction_id)
-    else:
-        reduction = get_reduction_by_id(reduction_id, user_number=user.user_number)
-    return ReductionWithRunsResponse.from_reduction(reduction)
+    job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
+    return JobWithRunResponse.from_job(job)
 
 
-@ROUTER.get("/reductions/count", tags=["reductions"])
+@ROUTER.get("/jobs/count", tags=["jobs"])
 async def count_all_reductions() -> CountResponse:
     """
     Count all reductions
     \f
     :return: CountResponse containing the count
     """
-    return CountResponse(count=count_reductions())
+    return CountResponse(count=count_jobs())
 
 
 @ROUTER.get("/instrument/{instrument_name}/specification", tags=["instrument"], response_model=None)
 async def get_instrument_specification(
     instrument_name: str, _: Annotated[HTTPAuthorizationCredentials, Depends(api_key_security)]
-) -> JSONB:
+) -> JSONB | None:
     """
     Return the specification for the given instrument
     \f

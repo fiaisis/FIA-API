@@ -245,7 +245,7 @@ for workspace in output_workspaces:
 def test_osiris_transform_spectroscopy():
     """Test spectroscopy transform"""
     reduction = Mock()
-    reduction.reduction_inputs = {
+    reduction.inputs = {
         "input_runs": [1, 2, 3],
         "calibration_run_number": "0123456",
         "cycle_string": "cycle_1_2",

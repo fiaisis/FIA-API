@@ -10,7 +10,8 @@ MissingTransformError (Exception): A custom exception for handling cases where a
 
 from abc import ABC, abstractmethod
 
-from fia_api.core.model import Reduction
+from db.data_models import Job
+
 from fia_api.scripts.pre_script import PreScript
 
 
@@ -20,11 +21,11 @@ class Transform(ABC):
     """
 
     @abstractmethod
-    def apply(self, script: PreScript, reduction: Reduction) -> None:
+    def apply(self, script: PreScript, job: Job) -> None:
         """
         Apply the transform on the given script
         :param script: PreScript - the script to transform
-        :param reduction: Reduction the reduction entity
+        :param job: Reduction the job entity
         :return: None
         """
 

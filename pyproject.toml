@@ -7,8 +7,9 @@ dependencies = [
     "fastapi[all]==0.111.1",
     "PyJWT==2.8.0",
     "psycopg2==2.9.9",
-    "SQLAlchemy==2.0.31",
+    "SQLAlchemy==2.0.30",
     "pydantic==2.8.2",
+    "db@git+https://github.com/fiaisis/db",
     "uvicorn==0.30.3",
     "requests==2.32.3"
 ]

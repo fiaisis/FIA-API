@@ -2,20 +2,23 @@
 Test cases for response objects
 """
 
+import copy
 import datetime
 from unittest import mock
 
-from fia_api.core.model import Instrument, Reduction, ReductionState, Run, Script
+from db.data_models import Instrument, Job, JobOwner, Run, Script, State
+
 from fia_api.core.responses import (
-    ReductionResponse,
-    ReductionWithRunsResponse,
+    JobResponse,
+    JobWithRunResponse,
     RunResponse,
     ScriptResponse,
 )
 
+OWNER = JobOwner(user_number=1111, experiment_number=2222)
+
 RUN = Run(
     filename="filename",
-    experiment_number=123456,
     title="title",
     users="user 1, user 2",
     run_start=datetime.datetime(2000, 1, 1, 1, 1, 1, tzinfo=datetime.UTC),
@@ -23,20 +26,21 @@ RUN = Run(
     good_frames=1,
     raw_frames=2,
     instrument=Instrument(instrument_name="instrument name"),
+    owner=OWNER,
 )
 
 SCRIPT = Script(script="print('foo')")
 
-REDUCTION = Reduction(
+JOB = Job(
     id=1,
-    reduction_start=datetime.datetime(2000, 1, 1, 1, 1, 1, tzinfo=datetime.UTC),
-    reduction_end=datetime.datetime(2000, 1, 1, 1, 5, 1, tzinfo=datetime.UTC),
-    reduction_state=ReductionState.SUCCESSFUL,
-    reduction_inputs={"ei": "auto"},
-    reduction_outputs="some output",
+    start=datetime.datetime(2000, 1, 1, 1, 1, 1, tzinfo=datetime.UTC),
+    end=datetime.datetime(2000, 1, 1, 1, 5, 1, tzinfo=datetime.UTC),
+    state=State.SUCCESSFUL,
+    inputs={"ei": "auto"},
+    outputs="some output",
     script=SCRIPT,
     stacktrace="some stacktrace",
-    runs=[RUN],
+    run=RUN,
 )
 
 
@@ -47,7 +51,26 @@ def test_run_response_from_run():
     """
     response = RunResponse.from_run(RUN)
     assert response.filename == RUN.filename
-    assert response.experiment_number == RUN.experiment_number
+    assert response.experiment_number == RUN.owner.experiment_number
+    assert response.title == RUN.title
+    assert response.users == RUN.users
+    assert response.run_start == RUN.run_start
+    assert response.run_end == RUN.run_end
+    assert response.good_frames == RUN.good_frames
+    assert response.raw_frames == RUN.raw_frames
+    assert response.instrument_name == RUN.instrument.instrument_name
+
+
+def test_run_response_from_run_when_no_owner():
+    """
+    Test run response can be built from run without owner
+    :return: None
+    """
+    local_run = copy.deepcopy(RUN)
+    local_run.owner = None
+    response = RunResponse.from_run(local_run)
+    assert response.filename == RUN.filename
+    assert response.experiment_number == 0
     assert response.title == RUN.title
     assert response.users == RUN.users
     assert response.run_start == RUN.run_start
@@ -61,45 +84,45 @@ def test_run_response_from_run():
     "fia_api.core.responses.ScriptResponse.from_script",
     return_value=ScriptResponse(value="print('foo')"),
 )
-def test_reduction_response_from_reduction(from_script):
+def test_job_response_from_job(from_script):
     """
-    Test that reduction response can be built from reduction
+    Test that job response can be built from job
     :return: None
     """
-    response = ReductionResponse.from_reduction(REDUCTION)
-    from_script.assert_called_once_with(REDUCTION.script)
+    response = JobResponse.from_job(JOB)
+    from_script.assert_called_once_with(JOB.script)
     assert not hasattr(response, "runs")
-    assert response.id == REDUCTION.id
-    assert response.reduction_state == REDUCTION.reduction_state
-    assert response.script.value == REDUCTION.script.script
-    assert response.reduction_start == REDUCTION.reduction_start
-    assert response.reduction_end == REDUCTION.reduction_end
-    assert response.reduction_inputs == REDUCTION.reduction_inputs
-    assert response.reduction_outputs == REDUCTION.reduction_outputs
-    assert response.reduction_status_message == REDUCTION.reduction_status_message
-    assert response.stacktrace == REDUCTION.stacktrace
+    assert response.id == JOB.id
+    assert response.state == JOB.state
+    assert response.script.value == JOB.script.script
+    assert response.start == JOB.start
+    assert response.end == JOB.end
+    assert response.inputs == JOB.inputs
+    assert response.outputs == JOB.outputs
+    assert response.status_message == JOB.status_message
+    assert response.stacktrace == JOB.stacktrace
 
 
 @mock.patch(
     "fia_api.core.responses.ScriptResponse.from_script",
     return_value=ScriptResponse(value="print('foo')"),
 )
-def test_reduction_with_runs_response_from_reduction(from_script):
+def test_job_with_runs_response_from_job(from_script):
     """
-    Test reduction response can be built to include runs
+    Test job response can be built to include runs
     :return: None
     """
-    response = ReductionWithRunsResponse.from_reduction(REDUCTION)
-    from_script.assert_called_once_with(REDUCTION.script)
-    assert response.id == REDUCTION.id
-    assert response.reduction_state == REDUCTION.reduction_state
-    assert response.script.value == REDUCTION.script.script
-    assert response.reduction_start == REDUCTION.reduction_start
-    assert response.reduction_end == REDUCTION.reduction_end
-    assert response.reduction_inputs == REDUCTION.reduction_inputs
-    assert response.reduction_outputs == REDUCTION.reduction_outputs
-    assert response.reduction_status_message == REDUCTION.reduction_status_message
-    assert isinstance(response.runs[0], RunResponse)
+    response = JobWithRunResponse.from_job(JOB)
+    from_script.assert_called_once_with(JOB.script)
+    assert response.id == JOB.id
+    assert response.state == JOB.state
+    assert response.script.value == JOB.script.script
+    assert response.start == JOB.start
+    assert response.end == JOB.end
+    assert response.inputs == JOB.inputs
+    assert response.outputs == JOB.outputs
+    assert response.status_message == JOB.status_message
+    assert response.run == RunResponse.from_run(JOB.run)
 
 
 @mock.patch("fia_api.core.responses.filter_script_for_tokens", return_value=SCRIPT.script)

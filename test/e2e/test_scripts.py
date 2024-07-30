@@ -111,12 +111,12 @@ def test_get_script_by_sha_instrument_and_sha_doesnt_exist_returns_404():
     assert response.json() == {"message": "Resource not found"}
 
 
-def test_get_script_by_sha_with_reduction_id():
+def test_get_script_by_sha_with_job_id():
     """
-    Test transformed script can be returned from hash when reduction id is provided
+    Test transformed script can be returned from hash when job id is provided
     :return: None
     """
-    response = client.get("/instrument/test/script/sha/64c6121?reduction_id=1")
+    response = client.get("/instrument/test/script/sha/64c6121?job_id=1")
     assert response.status_code == HTTPStatus.OK
     response = response.json()
     assert response["is_latest"] is False
