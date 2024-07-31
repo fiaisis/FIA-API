@@ -6,11 +6,13 @@ with a live db connection
 """
 
 import datetime
+from unittest import mock
+from unittest.mock import Mock
 
 import pytest
 
 from fia_api.core.model import Base, Instrument, Reduction, ReductionState, Run, Script
-from fia_api.core.repositories import ENGINE, SESSION, Repo
+from fia_api.core.repositories import ENGINE, SESSION, Repo, test_connection
 from fia_api.core.specifications.reduction import ReductionSpecification
 
 # pylint: disable = redefined-outer-name
@@ -161,3 +163,14 @@ def test_reductions_by_instrument_sort_by_reduction_field(reduction_repo):
     )
     expected.reverse()
     assert result == expected
+
+
+@mock.patch("fia_api.core.repositories.SESSION")
+@mock.patch("fia_api.core.repositories.select")
+def test_test_connection_raises_httpexception(mock_select, mock_session):
+    """Test exception raised when runtime error occurs"""
+    mock_session_object = Mock()
+    mock_session.return_value.__enter__.return_value = mock_session_object
+
+    test_connection()
+    mock_session_object.execute.assert_called_once_with(mock_select.return_value)

@@ -31,6 +31,12 @@ ENGINE = create_engine(
 SESSION = sessionmaker(ENGINE)
 
 
+def test_connection() -> None:
+    """Test connection to database."""
+    with SESSION() as session:
+        session.execute(select(1))
+
+
 class Repo(Generic[T]):
     """
     A generic repository class for performing database operations on entities of type T.

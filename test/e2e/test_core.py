@@ -12,7 +12,6 @@ from test.utils import FIA_FAKER_PROVIDER
 
 client = TestClient(app)
 
-
 faker = FIA_FAKER_PROVIDER
 
 USER_TOKEN = (
@@ -455,12 +454,22 @@ def test_instrument_reductions_count():
     assert response.json()["count"] == 1
 
 
-def test_readiness_and_liveness_probes():
+def test_liveness_probes():
     """
     Test endpoint for probes
     :return: None
     """
     response = client.get("/healthz")
+    assert response.status_code == HTTPStatus.OK
+    assert response.text == '"ok"'
+
+
+def test_readiness_probes():
+    """
+    Test endpoint for probes
+    :return: None
+    """
+    response = client.get("/ready")
     assert response.status_code == HTTPStatus.OK
     assert response.text == '"ok"'
 
