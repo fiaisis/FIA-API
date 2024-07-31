@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.dialects.postgresql import JSONB
 from starlette.background import BackgroundTasks
 
 from fia_api.core.auth.api_keys import APIKeyBearer
 from fia_api.core.auth.tokens import JWTBearer, get_user_from_token
+from fia_api.core.repositories import test_connection
 from fia_api.core.responses import (
     CountResponse,
     PreScriptResponse,
@@ -44,6 +45,13 @@ async def get() -> Literal["ok"]:
     """Health Check endpoint."""
     return "ok"
 
+@ROUTER.get("/ready", tags=["k8s"])
+async def ready() -> Literal["ok"]:
+    try:
+        test_connection()
+        return "ok"
+    except Exception as e:
+        raise HTTPException(status_code=503) from e
 
 @ROUTER.get("/instrument/{instrument}/script", tags=["scripts"])
 async def get_pre_script(
