@@ -45,6 +45,7 @@ async def get() -> Literal["ok"]:
     """Health Check endpoint."""
     return "ok"
 
+
 @ROUTER.get("/ready", tags=["k8s"])
 async def ready() -> Literal["ok"]:
     try:
@@ -52,6 +53,7 @@ async def ready() -> Literal["ok"]:
         return "ok"
     except Exception as e:
         raise HTTPException(status_code=503) from e
+
 
 @ROUTER.get("/instrument/{instrument}/script", tags=["scripts"])
 async def get_pre_script(
