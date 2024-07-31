@@ -106,6 +106,3 @@ class Repo(Generic[T]):
             session.commit()
             session.refresh(entity)
         return entity
-
-
-test_connection()
