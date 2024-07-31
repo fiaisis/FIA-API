@@ -158,7 +158,7 @@ def test_get_reduction_by_id_reduction_exists_for_staff(mock_post):
             "sum_runs": False,
             "runno": 25581,
             "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
-                              "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
+            "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
             "wbvan": 12345,
         },
         "reduction_outputs": None,
@@ -229,8 +229,8 @@ def test_get_test_prescript_for_reduction():
 
     assert response_object["is_latest"]
     assert (
-            response_object["value"]
-            == """from __future__ import print_function
+        response_object["value"]
+        == """from __future__ import print_function
 from mantid.kernel import ConfigService
 ConfigService.Instance()[\"network.github.api_token\"] = \"\"
 # This line is inserted via test
@@ -273,7 +273,7 @@ def test_get_reductions_for_instrument_reductions_exist_for_dev_mode():
                 "reduction_inputs": {
                     "ei": "'auto'",
                     "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
-                                      "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
+                    "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
                     "monovan": 0,
                     "remove_bkg": True,
                     "runno": 25581,
@@ -308,7 +308,7 @@ def test_get_reductions_for_instrument_reductions_exist_for_staff(mock_post):
             "reduction_inputs": {
                 "ei": "'auto'",
                 "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
-                                  "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
+                "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
                 "monovan": 0,
                 "remove_bkg": True,
                 "runno": 25581,
