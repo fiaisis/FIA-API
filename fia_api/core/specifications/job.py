@@ -132,8 +132,7 @@ class JobSpecification(Specification[Job]):
                 )
             )
         else:
-            self.value = (self.value.join(Instrument)
-                          .where(Instrument.instrument_name == instrument).join(Run, Job.run))
+            self.value = self.value.join(Instrument).where(Instrument.instrument_name == instrument).join(Run, Job.run)
 
         self._apply_ordering(order_by, order_direction)
 
