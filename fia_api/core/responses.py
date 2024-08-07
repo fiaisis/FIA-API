@@ -73,7 +73,7 @@ class RunResponse(BaseModel):
             filename=run.filename,
             experiment_number=run.owner.experiment_number
             if run.owner is not None and run.owner.experiment_number is not None
-            else 0,
+            else None,
             title=run.title,
             users=run.users,
             run_start=run.run_start,
