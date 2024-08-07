@@ -258,7 +258,7 @@ def test_get_script_for_job_with_invalid_job_id(mock_repo):
     ):
         get_script_for_job(instrument, jobid)
 
-    assert f"No reduction found with id: {jobid}" in str(excinfo.value)
+    assert f"No job found with id: {jobid}" in str(excinfo.value)
 
 
 @patch("fia_api.scripts.acquisition.requests.get")
