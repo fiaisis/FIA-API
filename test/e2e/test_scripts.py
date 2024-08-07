@@ -55,7 +55,7 @@ something()
     assert_is_commit_sha(response_object["sha"])
 
 
-def test_get_script_by_sha_no_reduction_id_instrument_exists_hash_exists():
+def test_get_script_by_sha_no_job_id_instrument_exists_hash_exists():
     """
     Test script returned by hash untransformed
     :return: None

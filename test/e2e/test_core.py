@@ -93,7 +93,7 @@ def test_get_all_job_for_user(mock_post, mock_get_experiment_numbers_for_user_nu
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_get_all_job_for_user_include_run(mock_post, mock_get_experiment_numbers_for_user_number):
-    """Test get all reductions for staff"""
+    """Test get all jobs for staff"""
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
     response = client.get("/jobs?include_run=true", headers={"Authorization": f"Bearer {USER_TOKEN}"})

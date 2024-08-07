@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class ToscaTransform(Transform):
     """
-    Tosca Transform applies modifications to tosca script based on the reduction inputs
+    Tosca Transform applies modifications to tosca script based on the job inputs
     """
 
     # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin

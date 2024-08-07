@@ -86,7 +86,7 @@ class RunResponse(BaseModel):
 
 class JobResponse(BaseModel):
     """
-    ReductionResponse object that does not contain the related runs
+    JobResponse object that does not contain the related runs
     """
 
     id: int
@@ -103,9 +103,9 @@ class JobResponse(BaseModel):
     @staticmethod
     def from_job(job: Job) -> JobResponse:
         """
-        Given a reduction return a ReductionResponse
-        :param job: The Reduction to convert
-        :return: The ReductionResponse object
+        Given a job return a JobResponse
+        :param job: The Job to convert
+        :return: The JobResponse object
         """
         script = ScriptResponse.from_script(job.script) if isinstance(job.script, Script) else None
         return JobResponse(

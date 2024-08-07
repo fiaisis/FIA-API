@@ -97,7 +97,7 @@ def get_job_by_id(job_id: int, user_number: int | None = None) -> Job:
     """
     job = _REPO.find_one(JobSpecification().by_id(job_id))
     if job is None:
-        raise MissingRecordError(f"No Reduction for id {job_id}")
+        raise MissingRecordError(f"No Job for id {job_id}")
 
     if user_number:
         experiments = get_experiments_for_user_number(user_number)

@@ -155,9 +155,9 @@ class FIAProvider(BaseProvider):
 
     def insertable_job(self, instrument: Instrument) -> Job:
         """
-        Given an instrument model, generate random; reduction, run, and script all related.
+        Given an instrument model, generate random; job, run, and script all related.
         :param instrument:The instrument
-        :return: The reduction with relations
+        :return: The job with relations
         """
         job = self.job(instrument)
         job.run = self.run(instrument)

@@ -25,7 +25,7 @@ class Transform(ABC):
         """
         Apply the transform on the given script
         :param script: PreScript - the script to transform
-        :param job: Reduction the job entity
+        :param job: Job the job entity
         :return: None
         """
 

@@ -202,7 +202,7 @@ def test_get_by_instrument_name_local(mock_local, mock_remote):
 
 
 @patch("fia_api.scripts.acquisition.get_by_instrument_name")
-def test_get_script_for_job_no_reduction_id(mock_get_by_name):
+def test_get_script_for_job_no_job_id(mock_get_by_name):
     """
     Test base script returned when no id provided
     :param mock_get_by_name: Mock

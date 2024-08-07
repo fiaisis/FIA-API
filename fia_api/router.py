@@ -87,7 +87,7 @@ async def get_pre_script_by_sha(instrument: str, sha: str, job_id: int | None = 
     \f
     :param instrument: The instrument
     :param sha: The commit sha of the script
-    :param job_id: The reduction id to apply transforms
+    :param job_id: The job id to apply transforms
     :return:
     """
     return get_script_by_sha(instrument, sha, job_id).to_response()
@@ -182,11 +182,11 @@ async def get_jobs_by_instrument(
 
 
 @ROUTER.get("/instrument/{instrument}/jobs/count", tags=["jobs"])
-async def count_reductions_for_instrument(
+async def count_jobs_for_instrument(
     instrument: str,
 ) -> CountResponse:
     """
-    Count reductions for a given instrument.
+    Count jobs for a given instrument.
     \f
     :param instrument: the name of the instrument
     :return: CountResponse containing the count
@@ -196,13 +196,13 @@ async def count_reductions_for_instrument(
 
 
 @ROUTER.get("/job/{job_id}", tags=["jobs"])
-async def get_reduction(
+async def get_job(
     job_id: int, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
 ) -> JobWithRunResponse:
     """
     Retrieve a job with nested run data, by iD.
     \f
-    :param job_id: the unique identifier of the reduction
+    :param job_id: the unique identifier of the job
     :return: JobWithRunsResponse object
     """
     user = get_user_from_token(credentials.credentials)
@@ -211,9 +211,9 @@ async def get_reduction(
 
 
 @ROUTER.get("/jobs/count", tags=["jobs"])
-async def count_all_reductions() -> CountResponse:
+async def count_all_jobs() -> CountResponse:
     """
-    Count all reductions
+    Count all jobs
     \f
     :return: CountResponse containing the count
     """
@@ -228,7 +228,7 @@ async def get_instrument_specification(
     Return the specification for the given instrument
     \f
     :param instrument_name: The instrument
-    :return: The specificaiton
+    :return: The specification
     """
     return get_specification_by_instrument_name(instrument_name.upper())
 
