@@ -70,7 +70,7 @@ def test_run_response_from_run_when_no_owner():
     local_run.owner = None
     response = RunResponse.from_run(local_run)
     assert response.filename == RUN.filename
-    assert response.experiment_number == None
+    assert response.experiment_number is None
     assert response.title == RUN.title
     assert response.users == RUN.users
     assert response.run_start == RUN.run_start
