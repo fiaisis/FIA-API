@@ -6,7 +6,6 @@ with a live db connection
 """
 
 import datetime
-import time
 from unittest import mock
 from unittest.mock import Mock
 
@@ -30,7 +29,6 @@ TEST_JOB = Job(
     instrument=TEST_INSTRUMENT_1,
     job_type=JobType.AUTOREDUCTION,
 )
-time.sleep(1)
 TEST_JOB_2 = Job(
     start=datetime.datetime.now(datetime.UTC),
     owner=TEST_JOB_OWNER,
@@ -40,8 +38,7 @@ TEST_JOB_2 = Job(
     instrument=TEST_INSTRUMENT_1,
     job_type=JobType.AUTOREDUCTION,
 )
-
-TEST_JOB_4 = Job(
+TEST_JOB_3 = Job(
     start=datetime.datetime.now(datetime.UTC),
     owner=TEST_JOB_OWNER,
     state=State.NOT_STARTED,
@@ -85,7 +82,7 @@ TEST_RUN_3 = Run(
     raw_frames=200,
     instrument=TEST_INSTRUMENT_2,
 )
-TEST_RUN_3.jobs.append(TEST_JOB_4)
+TEST_RUN_3.jobs.append(TEST_JOB_3)
 
 
 @pytest.fixture(scope="module", autouse=True)

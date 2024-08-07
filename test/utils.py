@@ -200,7 +200,6 @@ TEST_RUN = Run(
     users="Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
     jobs=[TEST_JOB],
 )
-EXPERIMENT_NUMBERS = range(0, 100000)
 
 
 def setup_database() -> None:
