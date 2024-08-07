@@ -53,7 +53,7 @@ class RunResponse(BaseModel):
     """
 
     filename: str
-    experiment_number: int
+    experiment_number: int | None
     title: str
     users: str
     run_start: datetime
