@@ -4,15 +4,19 @@ Module containing the REST endpoints
 
 from __future__ import annotations
 
+from http import HTTPStatus
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
+from pydantic import BaseModel
 from sqlalchemy.dialects.postgresql import JSONB
 from starlette.background import BackgroundTasks
 
 from fia_api.core.auth.api_keys import APIKeyBearer
+from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.auth.tokens import JWTBearer, get_user_from_token
+from fia_api.core.job_maker import JobMaker
 from fia_api.core.repositories import test_connection
 from fia_api.core.responses import (
     CountResponse,
@@ -25,6 +29,7 @@ from fia_api.core.services.job import (
     count_jobs,
     count_jobs_by_instrument,
     get_all_jobs,
+    get_experiment_number_for_job_id,
     get_job_by_id,
     get_job_by_instrument,
 )
@@ -36,6 +41,7 @@ from fia_api.scripts.acquisition import (
 from fia_api.scripts.pre_script import PreScript
 
 ROUTER = APIRouter()
+JOB_MAKER = JobMaker()
 jwt_security = JWTBearer()
 api_key_security = APIKeyBearer()
 
@@ -218,6 +224,39 @@ async def count_all_jobs() -> CountResponse:
     :return: CountResponse containing the count
     """
     return CountResponse(count=count_jobs())
+
+
+class RerunJob(BaseModel):
+    job_id: int
+    runner_image: str
+    script: str
+
+
+@ROUTER.post("/job/rerun", tags=["job"])
+async def make_rerun_job(rerun_job: RerunJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]):
+    user = get_user_from_token(credentials.credentials)
+    experiment_number = get_experiment_number_for_job_id(rerun_job.job_id)
+    # Forbidden if not staff, and experiment number not related to this user_number's experiment number
+    if user.role != "staff":
+        experiment_numbers = get_experiments_for_user_number(user.user_number)
+        if experiment_number not in experiment_numbers:
+            # If not staff this is not allowed
+            raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
+    JOB_MAKER.rerun_job(job_id=rerun_job.job_id, runner_image=rerun_job.runner_image, script=rerun_job.script, experiment_number=experiment_number)
+
+
+class SimpleJob(BaseModel):
+    runner_image: str
+    script: str
+
+
+@ROUTER.post("/job/simple", tags=["job"])
+async def make_simple_job(simple_job: SimpleJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]):
+    user = get_user_from_token(credentials.credentials)
+    if user.role != "staff":
+        # If not staff this is not allowed
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
+    JOB_MAKER.simple_job(runner_image=simple_job.runner_image, script=simple_job.script, user_number=user.user_number)
 
 
 @ROUTER.get("/instrument/{instrument_name}/specification", tags=["instrument"], response_model=None)
