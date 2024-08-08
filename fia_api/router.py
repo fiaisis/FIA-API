@@ -233,7 +233,9 @@ class RerunJob(BaseModel):
 
 
 @ROUTER.post("/job/rerun", tags=["job"])
-async def make_rerun_job(rerun_job: RerunJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]):
+async def make_rerun_job(
+    rerun_job: RerunJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
+):
     user = get_user_from_token(credentials.credentials)
     experiment_number = get_experiment_number_for_job_id(rerun_job.job_id)
     # Forbidden if not staff, and experiment number not related to this user_number's experiment number
@@ -242,7 +244,12 @@ async def make_rerun_job(rerun_job: RerunJob, credentials: Annotated[HTTPAuthori
         if experiment_number not in experiment_numbers:
             # If not staff this is not allowed
             raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
-    JOB_MAKER.rerun_job(job_id=rerun_job.job_id, runner_image=rerun_job.runner_image, script=rerun_job.script, experiment_number=experiment_number)
+    JOB_MAKER.rerun_job(
+        job_id=rerun_job.job_id,
+        runner_image=rerun_job.runner_image,
+        script=rerun_job.script,
+        experiment_number=experiment_number,
+    )
 
 
 class SimpleJob(BaseModel):
@@ -251,7 +258,9 @@ class SimpleJob(BaseModel):
 
 
 @ROUTER.post("/job/simple", tags=["job"])
-async def make_simple_job(simple_job: SimpleJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]):
+async def make_simple_job(
+    simple_job: SimpleJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
+):
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         # If not staff this is not allowed

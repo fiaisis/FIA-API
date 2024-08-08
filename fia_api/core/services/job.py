@@ -127,5 +127,4 @@ def count_jobs() -> int:
 
 
 def get_experiment_number_for_job_id(job_id: int) -> int:
-
     return _REPO.find_one(JobSpecification().by_id(job_id)).owner.experiment_number
