@@ -7,12 +7,12 @@ import os
 from collections.abc import Sequence
 from typing import Generic, TypeVar
 
+from db.data_models import Base
 from sqlalchemy import NullPool, create_engine, func, select
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.orm import sessionmaker
 
 from fia_api.core.exceptions import NonUniqueRecordError
-from fia_api.core.model import Base
 from fia_api.core.specifications.base import Specification
 
 T = TypeVar("T", bound=Base)
@@ -58,7 +58,7 @@ class Repo(Generic[T]):
         """
         with self._session() as session:
             query = spec.value
-            return session.execute(query).scalars().all()
+            return session.execute(query).unique().scalars().all()
 
     def find_one(self, spec: Specification[T]) -> T | None:
         """
@@ -73,7 +73,7 @@ class Repo(Generic[T]):
         """
         with self._session() as session:
             try:
-                return session.execute(spec.value).scalars().one()
+                return session.execute(spec.value).unique().scalars().one()
             except NoResultFound:
                 logger.exception("No result found for %s", spec.value)
                 return None

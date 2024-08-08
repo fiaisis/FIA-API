@@ -98,7 +98,7 @@ def reduction():
     :return:
     """
     mock = Mock()
-    mock.reduction_inputs = {
+    mock.inputs = {
         "runno": 12345,
         "sum_runs": True,
         "ei": [50, 20],

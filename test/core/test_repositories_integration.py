@@ -10,38 +10,46 @@ from unittest import mock
 from unittest.mock import Mock
 
 import pytest
+from db.data_models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
 
-from fia_api.core.model import Base, Instrument, Reduction, ReductionState, Run, Script
 from fia_api.core.repositories import ENGINE, SESSION, Repo, test_connection
-from fia_api.core.specifications.reduction import ReductionSpecification
+from fia_api.core.specifications.job import JobSpecification
 
-# pylint: disable = redefined-outer-name
-
+TEST_JOB_OWNER = JobOwner(experiment_number=1)
+TEST_JOB_OWNER_2 = JobOwner(experiment_number=2)
+TEST_INSTRUMENT_1 = Instrument(instrument_name="instrument 1", latest_run=1, specification={"foo": "bar"})
+TEST_INSTRUMENT_2 = Instrument(instrument_name="instrument 2", latest_run=1, specification={"foo": "bar"})
 TEST_SCRIPT = Script(script="print('Script 1')", sha="some_sha", script_hash="some_hash")
-TEST_REDUCTION = Reduction(
-    reduction_start=datetime.datetime.now(datetime.UTC),
-    reduction_state=ReductionState.NOT_STARTED,
-    reduction_inputs={"input": "value"},
+TEST_JOB = Job(
+    start=datetime.datetime.now(datetime.UTC),
+    owner=TEST_JOB_OWNER_2,
+    state=State.NOT_STARTED,
+    inputs={"input": "value"},
     script=TEST_SCRIPT,
+    instrument=TEST_INSTRUMENT_1,
+    job_type=JobType.AUTOREDUCTION,
 )
-TEST_REDUCTION_2 = Reduction(
-    reduction_start=datetime.datetime.now(datetime.UTC),
-    reduction_state=ReductionState.UNSUCCESSFUL,
-    reduction_inputs={"input": "value"},
+TEST_JOB_2 = Job(
+    start=datetime.datetime.now(datetime.UTC),
+    owner=TEST_JOB_OWNER,
+    state=State.UNSUCCESSFUL,
+    inputs={"input": "value"},
     script=TEST_SCRIPT,
+    instrument=TEST_INSTRUMENT_1,
+    job_type=JobType.AUTOREDUCTION,
 )
-TEST_REDUCTION_3 = Reduction(
-    reduction_start=datetime.datetime.now(datetime.UTC),
-    reduction_state=ReductionState.SUCCESSFUL,
-    reduction_inputs={"input": "value"},
+TEST_JOB_3 = Job(
+    start=datetime.datetime.now(datetime.UTC),
+    owner=TEST_JOB_OWNER,
+    state=State.NOT_STARTED,
+    inputs={"input": "value"},
     script=TEST_SCRIPT,
+    instrument=TEST_INSTRUMENT_2,
+    job_type=JobType.AUTOREDUCTION,
 )
-TEST_INSTRUMENT_1 = Instrument(instrument_name="instrument 1", specification={"foo": "bar"})
-TEST_INSTRUMENT_2 = Instrument(instrument_name="instrument 2", specification={"foo": "bar"})
-
 TEST_RUN_1 = Run(
     filename="test_run",
-    experiment_number=1,
+    owner=TEST_JOB_OWNER,
     title="Test Run",
     users="User1, User2",
     run_start=datetime.datetime.now(datetime.UTC),
@@ -50,11 +58,11 @@ TEST_RUN_1 = Run(
     raw_frames=200,
     instrument=TEST_INSTRUMENT_1,
 )
-TEST_RUN_1.reductions.append(TEST_REDUCTION_2)
+TEST_RUN_1.jobs.append(TEST_JOB)
 TEST_RUN_2 = Run(
     filename="test_run",
-    experiment_number=2,
-    title="Test Run 2",
+    owner=TEST_JOB_OWNER_2,
+    title="A Test Run 2",
     users="User1, User2",
     run_start=datetime.datetime.now(datetime.UTC),
     run_end=datetime.datetime.now(datetime.UTC),
@@ -62,10 +70,10 @@ TEST_RUN_2 = Run(
     raw_frames=200,
     instrument=TEST_INSTRUMENT_1,
 )
-TEST_RUN_2.reductions.append(TEST_REDUCTION)
+TEST_RUN_2.jobs.append(TEST_JOB_2)
 TEST_RUN_3 = Run(
     filename="test_run",
-    experiment_number=3,
+    owner=TEST_JOB_OWNER_2,
     title="Test Run 3",
     users="User1, User2",
     run_start=datetime.datetime.now(datetime.UTC),
@@ -74,13 +82,7 @@ TEST_RUN_3 = Run(
     raw_frames=200,
     instrument=TEST_INSTRUMENT_2,
 )
-TEST_REDUCTION_4 = Reduction(
-    reduction_start=datetime.datetime.now(datetime.UTC),
-    reduction_state=ReductionState.NOT_STARTED,
-    reduction_inputs={"input": "value"},
-    script=TEST_SCRIPT,
-)
-TEST_RUN_3.reductions.append(TEST_REDUCTION_4)
+TEST_RUN_3.jobs.append(TEST_JOB_3)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -99,7 +101,7 @@ def _setup() -> None:
         session.add(TEST_RUN_1)
         session.add(TEST_RUN_2)
         session.add(TEST_RUN_3)
-        session.add(TEST_REDUCTION)
+        session.add(TEST_JOB)
         session.commit()
         session.refresh(TEST_SCRIPT)
         session.refresh(TEST_INSTRUMENT_1)
@@ -110,10 +112,10 @@ def _setup() -> None:
 
 
 @pytest.fixture()
-def reduction_repo() -> Repo[Reduction]:
+def job_repo() -> Repo[Job]:
     """
-    ReductionRepo fixture
-    :return: ReductionRepo
+    JobRepo fixture
+    :return: JobRepo
     """
     return Repo()
 
@@ -130,37 +132,33 @@ def run_repo() -> Repo[Run]:
 @pytest.mark.parametrize(
     ("order_field", "expected_ascending"),
     [
-        ("run_start", [TEST_REDUCTION_2, TEST_REDUCTION]),
-        ("run_end", [TEST_REDUCTION_2, TEST_REDUCTION]),
-        ("experiment_number", [TEST_REDUCTION_2, TEST_REDUCTION]),
-        ("experiment_title", [TEST_REDUCTION_2, TEST_REDUCTION]),
+        ("run_start", [TEST_JOB, TEST_JOB_2]),
+        ("run_end", [TEST_JOB, TEST_JOB_2]),
+        ("experiment_number", [TEST_JOB, TEST_JOB_2]),
+        ("experiment_title", [TEST_JOB_2, TEST_JOB]),
     ],
 )
-def test_reductions_by_instrument_sort_by_run_field(reduction_repo, order_field, expected_ascending):
-    """Test reductions by run fields"""
+def test_jobs_by_instrument_sort_by_run_field(job_repo, order_field, expected_ascending):
+    """Test jobs by run fields"""
     expected = expected_ascending
-    result = reduction_repo.find(
-        ReductionSpecification().by_instrument("instrument 1", order_by=order_field, order_direction="asc")
+    result = job_repo.find(
+        JobSpecification().by_instrument("instrument 1", order_by=order_field, order_direction="asc")
     )
     assert expected == result
-    result = reduction_repo.find(
-        ReductionSpecification().by_instrument("instrument 1", order_by=order_field, order_direction="desc")
+    result = job_repo.find(
+        JobSpecification().by_instrument("instrument 1", order_by=order_field, order_direction="desc")
     )
     expected.reverse()
     assert expected == result
 
 
-def test_reductions_by_instrument_sort_by_reduction_field(reduction_repo):
-    """Test sorting by reduction field"""
-    result = reduction_repo.find(
-        ReductionSpecification().by_instrument("instrument 1", order_by="reduction_state", order_direction="asc")
-    )
-    expected = [TEST_REDUCTION_2, TEST_REDUCTION]
+def test_jobs_by_instrument_sort_by_job_field(job_repo):
+    """Test sorting by job field"""
+    result = job_repo.find(JobSpecification().by_instrument("instrument 1", order_by="state", order_direction="asc"))
+    expected = [TEST_JOB_2, TEST_JOB]
     assert result == expected
 
-    result = reduction_repo.find(
-        ReductionSpecification().by_instrument("instrument 1", order_by="reduction_state", order_direction="desc")
-    )
+    result = job_repo.find(JobSpecification().by_instrument("instrument 1", order_by="state", order_direction="desc"))
     expected.reverse()
     assert result == expected
 

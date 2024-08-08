@@ -7,9 +7,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from db.data_models import Job, Run, Script, State
 from pydantic import BaseModel
 
-from fia_api.core.model import Reduction, ReductionState, Run, Script
 from fia_api.core.utility import filter_script_for_tokens
 
 
@@ -53,7 +53,7 @@ class RunResponse(BaseModel):
     """
 
     filename: str
-    experiment_number: int
+    experiment_number: int | None
     title: str
     users: str
     run_start: datetime
@@ -71,7 +71,9 @@ class RunResponse(BaseModel):
         """
         return RunResponse(
             filename=run.filename,
-            experiment_number=run.experiment_number,
+            experiment_number=run.owner.experiment_number
+            if run.owner is not None and run.owner.experiment_number is not None
+            else None,
             title=run.title,
             users=run.users,
             run_start=run.run_start,
@@ -82,66 +84,69 @@ class RunResponse(BaseModel):
         )
 
 
-class ReductionResponse(BaseModel):
+class JobResponse(BaseModel):
     """
-    ReductionResponse object that does not contain the related runs
+    JobResponse object that does not contain the related runs
     """
 
     id: int
-    reduction_start: datetime | None
-    reduction_end: datetime | None
-    reduction_state: ReductionState
-    reduction_status_message: str | None
-    reduction_inputs: Any
-    reduction_outputs: str | None
+    start: datetime | None
+    end: datetime | None
+    state: State
+    status_message: str | None
+    inputs: Any
+    outputs: str | None
     stacktrace: str | None
     script: ScriptResponse | None
+    runner_image: str | None
 
     @staticmethod
-    def from_reduction(reduction: Reduction) -> ReductionResponse:
+    def from_job(job: Job) -> JobResponse:
         """
-        Given a reduction return a ReductionResponse
-        :param reduction: The Reduction to convert
-        :return: The ReductionResponse object
+        Given a job return a JobResponse
+        :param job: The Job to convert
+        :return: The JobResponse object
         """
-        script = ScriptResponse.from_script(reduction.script) if isinstance(reduction.script, Script) else None
-        return ReductionResponse(
-            reduction_start=reduction.reduction_start,
-            reduction_end=reduction.reduction_end,
-            reduction_state=reduction.reduction_state,
-            reduction_status_message=reduction.reduction_status_message,
-            reduction_inputs=reduction.reduction_inputs,
-            reduction_outputs=reduction.reduction_outputs,
+        script = ScriptResponse.from_script(job.script) if isinstance(job.script, Script) else None
+        return JobResponse(
+            start=job.start,
+            end=job.end,
+            state=job.state,
+            status_message=job.status_message,
+            inputs=job.inputs,
+            outputs=job.outputs,
             script=script,
-            stacktrace=reduction.stacktrace,
-            id=reduction.id,
+            stacktrace=job.stacktrace,
+            id=job.id,
+            runner_image=job.runner_image,
         )
 
 
-class ReductionWithRunsResponse(ReductionResponse):
+class JobWithRunResponse(JobResponse):
     """
-    ReductionWithRunsResponse is the same as a reduction response, with the runs nested
+    JobWithRunsResponse is the same as a Job response, with the runs nested
     """
 
-    runs: list[RunResponse]
+    run: RunResponse | None
 
     @staticmethod
-    def from_reduction(reduction: Reduction) -> ReductionWithRunsResponse:
+    def from_job(job: Job) -> JobWithRunResponse:
         """
-        Given a Reduction, return the ReductionWithRunsResponse
-        :param reduction: The Reduction to convert
-        :return: The ReductionWithRunsResponse Object
+        Given a Job, return the JobWithRunsResponse
+        :param job: The Job to convert
+        :return: The JobWithRunsResponse Object
         """
-        script = ScriptResponse.from_script(reduction.script) if isinstance(reduction.script, Script) else None
-        return ReductionWithRunsResponse(
-            reduction_start=reduction.reduction_start,
-            reduction_end=reduction.reduction_end,
-            reduction_state=reduction.reduction_state,
-            reduction_status_message=reduction.reduction_status_message,
-            reduction_inputs=reduction.reduction_inputs,
-            reduction_outputs=reduction.reduction_outputs,
+        script = ScriptResponse.from_script(job.script) if isinstance(job.script, Script) else None
+        return JobWithRunResponse(
+            start=job.start,
+            end=job.end,
+            state=job.state,
+            status_message=job.status_message,
+            inputs=job.inputs,
+            outputs=job.outputs,
             script=script,
-            id=reduction.id,
-            stacktrace=reduction.stacktrace,
-            runs=[RunResponse.from_run(run) for run in reduction.runs],
+            id=job.id,
+            stacktrace=job.stacktrace,
+            run=RunResponse.from_run(job.run) if isinstance(job.run, Run) else None,
+            runner_image=job.runner_image,
         )

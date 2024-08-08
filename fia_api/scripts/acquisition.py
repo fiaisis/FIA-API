@@ -8,11 +8,11 @@ from http import HTTPStatus
 from pathlib import Path
 
 import requests
+from db.data_models import Job
 
 from fia_api.core.exceptions import MissingRecordError, MissingScriptError
-from fia_api.core.model import Reduction
 from fia_api.core.repositories import Repo
-from fia_api.core.specifications.reduction import ReductionSpecification
+from fia_api.core.specifications.job import JobSpecification
 from fia_api.core.utility import forbid_path_characters
 from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.factory import get_transform_for_instrument
@@ -117,49 +117,49 @@ def get_by_instrument_name(instrument: str) -> PreScript:
         return _get_script_locally(instrument)
 
 
-def get_script_for_reduction(instrument: str, reduction_id: int | None = None) -> PreScript:
+def get_script_for_job(instrument: str, job_id: int | None = None) -> PreScript:
     """
-    Get the script object for the given instrument, and optional reduction id
+    Get the script object for the given instrument, and optional job id
     :param instrument: str -  The instrument
-    :param reduction_id: Optional[id] - the reduction id. If provided will apply necessary transforms to the script
+    :param job_id: Optional[id] - the job id. If provided will apply necessary transforms to the script
     :return: PreScript -  The script
     """
     logger.info("Getting script for instrument: %s...", instrument)
     script = get_by_instrument_name(instrument)
-    if reduction_id:
-        _transform_script(instrument, reduction_id, script)
+    if job_id:
+        _transform_script(instrument, job_id, script)
 
     return script
 
 
-def _transform_script(instrument: str, reduction_id: int, script: PreScript) -> None:
+def _transform_script(instrument: str, job_id: int, script: PreScript) -> None:
     """
-    Given an instrument, reduction id, and script, apply the correct transforms to the script
+    Given an instrument, job id, and script, apply the correct transforms to the script
     :param instrument: The instrument
-    :param reduction_id: The reduction ID
+    :param job_id: The job ID
     :param script: The Pre script
     :return: None
     """
-    reduction_repo: Repo[Reduction] = Repo()
-    logger.info("Querying for reduction: %s", reduction_id)
-    reduction = reduction_repo.find_one(ReductionSpecification().by_id(reduction_id))
-    if not reduction:
-        logger.info("Reduction not found")
-        raise MissingRecordError(f"No reduction found with id: {reduction_id}")
-    logger.info("Reduction %s found", reduction_id)
+    job_repo: Repo[Job] = Repo()
+    logger.info("Querying for job: %s", job_id)
+    job = job_repo.find_one(JobSpecification().by_id(job_id))
+    if not job:
+        logger.info("Job not found")
+        raise MissingRecordError(f"No job found with id: {job_id}")
+    logger.info("Job %s found", job_id)
     transform = get_transform_for_instrument(instrument)
-    transform.apply(script, reduction)
+    transform.apply(script, job)
     mantid_transform = MantidTransform()
-    mantid_transform.apply(script, reduction)
+    mantid_transform.apply(script, job)
 
 
-def get_script_by_sha(instrument: str, sha: str, reduction_id: int | None = None) -> PreScript:
+def get_script_by_sha(instrument: str, sha: str, job_id: int | None = None) -> PreScript:
     """
-    Given an instrument and commit sha, return the script for that instrument at that point in history. If a reduction
+    Given an instrument and commit sha, return the script for that instrument at that point in history. If a job
     id is provided, the transformed version of the script will be returned.
     :param instrument: The instrument the script is for
     :param sha: The sha to look for
-    :param reduction_id: Optional reduction id
+    :param job_id: Optional job id
     :return: PreScript object
     """
     try:
@@ -172,11 +172,11 @@ def get_script_by_sha(instrument: str, sha: str, reduction_id: int | None = None
         if response.status_code != HTTPStatus.OK:
             raise RuntimeError("Cannot get script from GitHub")
         script = PreScript(value=response.text, sha=sha)
-        if reduction_id:
+        if job_id:
             # TODO(keiranjprice101): When the frontend related PR is merged, # noqa: FIX002, TD003
-            #  add a function to the reduction or script service to find script from reduction
+            #  add a function to the job or script service to find script from job
             #  and has, to prevent re-transforming unnecessarily
-            _transform_script(instrument, reduction_id, script)
+            _transform_script(instrument, job_id, script)
         return script
     except ConnectionError as exc:
         raise RuntimeError("Cannot get script from github") from exc

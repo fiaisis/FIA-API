@@ -121,12 +121,12 @@ output = save_file_name"""
 
 def test_tosca_transform() -> None:
     """Test updates on script are expected"""
-    reduction = Mock()
-    reduction.reduction_inputs = {
+    job = Mock()
+    job.inputs = {
         "input_runs": [1, 2, 3],
         "cycle_string": "cycle_23_3",
     }
     transform = ToscaTransform()
     script = PreScript(value=SCRIPT)
-    transform.apply(script, reduction)
+    transform.apply(script, job)
     assert script.value == EXPECTED_SCRIPT

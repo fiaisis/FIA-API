@@ -4,17 +4,17 @@ Service Layer for instruments
 
 from typing import Any
 
+from db.data_models import Instrument
 from sqlalchemy.dialects.postgresql import JSONB
 
 from fia_api.core.exceptions import MissingRecordError
-from fia_api.core.model import Instrument
 from fia_api.core.repositories import Repo
 from fia_api.core.specifications.instrument import InstrumentSpecification
 
 _REPO: Repo[Instrument] = Repo()
 
 
-def get_specification_by_instrument_name(instrument_name: str) -> JSONB:
+def get_specification_by_instrument_name(instrument_name: str) -> JSONB | None:
     """
     Given an instrument name, return the specification for that instrument
     :param instrument_name:

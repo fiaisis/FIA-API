@@ -18,7 +18,7 @@ from fia_api.scripts.acquisition import (
     _get_script_from_remote,
     _get_script_locally,
     get_by_instrument_name,
-    get_script_for_reduction,
+    get_script_for_job,
     write_script_locally,
 )
 from fia_api.scripts.pre_script import PreScript
@@ -202,7 +202,7 @@ def test_get_by_instrument_name_local(mock_local, mock_remote):
 
 
 @patch("fia_api.scripts.acquisition.get_by_instrument_name")
-def test_get_script_for_reduction_no_reduction_id(mock_get_by_name):
+def test_get_script_for_job_no_job_id(mock_get_by_name):
     """
     Test base script returned when no id provided
     :param mock_get_by_name: Mock
@@ -210,7 +210,7 @@ def test_get_script_for_reduction_no_reduction_id(mock_get_by_name):
     """
     expected_script = PreScript(value="some script")
     mock_get_by_name.return_value = expected_script
-    result = get_script_for_reduction("some instrument")
+    result = get_script_for_job("some instrument")
 
     assert result == expected_script
 
@@ -218,9 +218,9 @@ def test_get_script_for_reduction_no_reduction_id(mock_get_by_name):
 @patch("fia_api.scripts.acquisition.get_transform_for_instrument")
 @patch("fia_api.scripts.acquisition.Repo")
 @patch("fia_api.scripts.acquisition.get_by_instrument_name")
-def test_get_script_for_reduction_with_valid_reduction_id(mock_get_by_name, mock_repo, mock_get_transform):
+def test_get_script_for_job_with_valid_job_id(mock_get_by_name, mock_repo, mock_get_transform):
     """
-    Test transform applied to obtained script when reduction id provided
+    Test transform applied to obtained script when job id provided
     :param mock_get_by_name: Mock
     :param mock_repo: Mock
     :param mock_get_transform: Mock
@@ -232,7 +232,7 @@ def test_get_script_for_reduction_with_valid_reduction_id(mock_get_by_name, mock
     mock_repo.return_value.find_one.return_value = mock_reduction
     expected_script = PreScript("some script")
     mock_get_by_name.return_value = expected_script
-    result = get_script_for_reduction("some instrument", 1)
+    result = get_script_for_job("some instrument", 1)
     mock_get_by_name.assert_called_once_with("some instrument")
     mock_get_transform.assert_called_once_with("some instrument")
     mock_transform.apply.assert_called_once_with(expected_script, mock_reduction)
@@ -241,24 +241,24 @@ def test_get_script_for_reduction_with_valid_reduction_id(mock_get_by_name, mock
 
 
 @patch("fia_api.scripts.acquisition.Repo")
-def test_get_script_for_reduction_with_invalid_reduction_id(mock_repo):
+def test_get_script_for_job_with_invalid_job_id(mock_repo):
     """
-    Test exception raised when reduction id is given but no reduction exists
+    Test exception raised when job id is given but no job exists
     :param _: Mock
     :param mock_repo: Mock
     :return: None
     """
     mock_repo.return_value.find_one.return_value = None
     instrument = "some_instrument"
-    reduction_id = -1
+    jobid = -1
 
     with (
         pytest.raises(MissingRecordError) as excinfo,
         patch("fia_api.scripts.acquisition.get_by_instrument_name", return_value="some instrument"),
     ):
-        get_script_for_reduction(instrument, reduction_id)
+        get_script_for_job(instrument, jobid)
 
-    assert f"No reduction found with id: {reduction_id}" in str(excinfo.value)
+    assert f"No job found with id: {jobid}" in str(excinfo.value)
 
 
 @patch("fia_api.scripts.acquisition.requests.get")

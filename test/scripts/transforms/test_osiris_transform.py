@@ -244,8 +244,8 @@ for workspace in output_workspaces:
 
 def test_osiris_transform_spectroscopy():
     """Test spectroscopy transform"""
-    reduction = Mock()
-    reduction.reduction_inputs = {
+    job = Mock()
+    job.inputs = {
         "input_runs": [1, 2, 3],
         "calibration_run_number": "0123456",
         "cycle_string": "cycle_1_2",
@@ -255,7 +255,7 @@ def test_osiris_transform_spectroscopy():
         "diffraction_reduction": "false",
     }
     script = PreScript(value=SCRIPT)
-    OsirisTransform().apply(script, reduction)
+    OsirisTransform().apply(script, job)
 
     assert script.value == create_expected_script(
         input_runs="[1, 2, 3]",

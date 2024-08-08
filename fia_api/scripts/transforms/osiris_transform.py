@@ -6,7 +6,8 @@ scripts.
 import logging
 from collections.abc import Iterable
 
-from fia_api.core.model import Reduction
+from db.data_models import Job
+
 from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.transform import Transform
 
@@ -19,41 +20,37 @@ class OsirisTransform(Transform):
     entity.
     """
 
-    def apply(self, script: PreScript, reduction: Reduction) -> None:
-        logger.info("Beginning Osiris transform for reduction %s...", reduction.id)
+    def apply(self, script: PreScript, job: Job) -> None:
+        logger.info("Beginning Osiris transform for job %s...", job.id)
         lines = script.value.splitlines()
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
         # If you get here in the future, try removing the following line and see if it passes with newer mypy.
         for index, line in enumerate(lines):
             if line.startswith("input_runs"):
                 lines[index] = "input_runs = " + (
-                    str(reduction.reduction_inputs["input_runs"])  # type: ignore
-                    if isinstance(reduction.reduction_inputs["input_runs"], Iterable)  # type: ignore
-                    else f"[{reduction.reduction_inputs['input_runs']}]"  # type: ignore
+                    str(job.inputs["input_runs"])  # type: ignore
+                    if isinstance(job.inputs["input_runs"], Iterable)  # type: ignore
+                    else f"[{job.inputs['input_runs']}]"  # type: ignore
                 )
                 continue
             if line.startswith("calibration_run_number ="):
-                lines[index] = f"calibration_run_number = \"{reduction.reduction_inputs['calibration_run_number']}\""  # type: ignore
+                lines[index] = f"calibration_run_number = \"{job.inputs['calibration_run_number']}\""  # type: ignore
                 continue
             if line.startswith("cycle ="):
-                lines[index] = f"cycle = \"{reduction.reduction_inputs['cycle_string']}\""  # type: ignore
+                lines[index] = f"cycle = \"{job.inputs['cycle_string']}\""  # type: ignore
                 continue
             if line.startswith("analyser ="):
-                lines[index] = f"analyser = \"{reduction.reduction_inputs['analyser']}\""  # type: ignore
+                lines[index] = f"analyser = \"{job.inputs['analyser']}\""  # type: ignore
                 continue
             if line.startswith("reflection = "):
-                lines[index] = f"reflection = \"{reduction.reduction_inputs['reflection']}\""  # type: ignore
+                lines[index] = f"reflection = \"{job.inputs['reflection']}\""  # type: ignore
                 continue
             if line.startswith("spectroscopy_reduction ="):
-                lines[index] = (
-                    f"spectroscopy_reduction = {reduction.reduction_inputs['spectroscopy_reduction'] == 'true'}"  # type: ignore
-                )
+                lines[index] = f"spectroscopy_reduction = {job.inputs['spectroscopy_reduction'] == 'true'}"  # type: ignore
                 continue
             if line.startswith("diffraction_reduction = "):
-                lines[index] = (
-                    f"diffraction_reduction = {reduction.reduction_inputs['diffraction_reduction'] == 'true'}"  # type: ignore
-                )
+                lines[index] = f"diffraction_reduction = {job.inputs['diffraction_reduction'] == 'true'}"  # type: ignore
                 continue
 
         script.value = "\n".join(lines)
-        logger.info("Transform complete for reduction %s", reduction.id)
+        logger.info("Transform complete for job %s", job.id)

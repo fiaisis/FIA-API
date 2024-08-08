@@ -6,10 +6,10 @@ import random
 from datetime import UTC, datetime, timedelta
 from typing import ClassVar
 
+from db.data_models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
 from faker import Faker
 from faker.providers import BaseProvider
 
-from fia_api.core.model import Base, Instrument, Reduction, ReductionState, Run, Script
 from fia_api.core.repositories import ENGINE, SESSION
 
 random.seed(1)
@@ -99,7 +99,7 @@ class FIAProvider(BaseProvider):
         run = Run()
         run_start = self.start_time()
         run_end = run_start + timedelta(minutes=faker.pyint(max_value=50))
-        experiment_number = faker.unique.pyint(min_value=10000, max_value=99999)
+        experiment_number = faker.unique.pyint(min_value=10000, max_value=999999)
         raw_frames = faker.pyint(min_value=1000)
         good_frames = faker.pyint(max_value=raw_frames)
         title = faker.unique.sentence(nb_words=10)
@@ -113,31 +113,34 @@ class FIAProvider(BaseProvider):
         run.raw_frames = raw_frames
         run.good_frames = good_frames
         run.users = f"{faker.first_name()} {faker.last_name()}, {faker.first_name()} {faker.last_name()}"
-        run.experiment_number = experiment_number
         run.run_start = run_start
         run.run_end = run_end
+        run.owner = JobOwner(experiment_number=experiment_number)
 
         return run
 
-    def reduction(self) -> Reduction:
+    def job(self, instrument: Instrument) -> Job:
         """
-        Generate a random Reduction Model
-        :return: The reduction model
+        Generate a random job Model
+        :return: The job model
         """
-        reduction = Reduction()
-        reduction_state = faker.enum(ReductionState)
-        if reduction_state != ReductionState.NOT_STARTED:
-            reduction.reduction_start = self.start_time()
-            reduction.reduction_end = reduction.reduction_start + timedelta(minutes=faker.pyint(max_value=50))
-            reduction.reduction_status_message = faker.sentence(nb_words=10)
-            reduction.reduction_outputs = "What should this be?"
-        reduction.reduction_inputs = faker.pydict(
+        job = Job()
+        state = faker.enum(State)
+        if state != State.NOT_STARTED:
+            job.start = self.start_time()
+            job.end = job.start + timedelta(minutes=faker.pyint(max_value=50))
+            job.status_message = faker.sentence(nb_words=10)
+            job.outputs = "What should this be?"
+        job.inputs = faker.pydict(
             nb_elements=faker.pyint(min_value=1, max_value=10),
             value_types=[str, int, bool, float],
         )
-        reduction.reduction_state = reduction_state
-        reduction.stacktrace = "some stacktrace"
-        return reduction
+        job.state = state
+        job.stacktrace = "some stacktrace"
+        job.owner = JobOwner(experiment_number=faker.unique.pyint(min_value=10000, max_value=999999))
+        job.instrument = instrument
+        job.job_type = faker.enum(JobType)
+        return job
 
     def script(self) -> Script:
         """
@@ -150,24 +153,25 @@ class FIAProvider(BaseProvider):
         script.script = "import os\nprint('foo')\n"
         return script
 
-    def insertable_reduction(self, instrument: Instrument) -> Reduction:
+    def insertable_job(self, instrument: Instrument) -> Job:
         """
-        Given an instrument model, generate random; reduction, run, and script all related.
+        Given an instrument model, generate random; job, run, and script all related.
         :param instrument:The instrument
-        :return: The reduction with relations
+        :return: The job with relations
         """
-        reduction = self.reduction()
-        reduction.runs = [self.run(instrument)]
-        reduction.script = self.script()
+        job = self.job(instrument)
+        job.run = self.run(instrument)
+        job.script = self.script()
 
-        return reduction
+        return job
 
 
 FIA_FAKER_PROVIDER = FIAProvider(faker)
 
 TEST_INSTRUMENT = Instrument(instrument_name="TEST", specification={})
-TEST_REDUCTION = Reduction(
-    reduction_inputs={
+TEST_JOB_OWNER = JobOwner(experiment_number=1820497)
+TEST_JOB = Job(
+    inputs={
         "ei": "'auto'",
         "sam_mass": 0.0,
         "sam_rmm": 0.0,
@@ -179,19 +183,22 @@ TEST_REDUCTION = Reduction(
         "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
         "wbvan": 12345,
     },
-    reduction_state=ReductionState.NOT_STARTED,
+    state=State.NOT_STARTED,
+    owner=TEST_JOB_OWNER,
+    instrument=TEST_INSTRUMENT,
+    job_type=JobType.AUTOREDUCTION,
 )
 TEST_RUN = Run(
     instrument=TEST_INSTRUMENT,
     title="Whitebeam - vanadium - detector tests - vacuum bad - HT on not on all LAB",
-    experiment_number=1820497,
+    owner=TEST_JOB_OWNER,
     filename="MAR25581.nxs",
     run_start="2019-03-22T10:15:44",
     run_end="2019-03-22T10:18:26",
     raw_frames=8067,
     good_frames=6452,
     users="Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
-    reductions=[TEST_REDUCTION],
+    jobs=[TEST_JOB],
 )
 
 
@@ -207,7 +214,7 @@ def setup_database() -> None:
             instrument_.specification = FIA_FAKER_PROVIDER.instrument().specification
             instruments.append(instrument_)
         for _ in range(5000):
-            session.add(FIA_FAKER_PROVIDER.insertable_reduction(random.choice(instruments)))  # noqa: S311
-        session.add(TEST_REDUCTION)
+            session.add(FIA_FAKER_PROVIDER.insertable_job(random.choice(instruments)))  # noqa: S311
+        session.add(TEST_JOB)
         session.commit()
-        session.refresh(TEST_REDUCTION)
+        session.refresh(TEST_JOB)

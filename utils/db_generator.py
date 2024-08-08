@@ -48,7 +48,7 @@ def main():
             instruments.append(instrument_)
 
         for _ in range(10000):
-            session.add(fia_provider.insertable_reduction(random.choice(instruments)))  # noqa: S311
+            session.add(fia_provider.insertable_job(random.choice(instruments)))  # noqa: S311
         session.commit()
 
 
