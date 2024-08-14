@@ -4,6 +4,7 @@ Module containing the REST endpoints
 
 from __future__ import annotations
 
+import os
 from http import HTTPStatus
 from typing import Annotated, Any, Literal
 
@@ -40,8 +41,15 @@ from fia_api.scripts.acquisition import (
 )
 from fia_api.scripts.pre_script import PreScript
 
+QUEUE_HOST = os.environ.get("QUEUE_HOST", "rabbitmq-cluster.rabbitmq.svc.cluster.local")
+QUEUE_NAME = os.environ.get("EGRESS_QUEUE_NAME", "scheduled-jobs")
+PRODUCER_USERNAME = os.environ.get("QUEUE_USER", "admin")
+PRODUCER_PASSWORD = os.environ.get("QUEUE_PASSWORD", "password")
+
+JOB_MAKER = JobMaker(queue_host=QUEUE_HOST, queue_name=QUEUE_NAME,
+                     username=PRODUCER_USERNAME, password=PRODUCER_PASSWORD)
+
 ROUTER = APIRouter()
-JOB_MAKER = JobMaker()
 jwt_security = JWTBearer()
 api_key_security = APIKeyBearer()
 

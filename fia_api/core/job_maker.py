@@ -1,13 +1,43 @@
 import json
 
+from pika.adapters.blocking_connection import BlockingConnection  # type: ignore[import-untyped]
+from pika.connection import ConnectionParameters  # type: ignore[import-untyped]
+from pika.credentials import PlainCredentials  # type: ignore[import-untyped]
+
 
 class JobMaker:
-    def __init__(self):
+    def __init__(self, queue_host: str, username: str, password: str, queue_name: str):
         # Connect to Rabbit
-        pass
+        credentials = PlainCredentials(username=username, password=password)
+        self.connection_parameters = ConnectionParameters(queue_host, 5672, credentials=credentials)
+        self.queue_name = queue_name
+        self.connection = None
+        self.channel = None
+        self._connect_to_broker()
+
+    def _connect_to_broker(self) -> None:
+        """
+        Use this to connect to the broker
+        :return: None
+        """
+        self.connection = BlockingConnection(self.connection_parameters)
+        self.channel = self.connection.channel()  # type: ignore[attr-defined]
+        self.channel.exchange_declare(  # type: ignore[attr-defined]
+            self.queue_name,
+            exchange_type="direct",
+            durable=True,
+        )
+        self.channel.queue_declare(  # type: ignore[attr-defined]
+            self.queue_name,
+            durable=True,
+            arguments={"x-queue-type": "quorum"},
+        )
+        self.channel.queue_bind(self.queue_name, self.queue_name, routing_key="")  # type: ignore[attr-defined]
 
     def _send_message(self, message: str) -> None:
-        pass
+        self._connect_to_broker()
+        # Assuming channel is set in _connect_to_broker()
+        self.channel.basic_publish(exchange=self.queue_name, routing_key="", body=message)  # type: ignore
 
     def rerun_job(
         self,
