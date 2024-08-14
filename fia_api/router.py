@@ -46,8 +46,9 @@ QUEUE_NAME = os.environ.get("EGRESS_QUEUE_NAME", "scheduled-jobs")
 PRODUCER_USERNAME = os.environ.get("QUEUE_USER", "admin")
 PRODUCER_PASSWORD = os.environ.get("QUEUE_PASSWORD", "password")
 
-JOB_MAKER = JobMaker(queue_host=QUEUE_HOST, queue_name=QUEUE_NAME,
-                     username=PRODUCER_USERNAME, password=PRODUCER_PASSWORD)
+JOB_MAKER = JobMaker(
+    queue_host=QUEUE_HOST, queue_name=QUEUE_NAME, username=PRODUCER_USERNAME, password=PRODUCER_PASSWORD
+)
 
 ROUTER = APIRouter()
 jwt_security = JWTBearer()
