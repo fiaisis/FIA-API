@@ -41,10 +41,10 @@ from fia_api.scripts.acquisition import (
 )
 from fia_api.scripts.pre_script import PreScript
 
-QUEUE_HOST = os.environ.get("QUEUE_HOST", "rabbitmq-cluster.rabbitmq.svc.cluster.local")
+QUEUE_HOST = os.environ.get("QUEUE_HOST", "localhost")
 QUEUE_NAME = os.environ.get("EGRESS_QUEUE_NAME", "scheduled-jobs")
-PRODUCER_USERNAME = os.environ.get("QUEUE_USER", "admin")
-PRODUCER_PASSWORD = os.environ.get("QUEUE_PASSWORD", "password")
+PRODUCER_USERNAME = os.environ.get("QUEUE_USER", "guest")
+PRODUCER_PASSWORD = os.environ.get("QUEUE_PASSWORD", "guest")
 
 JOB_MAKER = JobMaker(
     queue_host=QUEUE_HOST, queue_name=QUEUE_NAME, username=PRODUCER_USERNAME, password=PRODUCER_PASSWORD
