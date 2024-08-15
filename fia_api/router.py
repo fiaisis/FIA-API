@@ -15,6 +15,7 @@ from starlette.background import BackgroundTasks
 from fia_api.core.auth.api_keys import APIKeyBearer
 from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.auth.tokens import JWTBearer, get_user_from_token
+from fia_api.core.job_maker import JobMaker
 from fia_api.core.repositories import test_connection
 from fia_api.core.responses import (
     CountResponse,
@@ -24,7 +25,6 @@ from fia_api.core.responses import (
 )
 from fia_api.core.services.instrument import get_specification_by_instrument_name, update_specification_for_instrument
 from fia_api.core.services.job import (
-    JOB_MAKER,
     RerunJob,
     SimpleJob,
     count_jobs,
@@ -33,6 +33,7 @@ from fia_api.core.services.job import (
     get_experiment_number_for_job_id,
     get_job_by_id,
     get_job_by_instrument,
+    job_maker,
 )
 from fia_api.scripts.acquisition import (
     get_script_by_sha,
@@ -228,7 +229,8 @@ async def count_all_jobs() -> CountResponse:
 
 @ROUTER.post("/job/rerun", tags=["job"])
 async def make_rerun_job(
-    rerun_job: RerunJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
+    rerun_job: RerunJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+        job_maker: Annotated[JobMaker, Depends(job_maker)]
 ) -> None:
     user = get_user_from_token(credentials.credentials)
     experiment_number = get_experiment_number_for_job_id(rerun_job.job_id)
@@ -238,7 +240,7 @@ async def make_rerun_job(
         if experiment_number not in experiment_numbers:
             # If not staff this is not allowed
             raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
-    JOB_MAKER.rerun_job(
+    job_maker.rerun_job(
         job_id=rerun_job.job_id,
         runner_image=rerun_job.runner_image,
         script=rerun_job.script,
@@ -248,13 +250,14 @@ async def make_rerun_job(
 
 @ROUTER.post("/job/simple", tags=["job"])
 async def make_simple_job(
-    simple_job: SimpleJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
+    simple_job: SimpleJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+        job_maker: Annotated[JobMaker, Depends(job_maker)]
 ) -> None:
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         # If not staff this is not allowed
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
-    JOB_MAKER.simple_job(runner_image=simple_job.runner_image, script=simple_job.script, user_number=user.user_number)
+    job_maker.simple_job(runner_image=simple_job.runner_image, script=simple_job.script, user_number=user.user_number)
 
 
 @ROUTER.get("/instrument/{instrument_name}/specification", tags=["instrument"], response_model=None)

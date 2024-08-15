@@ -15,15 +15,14 @@ from fia_api.core.job_maker import JobMaker
 from fia_api.core.repositories import Repo
 from fia_api.core.specifications.job import JobSpecification
 
-QUEUE_HOST = os.environ.get("QUEUE_HOST", "localhost")
-QUEUE_NAME = os.environ.get("EGRESS_QUEUE_NAME", "scheduled-jobs")
-PRODUCER_USERNAME = os.environ.get("QUEUE_USER", "guest")
-PRODUCER_PASSWORD = os.environ.get("QUEUE_PASSWORD", "guest")
 
-JOB_MAKER = JobMaker(
-    queue_host=QUEUE_HOST, queue_name=QUEUE_NAME, username=PRODUCER_USERNAME, password=PRODUCER_PASSWORD
-)
-
+def job_maker():
+    queue_host = os.environ.get("QUEUE_HOST", "localhost")
+    queue_name = os.environ.get("EGRESS_QUEUE_NAME", "scheduled-jobs")
+    producer_username = os.environ.get("QUEUE_USER", "guest")
+    producer_password = os.environ.get("QUEUE_PASSWORD", "guest")
+    return JobMaker(queue_host=queue_host, queue_name=queue_name, username=producer_username,
+                    password=producer_password)
 
 class SimpleJob(BaseModel):
     runner_image: str
