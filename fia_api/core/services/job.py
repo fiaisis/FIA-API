@@ -1,6 +1,7 @@
 """
 Service Layer for jobs
 """
+
 import os
 from collections.abc import Sequence
 from typing import Literal
