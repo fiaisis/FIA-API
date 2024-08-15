@@ -127,4 +127,15 @@ def count_jobs() -> int:
 
 
 def get_experiment_number_for_job_id(job_id: int) -> int:
-    return _REPO.find_one(JobSpecification().by_id(job_id)).owner.experiment_number
+    """
+    Given a job id find and return the experiment number attached to it or will raise an exception.
+    :param job_id: (int) The id of the job
+    :return: (int) the experiment number of the job found with the id
+    """
+    job = _REPO.find_one(JobSpecification().by_id(job_id))
+    if job is not None:
+        owner = job.owner
+        if owner is not None:
+            return owner.experiment_number
+        raise ValueError("Job has no owner in the DB")
+    raise ValueError("No job found with ID in the DB")

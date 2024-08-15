@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 from pika.adapters.blocking_connection import BlockingConnection  # type: ignore[import-untyped]
 from pika.connection import ConnectionParameters  # type: ignore[import-untyped]
@@ -56,7 +57,7 @@ class JobMaker:
         :param user_number:
         :return: None
         """
-        json_dict = {"job_id": job_id, "runner_image": runner_image, "script": script}
+        json_dict: dict[str, Any] = {"job_id": job_id, "runner_image": runner_image, "script": script}
         if experiment_number is not None:
             json_dict["experiment_number"] = experiment_number
         elif user_number is not None:
@@ -76,7 +77,7 @@ class JobMaker:
         :param user_number:
         :return: None
         """
-        json_dict = {"runner_image": runner_image, "script": script}
+        json_dict: dict[str, Any] = {"runner_image": runner_image, "script": script}
         if experiment_number is not None:
             json_dict["experiment_number"] = experiment_number
         elif user_number is not None:

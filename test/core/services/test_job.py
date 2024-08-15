@@ -4,6 +4,7 @@ Tests for job service
 
 from unittest.mock import Mock, patch
 
+import faker.generator
 import pytest
 
 from fia_api.core.exceptions import AuthenticationError, MissingRecordError
@@ -11,6 +12,7 @@ from fia_api.core.services.job import (
     count_jobs,
     count_jobs_by_instrument,
     get_all_jobs,
+    get_experiment_number_for_job_id,
     get_job_by_id,
     get_job_by_instrument,
 )
@@ -161,3 +163,25 @@ def test_get_all_jobs_with_user_no_access(mock_get_experiments, mock_spec_class,
     spec.by_experiment_numbers.assert_called_once_with([], order_by="start", order_direction="desc", limit=0, offset=0)
     mock_repo.find.assert_called_once_with(spec.by_experiment_numbers())
     assert jobs == []
+
+
+@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job.JobSpecification")
+def test_get_experiment_number_from_job_id(mock_spec_class, mock_repo):
+    job_id = faker.generator.random.randint(1, 1000)
+
+    get_experiment_number_for_job_id(job_id)
+
+    mock_spec_class.assert_called_once_with()
+    mock_spec_class.return_value.by_id.assert_called_once_with(job_id)
+    mock_repo.find_one.assert_called_once_with(mock_spec_class().by_id())
+
+
+@patch("fia_api.core.services.job._REPO")
+def test_get_experiment_number_from_job_id_expect_raise(mock_repo):
+    job_id = faker.generator.random.randint(1, 1000)
+    mock_repo.find_one.return_value = None
+
+    with patch("fia_api.core.services.job.JobSpecification"), pytest.raises(ValueError):  # noqa: PT011
+        get_experiment_number_for_job_id(job_id)
+

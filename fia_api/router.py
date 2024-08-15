@@ -244,7 +244,7 @@ class RerunJob(BaseModel):
 @ROUTER.post("/job/rerun", tags=["job"])
 async def make_rerun_job(
     rerun_job: RerunJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
-):
+) -> None:
     user = get_user_from_token(credentials.credentials)
     experiment_number = get_experiment_number_for_job_id(rerun_job.job_id)
     # Forbidden if not staff, and experiment number not related to this user_number's experiment number
@@ -269,7 +269,7 @@ class SimpleJob(BaseModel):
 @ROUTER.post("/job/simple", tags=["job"])
 async def make_simple_job(
     simple_job: SimpleJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
-):
+) -> None:
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         # If not staff this is not allowed
