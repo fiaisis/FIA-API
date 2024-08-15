@@ -8,6 +8,7 @@ from test.utils import FIA_FAKER_PROVIDER
 
 faker = FIA_FAKER_PROVIDER
 
+
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
 def test_send_message(broker):
     job_maker = JobMaker("", "", "", "")
@@ -36,9 +37,11 @@ def test_rerun_job_experiment_number(broker):
     assert broker.call_count == 1
     assert broker.call_arg == mock.call()
     assert job_maker._send_message.call_count == 1
-    assert (job_maker._send_message.call_args ==
-            mock.call(json.dumps({"job_id": job_id, "runner_image": runner_image, "script": script,
-                                  "experiment_number": experiment_number})))
+    assert job_maker._send_message.call_args == mock.call(
+        json.dumps(
+            {"job_id": job_id, "runner_image": runner_image, "script": script, "experiment_number": experiment_number}
+        )
+    )
 
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
@@ -55,9 +58,9 @@ def test_rerun_job_user_number(broker):
     assert broker.call_count == 1
     assert broker.call_arg == mock.call()
     assert job_maker._send_message.call_count == 1
-    assert (job_maker._send_message.call_args ==
-            mock.call(json.dumps({"job_id": job_id, "runner_image": runner_image, "script": script,
-                                  "user_number": user_number})))
+    assert job_maker._send_message.call_args == mock.call(
+        json.dumps({"job_id": job_id, "runner_image": runner_image, "script": script, "user_number": user_number})
+    )
 
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
@@ -70,15 +73,22 @@ def test_rerun_job_user_and_experiment_number(broker):
     user_number = faker.generator.random.randint(1, 1000000)
     experiment_number = faker.generator.random.randint(1, 1000000)
 
-    job_maker.rerun_job(job_id=job_id, runner_image=runner_image, script=script,
-                        user_number=user_number, experiment_number=experiment_number)
+    job_maker.rerun_job(
+        job_id=job_id,
+        runner_image=runner_image,
+        script=script,
+        user_number=user_number,
+        experiment_number=experiment_number,
+    )
 
     assert broker.call_count == 1
     assert broker.call_arg == mock.call()
     assert job_maker._send_message.call_count == 1
-    assert (job_maker._send_message.call_args ==
-            mock.call(json.dumps({"job_id": job_id, "runner_image": runner_image, "script": script,
-                                  "experiment_number": experiment_number})))
+    assert job_maker._send_message.call_args == mock.call(
+        json.dumps(
+            {"job_id": job_id, "runner_image": runner_image, "script": script, "experiment_number": experiment_number}
+        )
+    )
 
 
 def test_rerun_job_user_and_experiment_number_is_none():
@@ -92,8 +102,13 @@ def test_rerun_job_user_and_experiment_number_is_none():
     experiment_number = None
 
     with pytest.raises(ValueError):  # noqa: PT011
-        job_maker.rerun_job(job_id=job_id, runner_image=runner_image, script=script,
-                            user_number=user_number, experiment_number=experiment_number)
+        job_maker.rerun_job(
+            job_id=job_id,
+            runner_image=runner_image,
+            script=script,
+            user_number=user_number,
+            experiment_number=experiment_number,
+        )
 
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
@@ -109,9 +124,9 @@ def test_simple_job_experiment_number(broker):
     assert broker.call_count == 1
     assert broker.call_arg == mock.call()
     assert job_maker._send_message.call_count == 1
-    assert (job_maker._send_message.call_args ==
-            mock.call(json.dumps({"runner_image": runner_image, "script": script,
-                                  "experiment_number": experiment_number})))
+    assert job_maker._send_message.call_args == mock.call(
+        json.dumps({"runner_image": runner_image, "script": script, "experiment_number": experiment_number})
+    )
 
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
@@ -127,9 +142,9 @@ def test_simple_job_user_number(broker):
     assert broker.call_count == 1
     assert broker.call_arg == mock.call()
     assert job_maker._send_message.call_count == 1
-    assert (job_maker._send_message.call_args ==
-            mock.call(json.dumps({"runner_image": runner_image, "script": script,
-                                  "user_number": user_number})))
+    assert job_maker._send_message.call_args == mock.call(
+        json.dumps({"runner_image": runner_image, "script": script, "user_number": user_number})
+    )
 
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
@@ -141,15 +156,16 @@ def test_simple_job_user_and_experiment_number(broker):
     user_number = faker.generator.random.randint(1, 1000000)
     experiment_number = faker.generator.random.randint(1, 1000000)
 
-    job_maker.simple_job(runner_image=runner_image, script=script,
-                         user_number=user_number, experiment_number=experiment_number)
+    job_maker.simple_job(
+        runner_image=runner_image, script=script, user_number=user_number, experiment_number=experiment_number
+    )
 
     assert broker.call_count == 1
     assert broker.call_arg == mock.call()
     assert job_maker._send_message.call_count == 1
-    assert (job_maker._send_message.call_args ==
-            mock.call(json.dumps({"runner_image": runner_image, "script": script,
-                                  "experiment_number": experiment_number})))
+    assert job_maker._send_message.call_args == mock.call(
+        json.dumps({"runner_image": runner_image, "script": script, "experiment_number": experiment_number})
+    )
 
 
 def test_simple_job_user_and_experiment_number_is_none():
@@ -162,5 +178,6 @@ def test_simple_job_user_and_experiment_number_is_none():
     experiment_number = None
 
     with pytest.raises(ValueError):  # noqa: PT011
-        job_maker.simple_job(runner_image=runner_image, script=script,
-                             user_number=user_number, experiment_number=experiment_number)
+        job_maker.simple_job(
+            runner_image=runner_image, script=script, user_number=user_number, experiment_number=experiment_number
+        )

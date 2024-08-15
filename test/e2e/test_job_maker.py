@@ -55,7 +55,7 @@ def test_post_rerun_job(producer_channel):
     rerun_body = {
         "job_id": "1",
         "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
-        "script": 'print("Hello World!")'
+        "script": 'print("Hello World!")',
     }
 
     response = client.post("/job/rerun", json=rerun_body, headers={"Authorization": "Bearer shh"})
@@ -67,16 +67,13 @@ def test_post_rerun_job(producer_channel):
             "experiment_number": 667500,
             "job_id": 1,
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
-            "script": 'print("Hello World!")'
+            "script": 'print("Hello World!")',
         }
     ]
 
 
 def test_post_simple_job(producer_channel):
-    simple_body = {
-        "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
-        "script": 'print("Hello World!")'
-    }
+    simple_body = {"runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234", "script": 'print("Hello World!")'}
 
     response = client.post("/job/simple", json=simple_body, headers={"Authorization": "Bearer shh"})
 
@@ -86,6 +83,6 @@ def test_post_simple_job(producer_channel):
         {
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
             "script": 'print("Hello World!")',
-            "user_number": 123
+            "user_number": 123,
         }
     ]
