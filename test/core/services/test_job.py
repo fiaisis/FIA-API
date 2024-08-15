@@ -184,4 +184,3 @@ def test_get_experiment_number_from_job_id_expect_raise(mock_repo):
 
     with patch("fia_api.core.services.job.JobSpecification"), pytest.raises(ValueError):  # noqa: PT011
         get_experiment_number_for_job_id(job_id)
-
