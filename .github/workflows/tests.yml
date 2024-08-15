@@ -96,6 +96,14 @@ jobs:
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      rabbit-mq:
+        image: "rabbitmq:3.12-management"
+        ports:
+          - "5672:5672"
+          - "15672:15672"
+        env:
+          RABBITMQ_USER: guest
+          RABBITMQ_PASSWORD: guest
 
     steps:
       - name: Check out repository
@@ -119,11 +127,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[test]
 
-      - name: Run tests
+      - name: Run tests (excluding job maker)
         env:
           DATABASE_URL: postgresql://postgres:password@localhost:5432/test_db
         run: |
-          pytest test/e2e --random-order --random-order-bucket=global --cov --cov-report=xml
+          pytest test/e2e --random-order --random-order-bucket=global --cov --cov-report=xml --ignore=test/e2e/test_job_maker.py
+
+      - name: Run test job maker
+        env:
+          DEV_MODE: True
+        run: |
+          pytest test/e2e/test_job_maker.py --random-order --random-order-bucket=global --cov --cov-report=xml
 
       - name: Upload coverage
         uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
