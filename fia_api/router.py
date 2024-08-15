@@ -4,20 +4,17 @@ Module containing the REST endpoints
 
 from __future__ import annotations
 
-import os
 from http import HTTPStatus
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
-from pydantic import BaseModel
 from sqlalchemy.dialects.postgresql import JSONB
 from starlette.background import BackgroundTasks
 
 from fia_api.core.auth.api_keys import APIKeyBearer
 from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.auth.tokens import JWTBearer, get_user_from_token
-from fia_api.core.job_maker import JobMaker
 from fia_api.core.repositories import test_connection
 from fia_api.core.responses import (
     CountResponse,
@@ -27,6 +24,9 @@ from fia_api.core.responses import (
 )
 from fia_api.core.services.instrument import get_specification_by_instrument_name, update_specification_for_instrument
 from fia_api.core.services.job import (
+    JOB_MAKER,
+    RerunJob,
+    SimpleJob,
     count_jobs,
     count_jobs_by_instrument,
     get_all_jobs,
@@ -40,15 +40,6 @@ from fia_api.scripts.acquisition import (
     write_script_locally,
 )
 from fia_api.scripts.pre_script import PreScript
-
-QUEUE_HOST = os.environ.get("QUEUE_HOST", "localhost")
-QUEUE_NAME = os.environ.get("EGRESS_QUEUE_NAME", "scheduled-jobs")
-PRODUCER_USERNAME = os.environ.get("QUEUE_USER", "guest")
-PRODUCER_PASSWORD = os.environ.get("QUEUE_PASSWORD", "guest")
-
-JOB_MAKER = JobMaker(
-    queue_host=QUEUE_HOST, queue_name=QUEUE_NAME, username=PRODUCER_USERNAME, password=PRODUCER_PASSWORD
-)
 
 ROUTER = APIRouter()
 jwt_security = JWTBearer()
@@ -235,12 +226,6 @@ async def count_all_jobs() -> CountResponse:
     return CountResponse(count=count_jobs())
 
 
-class RerunJob(BaseModel):
-    job_id: int
-    runner_image: str
-    script: str
-
-
 @ROUTER.post("/job/rerun", tags=["job"])
 async def make_rerun_job(
     rerun_job: RerunJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
@@ -259,11 +244,6 @@ async def make_rerun_job(
         script=rerun_job.script,
         experiment_number=experiment_number,
     )
-
-
-class SimpleJob(BaseModel):
-    runner_image: str
-    script: str
 
 
 @ROUTER.post("/job/simple", tags=["job"])

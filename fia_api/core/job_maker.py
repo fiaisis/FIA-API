@@ -8,7 +8,6 @@ from pika.credentials import PlainCredentials  # type: ignore[import-untyped]
 
 class JobMaker:
     def __init__(self, queue_host: str, username: str, password: str, queue_name: str):
-        # Connect to Rabbit
         credentials = PlainCredentials(username=username, password=password)
         self.connection_parameters = ConnectionParameters(queue_host, 5672, credentials=credentials)
         self.queue_name = queue_name
@@ -49,12 +48,13 @@ class JobMaker:
         user_number: int | None = None,
     ) -> None:
         """
-        Default to using experiment_number over user_number
-        :param job_id:
-        :param runner_image:
-        :param script:
-        :param experiment_number:
-        :param user_number:
+        Submit a rerun job to the scheduled job queue in the message broker. Default to using experiment_number over
+        user_number.
+        :param job_id: The id of the job to be reran
+        :param runner_image: The image used as a runner on the cluster
+        :param script: The script to be used in the runner
+        :param experiment_number: the experiment number of the owner
+        :param user_number: the user number of the owner
         :return: None
         """
         json_dict: dict[str, Any] = {"job_id": job_id, "runner_image": runner_image, "script": script}
@@ -70,11 +70,12 @@ class JobMaker:
         self, runner_image: str, script: str, experiment_number: int | None = None, user_number: int | None = None
     ) -> None:
         """
-        Default to using experiment_number over user_number
-        :param runner_image:
-        :param script:
-        :param experiment_number:
-        :param user_number:
+        Submit a job to the scheduled job queue in the message broker. Default to using experiment_number over
+        user_number.
+        :param runner_image: The image used as a runner on the cluster
+        :param script: The script to be used in the runner
+        :param experiment_number: the experiment number of the owner
+        :param user_number: the user number of the owner
         :return: None
         """
         json_dict: dict[str, Any] = {"runner_image": runner_image, "script": script}

@@ -1,16 +1,39 @@
 """
 Service Layer for jobs
 """
-
+import os
 from collections.abc import Sequence
 from typing import Literal
 
 from db.data_models import Job
+from pydantic import BaseModel
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.exceptions import AuthenticationError, MissingRecordError
+from fia_api.core.job_maker import JobMaker
 from fia_api.core.repositories import Repo
 from fia_api.core.specifications.job import JobSpecification
+
+QUEUE_HOST = os.environ.get("QUEUE_HOST", "localhost")
+QUEUE_NAME = os.environ.get("EGRESS_QUEUE_NAME", "scheduled-jobs")
+PRODUCER_USERNAME = os.environ.get("QUEUE_USER", "guest")
+PRODUCER_PASSWORD = os.environ.get("QUEUE_PASSWORD", "guest")
+
+JOB_MAKER = JobMaker(
+    queue_host=QUEUE_HOST, queue_name=QUEUE_NAME, username=PRODUCER_USERNAME, password=PRODUCER_PASSWORD
+)
+
+
+class SimpleJob(BaseModel):
+    runner_image: str
+    script: str
+
+
+class RerunJob(BaseModel):
+    job_id: int
+    runner_image: str
+    script: str
+
 
 OrderField = Literal[
     "start",
@@ -137,5 +160,5 @@ def get_experiment_number_for_job_id(job_id: int) -> int:
         owner = job.owner
         if owner is not None and owner.experiment_number is not None:
             return owner.experiment_number
-        raise ValueError("Job has no owner in the DB")
+        raise ValueError("Job has no owner or owner does not have an experiment number in the DB")
     raise ValueError("No job found with ID in the DB")
