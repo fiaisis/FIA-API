@@ -21,8 +21,10 @@ def job_maker():
     queue_name = os.environ.get("EGRESS_QUEUE_NAME", "scheduled-jobs")
     producer_username = os.environ.get("QUEUE_USER", "guest")
     producer_password = os.environ.get("QUEUE_PASSWORD", "guest")
-    return JobMaker(queue_host=queue_host, queue_name=queue_name, username=producer_username,
-                    password=producer_password)
+    return JobMaker(
+        queue_host=queue_host, queue_name=queue_name, username=producer_username, password=producer_password
+    )
+
 
 class SimpleJob(BaseModel):
     runner_image: str

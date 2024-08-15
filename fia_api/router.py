@@ -229,8 +229,9 @@ async def count_all_jobs() -> CountResponse:
 
 @ROUTER.post("/job/rerun", tags=["job"])
 async def make_rerun_job(
-    rerun_job: RerunJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
-        job_maker: Annotated[JobMaker, Depends(job_maker)]
+    rerun_job: RerunJob,
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+    job_maker: Annotated[JobMaker, Depends(job_maker)],
 ) -> None:
     user = get_user_from_token(credentials.credentials)
     experiment_number = get_experiment_number_for_job_id(rerun_job.job_id)
@@ -250,8 +251,9 @@ async def make_rerun_job(
 
 @ROUTER.post("/job/simple", tags=["job"])
 async def make_simple_job(
-    simple_job: SimpleJob, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
-        job_maker: Annotated[JobMaker, Depends(job_maker)]
+    simple_job: SimpleJob,
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+    job_maker: Annotated[JobMaker, Depends(job_maker)],
 ) -> None:
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
