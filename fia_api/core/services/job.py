@@ -135,7 +135,7 @@ def get_experiment_number_for_job_id(job_id: int) -> int:
     job = _REPO.find_one(JobSpecification().by_id(job_id))
     if job is not None:
         owner = job.owner
-        if owner is not None:
+        if owner is not None and owner.experiment_number is not None:
             return owner.experiment_number
         raise ValueError("Job has no owner in the DB")
     raise ValueError("No job found with ID in the DB")
