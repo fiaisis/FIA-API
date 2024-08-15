@@ -16,7 +16,8 @@ from fia_api.core.repositories import Repo
 from fia_api.core.specifications.job import JobSpecification
 
 
-def job_maker():
+def job_maker() -> JobMaker:
+    """Creates a JobMaker and returns it using env vars"""
     queue_host = os.environ.get("QUEUE_HOST", "localhost")
     queue_name = os.environ.get("EGRESS_QUEUE_NAME", "scheduled-jobs")
     producer_username = os.environ.get("QUEUE_USER", "guest")
