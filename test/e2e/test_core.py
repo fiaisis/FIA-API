@@ -288,7 +288,7 @@ def test_get_jobs_for_instrument_jobs_exist_for_dev_mode():
                 "script": None,
                 "stacktrace": None,
                 "runner_image": None,
-                "type": "JobType.AUTOREDUCTION"
+                "type": "JobType.AUTOREDUCTION",
             }
         ]
 
@@ -325,7 +325,7 @@ def test_get_jobs_for_instrument_jobs_exist_for_staff(mock_post):
             "script": None,
             "stacktrace": None,
             "runner_image": None,
-            "type": "JobType.AUTOREDUCTION"
+            "type": "JobType.AUTOREDUCTION",
         }
     ]
 
@@ -384,7 +384,7 @@ def test_get_jobs_for_instrument_runs_included_for_staff(mock_post):
             "script": None,
             "stacktrace": None,
             "runner_image": None,
-            "type": "JobType.AUTOREDUCTION"
+            "type": "JobType.AUTOREDUCTION",
         }
     ]
 
