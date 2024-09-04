@@ -86,6 +86,7 @@ def test_get_all_job_for_user(mock_post, mock_get_experiment_numbers_for_user_nu
             "script": None,
             "stacktrace": None,
             "runner_image": None,
+            "type": "JobType.AUTOREDUCTION",
         }
     ]
 
@@ -133,6 +134,7 @@ def test_get_all_job_for_user_include_run(mock_post, mock_get_experiment_numbers
             "script": None,
             "stacktrace": None,
             "runner_image": None,
+            "type": "JobType.AUTOREDUCTION",
         }
     ]
 
@@ -179,6 +181,7 @@ def test_get_job_by_id_job_exists_for_staff(mock_post):
         "script": None,
         "stacktrace": None,
         "runner_image": None,
+        "type": "JobType.AUTOREDUCTION",
     }
 
 
