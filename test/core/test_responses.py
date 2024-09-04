@@ -6,7 +6,7 @@ import copy
 import datetime
 from unittest import mock
 
-from db.data_models import Instrument, Job, JobOwner, JobType, Run, Script, State
+from db.data_models import Instrument, Job, JobOwner, Run, Script, State
 
 from fia_api.core.responses import (
     JobResponse,
@@ -41,7 +41,6 @@ JOB = Job(
     script=SCRIPT,
     stacktrace="some stacktrace",
     run=RUN,
-    job_type=JobType.AUTOREDUCTION
 )
 
 
@@ -102,7 +101,6 @@ def test_job_response_from_job(from_script):
     assert response.outputs == JOB.outputs
     assert response.status_message == JOB.status_message
     assert response.stacktrace == JOB.stacktrace
-    assert response.type == str(JOB.job_type)
 
 
 @mock.patch(
@@ -125,7 +123,6 @@ def test_job_with_runs_response_from_job(from_script):
     assert response.outputs == JOB.outputs
     assert response.status_message == JOB.status_message
     assert response.run == RunResponse.from_run(JOB.run)
-    assert response.type == str(JOB.job_type)
 
 
 @mock.patch("fia_api.core.responses.filter_script_for_tokens", return_value=SCRIPT.script)
