@@ -41,7 +41,7 @@ JOB = Job(
     script=SCRIPT,
     stacktrace="some stacktrace",
     run=RUN,
-    job_type=JobType.AUTOREDUCTION
+    job_type=JobType.AUTOREDUCTION,
 )
 
 

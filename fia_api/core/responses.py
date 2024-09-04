@@ -120,7 +120,7 @@ class JobResponse(BaseModel):
             stacktrace=job.stacktrace,
             id=job.id,
             runner_image=job.runner_image,
-            type=str(job.job_type)
+            type=str(job.job_type),
         )
 
 
@@ -151,5 +151,5 @@ class JobWithRunResponse(JobResponse):
             stacktrace=job.stacktrace,
             run=RunResponse.from_run(job.run) if isinstance(job.run, Run) else None,
             runner_image=job.runner_image,
-            type=str(job.job_type)
+            type=str(job.job_type),
         )
