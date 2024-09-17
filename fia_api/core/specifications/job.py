@@ -137,3 +137,18 @@ class JobSpecification(Specification[Job]):
         self._apply_ordering(order_by, order_direction)
 
         return self
+
+    @paginate
+    def all(
+        self,
+        limit: int | None = None,
+        offset: int | None = None,
+        order_by: JointRunJobOrderField = "id",
+        order_direction: Literal["asc", "desc"] = "desc",
+    ) -> JobSpecification:
+        """"""
+        self.value = self.value.join(Run)
+
+        self._apply_ordering(order_by, order_direction)
+
+        return self
