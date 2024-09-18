@@ -146,7 +146,15 @@ class JobSpecification(Specification[Job]):
         order_by: JointRunJobOrderField = "id",
         order_direction: Literal["asc", "desc"] = "desc",
     ) -> JobSpecification:
-        """"""
+        """
+        Fetches all jobs and applies ordering, limit, and offset to the query.
+
+        :param limit: The maximum number of jobs to return. None indicates no limit.
+        :param offset: The number of jobs to skip before starting to return the results. None for no offset.
+        :param order_by: The attribute to order the jobs by. Can be attributes of Job or Run entities.
+        :param order_direction: The direction to order the jobs, either 'asc' for ascending or 'desc' for descending.
+        :return: An instance of JobSpecification with the applied filters and ordering.
+        """
         self.value = self.value.join(Run)
         self._apply_ordering(order_by, order_direction)
 
