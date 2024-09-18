@@ -185,6 +185,7 @@ def test_get_experiment_number_from_job_id_expect_raise(mock_repo):
     with patch("fia_api.core.services.job.JobSpecification"), pytest.raises(ValueError):  # noqa: PT011
         get_experiment_number_for_job_id(job_id)
 
+
 @patch("fia_api.core.services.job._REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_order_by_run_start_desc(mock_spec_class, mock_repo):
@@ -208,6 +209,7 @@ def test_get_all_jobs_order_by_run_start_asc(mock_spec_class, mock_repo):
     spec.all.assert_called_once_with(limit=5, offset=0, order_by="run_start", order_direction="asc")
     mock_repo.find.assert_called_once_with(spec.all())
 
+
 @patch("fia_api.core.services.job._REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_default_order_by_start(mock_spec_class, mock_repo):
@@ -218,6 +220,7 @@ def test_get_all_jobs_default_order_by_start(mock_spec_class, mock_repo):
     get_all_jobs(limit=5, offset=0)
     spec.all.assert_called_once_with(limit=5, offset=0, order_by="start", order_direction="desc")
     mock_repo.find.assert_called_once_with(spec.all())
+
 
 @patch("fia_api.core.services.job._REPO")
 @patch("fia_api.core.services.job.JobSpecification")
