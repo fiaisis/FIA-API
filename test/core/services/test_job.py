@@ -184,3 +184,48 @@ def test_get_experiment_number_from_job_id_expect_raise(mock_repo):
 
     with patch("fia_api.core.services.job.JobSpecification"), pytest.raises(ValueError):  # noqa: PT011
         get_experiment_number_for_job_id(job_id)
+
+@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job.JobSpecification")
+def test_get_all_jobs_order_by_run_start_desc(mock_spec_class, mock_repo):
+    """
+    Test get_all_jobs with order_by 'run_start' in descending order.
+    """
+    spec = mock_spec_class.return_value
+    get_all_jobs(limit=5, offset=0, order_by="run_start", order_direction="desc")
+    spec.all.assert_called_once_with(limit=5, offset=0, order_by="run_start", order_direction="desc")
+    mock_repo.find.assert_called_once_with(spec.all())
+
+
+@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job.JobSpecification")
+def test_get_all_jobs_order_by_run_start_asc(mock_spec_class, mock_repo):
+    """
+    Test get_all_jobs with order_by 'run_start' in ascending order.
+    """
+    spec = mock_spec_class.return_value
+    get_all_jobs(limit=5, offset=0, order_by="run_start", order_direction="asc")
+    spec.all.assert_called_once_with(limit=5, offset=0, order_by="run_start", order_direction="asc")
+    mock_repo.find.assert_called_once_with(spec.all())
+
+@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job.JobSpecification")
+def test_get_all_jobs_default_order_by_start(mock_spec_class, mock_repo):
+    """
+    Test get_all_jobs without specifying a different order_by, per the function signature it should order by 'start'.
+    """
+    spec = mock_spec_class.return_value
+    get_all_jobs(limit=5, offset=0)
+    spec.all.assert_called_once_with(limit=5, offset=0, order_by="start", order_direction="desc")
+    mock_repo.find.assert_called_once_with(spec.all())
+
+@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job.JobSpecification")
+def test_get_all_jobs_with_pagination(mock_spec_class, mock_repo):
+    """
+    Test get_all_jobs with custom pagination (limit and offset).
+    """
+    spec = mock_spec_class.return_value
+    get_all_jobs(limit=15, offset=30)
+    spec.all.assert_called_once_with(limit=15, offset=30, order_by="start", order_direction="desc")
+    mock_repo.find.assert_called_once_with(spec.all())
