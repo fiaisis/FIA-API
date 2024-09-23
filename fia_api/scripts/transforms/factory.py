@@ -27,6 +27,8 @@ def get_transform_for_instrument(instrument: str) -> Transform:
             return ToscaTransform()
         case "osiris":
             return OsirisTransform()
+        case "loq":
+            return LoqTransform()
         case "test":
             return TestTransform()
         case _:
