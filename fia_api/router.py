@@ -294,7 +294,7 @@ async def update_instrument_specification(
 
 @ROUTER.put("/instrument/{instrument_name}/status", tags=["instrument"])
 async def update_instrument_status(
-    instrument_name: str, status: bool, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
+    instrument_name: str, status: bool, credentials: Annotated[HTTPAuthorizationCredentials, Depends(api_key_security)]
 ) -> dict[str, Any]:
     """
     Update the enabled status of a specific instrument.
