@@ -523,3 +523,11 @@ def test_put_instrument_specification_no_api_key():
     client.put("/instrument/het/specification", json={"foo": "bar"})
     response = client.get("/instrument/het/specification")
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_put_instrument_status_returns_true():
+    """Test instrument status returns true when set to true."""
+    response = client.put("/instrument/mari/status", json={"status": True}, headers={"Authorization": "Bearer shh"})
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["enabled"] is True
+
