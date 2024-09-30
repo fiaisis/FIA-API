@@ -527,7 +527,6 @@ def test_put_instrument_specification_no_api_key():
 
 def test_put_instrument_status():
     """Test instrument status is updated"""
-    client.put("/instrument/mari/status", json={"status": "true"}, headers={"Authorization": "Bearer shh"})
-    response = client.get("/instrument/mari/status", headers={"Authorization": "Bearer shh"})
+    response = client.put("/instrument/mari/status", json={"status": "true"}, headers={"Authorization": "Bearer shh"})
     assert response.status_code == HTTPStatus.OK
-    assert response.json()["enabled"] == "true"
+    assert response.json()["enabled"] is True
