@@ -292,10 +292,10 @@ async def update_instrument_specification(
     return specification
 
 
-@ROUTER.put("/instrument/{instrument_name}/status", tags=["instrument"])
+@ROUTER.put("/instrument/{instrument_name}/status", tags=["instrument"], response_model=None)
 async def update_instrument_status(
     instrument_name: str, status: bool, credentials: Annotated[HTTPAuthorizationCredentials, Depends(api_key_security)]
-) -> dict[str, Any]:
+) -> JSONB | None:
     """
     Update the enabled status of a specific instrument.
     \f
@@ -314,7 +314,7 @@ async def update_instrument_status(
     if specification is None:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Instrument specification not found.")
 
-    specification["enabled"] = status
-    update_specification_for_instrument(instrument_name.upper(), specification)
+    specification["enabled"] = status  # type: ignore[index]
+    update_specification_for_instrument(instrument_name.upper(), specification)  # type: ignore[arg-type]
 
     return specification
