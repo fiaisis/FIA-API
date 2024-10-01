@@ -8,6 +8,7 @@ from starlette.requests import Request
 
 logger = logging.getLogger(__name__)
 API_KEY = os.environ["FIA_API_API_KEY"]
+DEV_MODE = bool(os.environ.get("DEV_MODE", False))
 
 
 class APIKeyBearer(HTTPBearer):
@@ -25,6 +26,8 @@ class APIKeyBearer(HTTPBearer):
         :return: The JWT access token if authentication is successful.
         :raises HTTPException: If the supplied JWT access token is invalid or has expired.
         """
+        if DEV_MODE:
+            return HTTPAuthorizationCredentials(scheme="Bearer", credentials="foo")
         credentials: HTTPAuthorizationCredentials | None = await super().__call__(request)
         try:
             api_key = credentials.credentials  # type: ignore # if credentials is None, it will raise here and be caught immediately

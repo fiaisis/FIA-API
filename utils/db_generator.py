@@ -32,8 +32,7 @@ SESSION = sessionmaker(ENGINE)
 
 def main():
     fia_provider = FIA_FAKER_PROVIDER
-
-    if "localhost" not in ENGINE.url:
+    if "localhost" not in ENGINE.url and "db" not in ENGINE.url:
         # Someone already overwrote all of production with this. Proceed with caution.
         sys.exit(f"Script is not pointing at localhost {ENGINE.url}: Don't even think about it")
 

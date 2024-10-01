@@ -2,6 +2,7 @@
 venv/
 build/
 test/
+!test/utils.py
 .*/
 *.md
 .*
