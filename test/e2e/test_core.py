@@ -527,7 +527,7 @@ def test_put_instrument_specification_no_api_key():
 
 def test_token_decoding_in_status():
     """Test token decoding in status."""
-    client.put("/instrument/mari/status?status=true", headers={"Authorization": "Bearer shh"})
+    client.put("/instrument/mari/status", json={"enabled": True}, headers={"Authorization": "Bearer shh"})
 
 
 def test_put_instrument_status_returns_true():
