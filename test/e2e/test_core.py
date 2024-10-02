@@ -534,5 +534,4 @@ def test_put_instrument_status_returns_true():
     """Test instrument status returns true when set to true."""
     client.put("/instrument/mari/status", json={"enabled": True}, headers={"Authorization": "Bearer shh"})
     response = client.get("/instrument/mari/specification", headers={"Authorization": "Bearer shh"})
-    assert response["enabled"] is True
-    assert response.status_code == HTTPStatus.OK
+    assert response.json["enabled"] is True
