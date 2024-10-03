@@ -311,9 +311,6 @@ async def update_instrument_status(
         )
 
     specification = get_specification_by_instrument_name(instrument_name.upper())
-    if specification is None:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Instrument specification not found.")
-
     specification["enabled"] = status  # type: ignore[index]
     update_specification_for_instrument(instrument_name.upper(), specification)  # type: ignore[arg-type]
 
