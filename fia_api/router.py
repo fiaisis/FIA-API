@@ -290,3 +290,28 @@ async def update_instrument_specification(
     """
     update_specification_for_instrument(instrument_name.upper(), specification)
     return specification
+
+
+@ROUTER.put("/instrument/{instrument_name}/status", tags=["instrument"], response_model=None)
+async def update_instrument_status(
+    instrument_name: str, status: bool, credentials: Annotated[HTTPAuthorizationCredentials, Depends(api_key_security)]
+) -> JSONB | None:
+    """
+    Update the enabled status of a specific instrument.
+    \f
+    :param instrument_name: The instrument name
+    :param status: The new enabled status (true for enabled, false for disabled)
+    :param credentials: Authorization credentials for the user
+    :return: The updated specification
+    """
+    user = get_user_from_token(credentials.credentials)
+    if user.role != "staff":
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN, detail="Only authorised staff can update the instrument status."
+        )
+
+    specification = get_specification_by_instrument_name(instrument_name.upper())
+    specification["enabled"] = status  # type: ignore[index]
+    update_specification_for_instrument(instrument_name.upper(), specification)  # type: ignore[arg-type]
+
+    return specification
