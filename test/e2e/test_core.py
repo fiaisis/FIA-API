@@ -525,13 +525,8 @@ def test_put_instrument_specification_no_api_key():
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-def test_token_decoding_in_status():
-    """Test token decoding in status."""
-    client.put("/instrument/mari/status", json={"enabled": True}, headers={"Authorization": "Bearer shh"})
-
-
 def test_put_instrument_status_returns_true():
     """Test instrument status returns true when set to true."""
-    client.put("/instrument/mari/status?status=true", headers={"Authorization": "Bearer shh"})
-    get_response = client.get("/instrument/mari/specification", headers={"Authorization": "Bearer shh"})
+    client.put("/instrument/mari/status?status=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    get_response = client.get("/instrument/mari/specification", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert get_response.json()["enabled"] is True

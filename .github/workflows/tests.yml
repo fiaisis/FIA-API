@@ -14,7 +14,7 @@ jobs:
       - name: Set up python
         uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v4.5.0
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Set up cache for Python dependencies
         uses: actions/cache@v4
@@ -35,7 +35,6 @@ jobs:
         uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-
 
   integration:
     runs-on: ubuntu-latest
@@ -58,7 +57,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Set up cache for Python dependencies
         uses: actions/cache@v4
@@ -82,7 +81,7 @@ jobs:
       - name: Upload coverage
         uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
         with:
-            token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}
   e2e:
     runs-on: ubuntu-latest
 
@@ -112,7 +111,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Set up cache for Python dependencies
         uses: actions/cache@v4
@@ -127,17 +126,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[test]
 
-      - name: Run tests (excluding job maker)
+      - name: Run tests (excluding dev mode)
         env:
           DATABASE_URL: postgresql://postgres:password@localhost:5432/test_db
         run: |
-          pytest test/e2e --random-order --random-order-bucket=global --cov --cov-report=xml --ignore=test/e2e/test_job_maker.py
+          pytest test/e2e --random-order --random-order-bucket=global --cov --cov-report=xml --ignore=test/e2e/test_job_maker.py --ignore=test/e2e/test_status.py
 
-      - name: Run test job maker
+      - name: Run test with dev mode true
         env:
           DEV_MODE: True
         run: |
-          pytest test/e2e/test_job_maker.py --random-order --random-order-bucket=global --cov --cov-report=xml
+          pytest test/e2e/test_job_maker.py test/e2e/test_status.py --random-order --random-order-bucket=global --cov --cov-report=xml
 
       - name: Upload coverage
         uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
