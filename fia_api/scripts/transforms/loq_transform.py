@@ -27,14 +27,14 @@ class LoqTransform(Transform):
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
         # If you get here in the future, try removing the type ignore and see if it passes with newer mypy
         for index, line in enumerate(lines):
-            if "url_to_mask_file.xml" in line:
+            if "/extras/loq/MaskFile.toml" in line:
                 lines[index] = line.replace("/extras/loq/MaskFile.toml", job.inputs["user_file"])  # type: ignore
                 continue
-            if self._replace_input(line, lines, index, "sample_scatter", job.inputs["sample_scatter"]):  # type: ignore
+            if self._replace_input(line, lines, index, "sample_scatter", job.inputs["run_number"]):  # type: ignore
                 continue
-            if self._replace_input(line, lines, index, "sample_transmission", job.inputs["sample_transmission"]):  # type: ignore
+            if self._replace_input(line, lines, index, "sample_transmission", job.inputs["scatter_transmission"]):  # type: ignore
                 continue
-            if self._replace_input(line, lines, index, "sample_direct", job.inputs["sample_direct"]):  # type: ignore
+            if self._replace_input(line, lines, index, "sample_direct", job.inputs["scatter_direct"]):  # type: ignore
                 continue
             if self._replace_input(line, lines, index, "can_scatter", job.inputs["can_scatter"]):  # type: ignore
                 continue
