@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v3.5.0
 
       - name: Set up python
-        uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v4.5.0
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v4.5.0
         with:
           python-version: '3.12'
 
@@ -32,7 +32,7 @@ jobs:
         run: pytest . --random-order --random-order-bucket=global --ignore=test/e2e --ignore=test/core/test_repositories_integration.py --cov --cov-report=xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -56,7 +56,7 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: Set up Python
-        uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: '3.12'
 
@@ -80,7 +80,7 @@ jobs:
           pytest test/core/test_repositories_integration.py --random-order --random-order-bucket=global --cov --cov-report=xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
         with:
             token: ${{ secrets.CODECOV_TOKEN }}
   e2e:
@@ -110,7 +110,7 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: Set up Python
-        uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: '3.12'
 
@@ -140,6 +140,6 @@ jobs:
           pytest test/e2e/test_job_maker.py --random-order --random-order-bucket=global --cov --cov-report=xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
