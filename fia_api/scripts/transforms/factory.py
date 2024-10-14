@@ -4,6 +4,7 @@ This module provides a factory function to get the appropriate transform for a g
 
 import logging
 
+from fia_api.scripts.transforms.loq_transform import LoqTransform
 from fia_api.scripts.transforms.mari_transforms import MariTransform
 from fia_api.scripts.transforms.osiris_transform import OsirisTransform
 from fia_api.scripts.transforms.test_transforms import TestTransform
@@ -27,6 +28,8 @@ def get_transform_for_instrument(instrument: str) -> Transform:
             return ToscaTransform()
         case "osiris":
             return OsirisTransform()
+        case "loq":
+            return LoqTransform()
         case "test":
             return TestTransform()
         case _:
