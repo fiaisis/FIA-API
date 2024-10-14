@@ -185,7 +185,6 @@ def test_loq_transform_apply(script, reduction):  # noqa: PLR0912, C901
     transform.apply(script, reduction)
     updated_lines = script.value.splitlines()
     assert len(original_lines) == len(updated_lines)
-    url_replaced = False
     for index, line in enumerate(updated_lines):
         if line.startswith("user_file"):
             assert line == 'user_file = "/extras/loq/BestMaskFile.toml"'
