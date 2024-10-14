@@ -116,7 +116,7 @@ def test_mari_transform_apply(script, reduction):  # noqa: C901
     """
     Test mari transform applies correct updates to script
     :param script: The script fixture
-    :param reduction: The reduciton fixture
+    :param reduction: The reduction fixture
     :return: None
     """
     transform = MariTransform()

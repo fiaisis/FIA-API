@@ -20,8 +20,7 @@ class LoqTransform(Transform):
     LoqTransform applies modifications to LOQ instrument scripts based on reduction input parameters in a Job
     entity.
     """
-
-    def apply(self, script: PreScript, job: Job) -> None:
+    def apply(self, script: PreScript, job: Job) -> None:  # noqa: C901
         logger.info("Beginning LOQ transform for job %s...", job.id)
         lines = script.value.splitlines()
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
@@ -41,6 +40,14 @@ class LoqTransform(Transform):
             if self._replace_input(line, lines, index, "can_transmission", job.inputs["can_transmission"]):  # type: ignore
                 continue
             if self._replace_input(line, lines, index, "can_direct", job.inputs["can_direct"]):  # type: ignore
+                continue
+            if self._replace_input(line, lines, index, "sample_thickness", job.inputs["sample_thickness"]):  # type: ignore
+                continue
+            if self._replace_input(line, lines, index, "sample_geometry", '"' + job.inputs["sample_geometry"] + '"'):  # type: ignore
+                continue
+            if self._replace_input(line, lines, index, "sample_height", job.inputs["sample_height"]):  # type: ignore
+                continue
+            if self._replace_input(line, lines, index, "sample_width", job.inputs["sample_width"]):  # type: ignore
                 continue
         script.value = "\n".join(lines)
         logger.info("Transform complete for reduction %s", job.id)
