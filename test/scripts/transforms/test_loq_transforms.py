@@ -10,7 +10,7 @@ from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.loq_transform import LoqTransform
 
 
-@pytest.fixture
+@pytest.fixture()
 def script():
     """
     LoqTransform  PreScript fixture
@@ -146,10 +146,11 @@ for i in range(len(default_slice_wavs) - 1):
   output_workspace = ici.WavRangeReduction(default_slice_wavs[i], default_slice_wavs[i + 1], False, combineDet='merged')
   SaveNXcanSAS(**get_nxcansas_kwargs(output_workspace, ws_suffix=f"{default_slice_wavs[0]}_{default_slice_wavs[-1]}"))
   output.append(f"{output_workspace}_auto.h5")
-""")
+"""
+    )
 
 
-@pytest.fixture
+@pytest.fixture()
 def reduction():
     """
     Reduction fixture
