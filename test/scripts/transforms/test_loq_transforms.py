@@ -186,28 +186,24 @@ def test_loq_transform_apply(script, reduction):  # noqa: PLR0912, C901
     transform.apply(script, reduction)
     updated_lines = script.value.splitlines()
     assert len(original_lines) == len(updated_lines)
+    replacements = {
+        "user_file": 'user_file = "/extras/loq/BestMaskFile.toml"',
+        "sample_scatter": "sample_scatter = 10",
+        "sample_transmission": "sample_transmission = 9",
+        "sample_direct": "sample_direct = 3",
+        "can_scatter": "can_scatter = 5",
+        "can_transmission": "can_transmission = 4",
+        "can_direct": "can_direct = 3",
+        "sample_thickness": "sample_thickness = 2.0",
+        "sample_geometry": 'sample_geometry = "Disc"',
+        "sample_height": "sample_height = 8.0",
+        "sample_width": "sample_width = 8.0",
+    }
+    
     for index, line in enumerate(updated_lines):
-        if line.startswith("user_file"):
-            assert line == 'user_file = "/extras/loq/BestMaskFile.toml"'
-        elif line.startswith("sample_scatter"):
-            assert line == "sample_scatter = 10"
-        elif line.startswith("sample_transmission"):
-            assert line == "sample_transmission = 9"
-        elif line.startswith("sample_direct"):
-            assert line == ("sample_direct = 3")
-        elif line.startswith("can_scatter"):
-            assert line == "can_scatter = 5"
-        elif line.startswith("can_transmission"):
-            assert line == "can_transmission = 4"
-        elif line.startswith("can_direct"):
-            assert line == "can_direct = 3"
-        elif line.startswith("sample_thickness"):
-            assert line == "sample_thickness = 2.0"
-        elif line.startswith("sample_geometry"):
-            assert line == 'sample_geometry = "Disc"'
-        elif line.startswith("sample_height"):
-            assert line == "sample_height = 8.0"
-        elif line.startswith("sample_width"):
-            assert line == "sample_width = 8.0"
+        for key, expected_line in replacements.items():
+            if line.startswith(key):
+                assert line == expected_line 
+                break
         else:
             assert line == original_lines[index]
