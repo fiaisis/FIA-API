@@ -173,7 +173,7 @@ def reduction():
     return mock
 
 
-def test_loq_transform_apply(script, reduction):  # noqa: PLR0912, C901
+def test_loq_transform_apply(script, reduction):
     """
     Test loq transform applies correct updates to script
     :param script: The script fixture
@@ -199,11 +199,11 @@ def test_loq_transform_apply(script, reduction):  # noqa: PLR0912, C901
         "sample_height": "sample_height = 8.0",
         "sample_width": "sample_width = 8.0",
     }
-    
+
     for index, line in enumerate(updated_lines):
         for key, expected_line in replacements.items():
             if line.startswith(key):
-                assert line == expected_line 
+                assert line == expected_line
                 break
         else:
             assert line == original_lines[index]
