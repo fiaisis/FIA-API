@@ -5,9 +5,11 @@ Module containing the REST endpoints
 from __future__ import annotations
 
 from http import HTTPStatus
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+import aiofiles
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.dialects.postgresql import JSONB
 from starlette.background import BackgroundTasks
@@ -41,10 +43,6 @@ from fia_api.scripts.acquisition import (
     write_script_locally,
 )
 from fia_api.scripts.pre_script import PreScript
-
-import aiofiles
-from pathlib import Path
-from fastapi import UploadFile, HTTPException
 
 ROUTER = APIRouter()
 jwt_security = JWTBearer()
