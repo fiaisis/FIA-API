@@ -42,6 +42,10 @@ from fia_api.scripts.acquisition import (
 )
 from fia_api.scripts.pre_script import PreScript
 
+import aiofiles
+from pathlib import Path
+from fastapi import UploadFile, HTTPException
+
 ROUTER = APIRouter()
 jwt_security = JWTBearer()
 api_key_security = APIKeyBearer()
@@ -290,3 +294,82 @@ async def update_instrument_specification(
     """
     update_specification_for_instrument(instrument_name.upper(), specification)
     return specification
+
+
+extras_dir = Path("/extras")
+
+
+@ROUTER.get("/extras", tags=["files"])
+async def get_extras_top_level_folders() -> list[Path]:
+    """
+    Returns top level folders in the extras directory
+    \f
+    :return: List of folders
+    """
+    root_directory = extras_dir
+    if not root_directory.exists():
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=f"Extras directory ({extras_dir}) not found")
+
+    return [directory.stem for directory in root_directory.glob("*")]
+
+
+@ROUTER.get("/extras/{instrument}", tags=["files"])
+async def get_instrument_files(instrument: Any) -> list[Path]:
+    """
+    Returns a list of files within an instrument folder. Directs users to use the /extras endpoint if folder not found
+
+    \f
+    :return: List of files within an instrument folder
+    """
+    instrument_directory = extras_dir / instrument
+    if not instrument_directory.exists():
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=f"Instrument folder ({instrument_directory}) not found \
+            GET /extras for list of valid instrument folders",
+        )
+    try:
+        return list(instrument_directory.glob("*"))
+    except Exception as err:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail=f"There was an error returning the files {err}, {type(err)}",
+        ) from err
+
+
+@ROUTER.post("/extras/{instrument}/{filename}", tags=["files"])
+async def upload_file_to_instrument_folder(instrument: str, filename: str, file: UploadFile) -> str:
+    """
+    :param instrument: The instrument name
+    :param filename: The name for the uploaded file
+    :param file: The file contents
+    \f
+    :return: String with created filename
+    """
+    instrument_directory = extras_dir / instrument
+
+    if not instrument_directory.exists():
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=f"Instrument folder ({instrument_directory}) not found, use \
+                  GET /extras for list of valid instrument folders",
+        )
+
+    try:
+        contents = await file.read()
+        async with aiofiles.open(instrument_directory / filename, "wb") as f:
+            await f.write(contents)
+    except PermissionError as err:
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail=f"Permissions denied for the instrument folder {err}",
+        ) from err
+    except Exception as err:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail=f"There was an error uploading the file {err}, {type(err)}",
+        ) from err
+    finally:
+        await file.close()
+
+    return f"Successfully uploaded {filename}"
