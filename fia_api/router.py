@@ -37,6 +37,7 @@ from fia_api.core.services.job import (
     get_job_by_instrument,
     job_maker,
 )
+from fia_api.core.utility import forbid_path_characters
 from fia_api.scripts.acquisition import (
     get_script_by_sha,
     get_script_for_job,
@@ -311,8 +312,9 @@ async def get_extras_top_level_folders() -> list[Path]:
     return [directory.stem for directory in root_directory.glob("*")]
 
 
+@forbid_path_characters
 @ROUTER.get("/extras/{instrument}", tags=["files"])
-async def get_instrument_files(instrument: Any) -> list[Path]:
+async def get_instrument_files(instrument: Any) -> list[str]:
     """
     Returns a list of files within an instrument folder. Directs users to use the /extras endpoint if folder not found
 
@@ -320,12 +322,18 @@ async def get_instrument_files(instrument: Any) -> list[Path]:
     :return: List of files within an instrument folder
     """
     instrument_directory = extras_dir / instrument
-    if not instrument_directory.exists():
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail=f"Instrument folder ({instrument_directory}) not found \
-            GET /extras for list of valid instrument folders",
-        )
+    # Do a check as we are handling user entered data here
+    try:
+        instrument_directory.resolve(strict=True)
+        if not instrument_directory.is_relative_to(extras_dir):
+            raise HTTPException(
+                status_code=HTTPStatus.FORBIDDEN,
+                detail="Invalid path being accessed, instrument folder may not exist, \
+                      use GET /extras for list of valid folders",
+            )
+    except OSError:
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed.") from None
+
     try:
         return list(instrument_directory.glob("*"))
     except Exception as err:
@@ -335,6 +343,7 @@ async def get_instrument_files(instrument: Any) -> list[Path]:
         ) from err
 
 
+@forbid_path_characters
 @ROUTER.post("/extras/{instrument}/{filename}", tags=["files"])
 async def upload_file_to_instrument_folder(instrument: str, filename: str, file: UploadFile) -> str:
     """
@@ -344,18 +353,26 @@ async def upload_file_to_instrument_folder(instrument: str, filename: str, file:
     \f
     :return: String with created filename
     """
-    instrument_directory = extras_dir / instrument
+    # the file path does not exist yet, so do checks with parent directory
+    file_directory = extras_dir / instrument / filename
 
-    if not instrument_directory.exists():
+    # Do a check as we are handling user entered data here
+    try:
+        file_directory.parent.resolve(strict=True)
+        if not file_directory.parent.is_relative_to(extras_dir):
+            raise HTTPException(
+                status_code=HTTPStatus.FORBIDDEN,
+                detail="Invalid path being accessed, instrument folder may not exist, \
+                      use GET /extras for list of valid folders",
+            )
+    except OSError as err:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail=f"Instrument folder ({instrument_directory}) not found, use \
-                  GET /extras for list of valid instrument folders",
-        )
+            status_code=HTTPStatus.FORBIDDEN, detail=f"Invalid path being accessed. {err}, {type(err)}"
+        ) from None
 
     try:
         contents = await file.read()
-        async with aiofiles.open(instrument_directory / filename, "wb") as f:
+        async with aiofiles.open(file_directory, "wb") as f:
             await f.write(contents)
     except PermissionError as err:
         raise HTTPException(
