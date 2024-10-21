@@ -37,7 +37,6 @@ from fia_api.core.services.job import (
     get_job_by_instrument,
     job_maker,
 )
-from fia_api.core.utility import forbid_path_characters
 from fia_api.scripts.acquisition import (
     get_script_by_sha,
     get_script_for_job,
@@ -299,7 +298,7 @@ extras_dir = Path("/extras")
 
 
 @ROUTER.get("/extras", tags=["files"])
-async def get_extras_top_level_folders() -> list[Path]:
+async def get_extras_top_level_folders() -> list[str]:
     """
     Returns top level folders in the extras directory
     \f
@@ -312,9 +311,8 @@ async def get_extras_top_level_folders() -> list[Path]:
     return [directory.stem for directory in root_directory.glob("*")]
 
 
-@forbid_path_characters
 @ROUTER.get("/extras/{instrument}", tags=["files"])
-async def get_instrument_files(instrument: Any) -> list[str]:
+async def get_instrument_files(instrument: str) -> list[Path]:
     """
     Returns a list of files within an instrument folder. Directs users to use the /extras endpoint if folder not found
 
@@ -343,7 +341,6 @@ async def get_instrument_files(instrument: Any) -> list[str]:
         ) from err
 
 
-@forbid_path_characters
 @ROUTER.post("/extras/{instrument}/{filename}", tags=["files"])
 async def upload_file_to_instrument_folder(instrument: str, filename: str, file: UploadFile) -> str:
     """
