@@ -5,9 +5,11 @@ Module containing the REST endpoints
 from __future__ import annotations
 
 from http import HTTPStatus
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+import aiofiles
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.dialects.postgresql import JSONB
 from starlette.background import BackgroundTasks
@@ -290,3 +292,96 @@ async def update_instrument_specification(
     """
     update_specification_for_instrument(instrument_name.upper(), specification)
     return specification
+
+
+extras_dir = Path("/extras")
+
+
+@ROUTER.get("/extras", tags=["files"])
+async def get_extras_top_level_folders() -> list[str]:
+    """
+    Returns top level folders in the extras directory
+    \f
+    :return: List of folders
+    """
+    root_directory = extras_dir
+    if not root_directory.exists():
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=f"Extras directory ({extras_dir}) not found")
+
+    return [directory.stem for directory in root_directory.glob("*")]
+
+
+@ROUTER.get("/extras/{instrument}", tags=["files"])
+async def get_instrument_files(instrument: str) -> list[Path]:
+    """
+    Returns a list of files within an instrument folder. Directs users to use the /extras endpoint if folder not found
+
+    \f
+    :return: List of files within an instrument folder
+    """
+    instrument_directory = extras_dir / instrument
+    # Do a check as we are handling user entered data here
+    try:
+        instrument_directory.resolve(strict=True)
+        if not instrument_directory.is_relative_to(extras_dir):
+            raise HTTPException(
+                status_code=HTTPStatus.FORBIDDEN,
+                detail="Invalid path being accessed, instrument folder may not exist, \
+                      use GET /extras for list of valid folders",
+            )
+    except OSError:
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed.") from None
+
+    try:
+        return list(instrument_directory.glob("*"))
+    except Exception as err:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail=f"There was an error returning the files {err}, {type(err)}",
+        ) from err
+
+
+@ROUTER.post("/extras/{instrument}/{filename}", tags=["files"])
+async def upload_file_to_instrument_folder(instrument: str, filename: str, file: UploadFile) -> str:
+    """
+    :param instrument: The instrument name
+    :param filename: The name for the uploaded file
+    :param file: The file contents
+    \f
+    :return: String with created filename
+    """
+    # the file path does not exist yet, so do checks with parent directory
+    file_directory = extras_dir / instrument / filename
+
+    # Do a check as we are handling user entered data here
+    try:
+        file_directory.parent.resolve(strict=True)
+        if not file_directory.parent.is_relative_to(extras_dir):
+            raise HTTPException(
+                status_code=HTTPStatus.FORBIDDEN,
+                detail="Invalid path being accessed, instrument folder may not exist, \
+                      use GET /extras for list of valid folders",
+            )
+    except OSError as err:
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN, detail=f"Invalid path being accessed. {err}, {type(err)}"
+        ) from None
+
+    try:
+        contents = await file.read()
+        async with aiofiles.open(file_directory, "wb") as f:
+            await f.write(contents)
+    except PermissionError as err:
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail=f"Permissions denied for the instrument folder {err}",
+        ) from err
+    except Exception as err:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail=f"There was an error uploading the file {err}, {type(err)}",
+        ) from err
+    finally:
+        await file.close()
+
+    return f"Successfully uploaded {filename}"
