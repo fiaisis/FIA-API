@@ -7,7 +7,7 @@ import pytest
 from starlette.testclient import TestClient
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_file():
     file_names: list[str] = ["test_file_1.txt", "test_file_2.png"]
     files: dict[int, any] = {

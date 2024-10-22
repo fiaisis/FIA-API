@@ -5,12 +5,12 @@ Module containing the REST endpoints
 from __future__ import annotations
 
 import os
-from dotenv import load_dotenv
 from http import HTTPStatus
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import aiofiles
+from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.dialects.postgresql import JSONB
