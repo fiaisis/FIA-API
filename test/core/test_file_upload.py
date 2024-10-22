@@ -1,16 +1,33 @@
+import os
+import random
 from http import HTTPStatus
+from pathlib import Path
 
-# from unittest.mock import Mock, patch
+import pytest
 from starlette.testclient import TestClient
 
-from fia_api.fia_api import app
 
-client = TestClient(app)
+@pytest.fixture
+def mock_file():
+    file_names: list[str] = ["test_file_1.txt", "test_file_2.png"]
+    files: dict[int, any] = {
+        0: (file_names[0], b"Insert file content here", "text/plain"),
+        1: (file_names[1], b"Yet another file", "text/plain"),
+    }
 
-# local_instrument_folders: list[str] = [
-#     "alf",
-#     "mari",
-# ]
+    return files[random.randint(0, 1)]  # noqa: S311
+
+
+@pytest.fixture(scope="session")
+def client(tmp_path_factory):
+    tmp_path = tmp_path_factory.mktemp("mock-extras", numbered=False)
+    os.environ["EXTRAS_DIRECTORY"] = str(tmp_path)
+
+    # import app only after setting the env var
+    from fia_api.fia_api import app
+
+    return TestClient(app)
+
 
 instrument_folders: list[str] = [
     "alf",
@@ -50,62 +67,74 @@ instrument_folders: list[str] = [
     "zoom",
 ]
 
-file_names: list[str] = ["test_file_1.txt", "test_file_2.png"]
-files: dict[int, any] = {
-    0: ("testfile.txt", b"Insert file content here", "text/plain"),
-    1: ("testfile_2", b"Yet another file", "text/plain"),
-}
 
-
-def test_read_extras_populated():
+def test_read_extras_empty(client):
+    """Tests the root folder is empty"""
     response = client.get("/extras")
     folders = response.json()
 
+    assert folders == []
     assert response.status_code == HTTPStatus.OK
-    assert folders == instrument_folders
 
 
-def test_read_instrument_empty():
-    response = client.get("/extras/alf")
+def test_read_extras_populated(client):
+    """Tests the root folders is populated (instrument folders exist)"""
+    root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
+    for folder in sorted(instrument_folders):
+        Path(root_folder / folder).mkdir()
+    response = client.get("/extras")
+
+    assert response.status_code == HTTPStatus.OK
+    assert sorted(response.json()) == instrument_folders
+
+
+def test_read_instrument_empty(client):
+    """Tests that a randomly selected instrument folder is empty"""
+    response = client.get(f"/extras/{instrument_folders[0]}")
     instrument_files = response.json()
 
     assert response.status_code == HTTPStatus.OK
     assert instrument_files == []
 
 
-# def test_read_instrument_populated():
-# run manual (redefined) upload with a fake folder /extras/inst
-# then test to see if those files names are present here
+def test_read_instrument_populated(client, mock_file):
+    """Tests if files under instrument folder are read correctly"""
+    root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
+    file_directory = Path(root_folder / instrument_folders[2]) / "filename1"
+    file_directory2 = Path(root_folder / instrument_folders[2]) / "filename2"
+    Path.touch(file_directory)
+    Path.touch(file_directory2)
+    response = client.get(f"/extras/{instrument_folders[2]}")
+
+    assert response.status_code == HTTPStatus.OK
+    assert sorted(response.json()) == sorted([str(file_directory), str(file_directory2)])
 
 
-def test_success_file_upload():
-    file_id = 0
-    upload_file = {"file": files[file_id]}
-    upload_url = f"/extras/mari/{file_names[file_id]}"
+def test_success_file_upload(client, mock_file):
+    """Tests if files are uploaded successfully"""
+    upload_file = {"file": mock_file}
+    upload_url = f"/extras/{instrument_folders[3]}/{mock_file[0]}"
+    response = client.post(upload_url, files=upload_file)
 
-    with TestClient(app) as client:
-        response = client.post(upload_url, files=upload_file)
-        assert response.status_code == HTTPStatus.OK
-        assert response.json() == f"Successfully uploaded {file_names[file_id]}"
-
-
-def test_fail_file_upload_to_non_existent_dir():
-    file_id = 0
-    upload_file = {"file": files[file_id]}
-    upload_url = f"/extras/nonexistent-folder/{file_names[file_id]}"
-
-    with TestClient(app) as client:
-        response = client.post(upload_url, files=upload_file)
-        assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json()["detail"].startswith("Invalid path being accessed")
-        assert response.json()["detail"].rfind("No such file or directory") != -1
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == f"Successfully uploaded {mock_file[0]}"
 
 
-def test_fail_file_upload_to_non_extras():
-    file_id = 1
-    upload_file = {"file": files[file_id]}
-    upload_url = f"/anUnexpectedFolder/mari{file_names[file_id]}"
+def test_fail_file_upload_to_non_existent_dir(client, mock_file):
+    """Tests if uploads to non existent instrument folders are rejected"""
+    upload_file = {"file": mock_file}
+    upload_url = f"/extras/nonexistent-folder/{mock_file[0]}"
+    response = client.post(upload_url, files=upload_file)
 
-    with TestClient(app) as client:
-        response = client.post(upload_url, files=upload_file)
-        assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json()["detail"].startswith("Invalid path being accessed")
+    assert response.json()["detail"].rfind("No such file or directory") != -1
+
+
+def test_fail_file_upload_to_non_extras(client, mock_file):
+    """Tests if uploads to folders not matching EXTRAS_DIRECTORY (base folder) are rejected"""
+    upload_file = {"file": mock_file}
+    upload_url = f"/anUnexpectedFolder/{instrument_folders[6]}/{mock_file[0]}"
+    response = client.post(upload_url, files=upload_file)
+
+    assert response.status_code == HTTPStatus.NOT_FOUND

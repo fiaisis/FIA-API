@@ -4,6 +4,8 @@ Module containing the REST endpoints
 
 from __future__ import annotations
 
+import os
+from dotenv import load_dotenv
 from http import HTTPStatus
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -47,6 +49,12 @@ from fia_api.scripts.pre_script import PreScript
 ROUTER = APIRouter()
 jwt_security = JWTBearer()
 api_key_security = APIKeyBearer()
+
+try:
+    load_dotenv()
+    extras_dir = Path(os.environ["EXTRAS_DIRECTORY"])
+except KeyError:
+    extras_dir = Path("/extras")
 
 
 @ROUTER.get("/healthz", tags=["k8s"])
@@ -294,9 +302,6 @@ async def update_instrument_specification(
     return specification
 
 
-extras_dir = Path("/extras")
-
-
 @ROUTER.get("/extras", tags=["files"])
 async def get_extras_top_level_folders() -> list[str]:
     """
@@ -344,10 +349,13 @@ async def get_instrument_files(instrument: str) -> list[Path]:
 @ROUTER.post("/extras/{instrument}/{filename}", tags=["files"])
 async def upload_file_to_instrument_folder(instrument: str, filename: str, file: UploadFile) -> str:
     """
+    Uploads a file to the instrument folder, prevents access to folder any other
+    directory other than extras and its sub folders.
+
+    \f
     :param instrument: The instrument name
     :param filename: The name for the uploaded file
     :param file: The file contents
-    \f
     :return: String with created filename
     """
     # the file path does not exist yet, so do checks with parent directory
