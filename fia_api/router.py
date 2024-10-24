@@ -264,7 +264,7 @@ async def make_simple_job(
 
 @ROUTER.get("/instrument/{instrument_name}/specification", tags=["instrument"], response_model=None)
 async def get_instrument_specification(
-    instrument_name: str, _: Annotated[HTTPAuthorizationCredentials, Depends(api_key_security)]
+    instrument_name: str, _: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
 ) -> JSONB | None:
     """
     Return the specification for the given instrument
@@ -279,7 +279,7 @@ async def get_instrument_specification(
 async def update_instrument_specification(
     instrument_name: str,
     specification: dict[str, Any],
-    _: Annotated[HTTPAuthorizationCredentials, Depends(api_key_security)],
+    _: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
 ) -> dict[str, Any]:
     """
     Replace the current specification with the given specification for the given instrument
