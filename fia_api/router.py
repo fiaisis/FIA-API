@@ -12,7 +12,6 @@ from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.dialects.postgresql import JSONB
 from starlette.background import BackgroundTasks
 
-from fia_api.core.auth.api_keys import APIKeyBearer
 from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.auth.tokens import JWTBearer, get_user_from_token
 from fia_api.core.job_maker import JobMaker
@@ -44,7 +43,6 @@ from fia_api.scripts.pre_script import PreScript
 
 ROUTER = APIRouter()
 jwt_security = JWTBearer()
-api_key_security = APIKeyBearer()
 
 
 @ROUTER.get("/healthz", tags=["k8s"])
