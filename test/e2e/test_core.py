@@ -512,7 +512,9 @@ def test_get_instrument_specification_bad_api_key():
 
 def test_put_instrument_specification():
     """Test instrument put is updated"""
-    client.put("/instrument/tosca/specification", json={"foo": "bar"}, headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    client.put(
+        "/instrument/tosca/specification", json={"foo": "bar"}, headers={"Authorization": f"Bearer {STAFF_TOKEN}"}
+    )
     response = client.get("/instrument/tosca/specification", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"foo": "bar"}
