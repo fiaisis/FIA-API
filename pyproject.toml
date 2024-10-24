@@ -96,4 +96,3 @@ max-args = 10
 
 [tool.pytest.ini_options]
 required_plugins = "pytest-env"
-env = ["FIA_API_API_KEY=shh"]
