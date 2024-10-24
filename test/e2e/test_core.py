@@ -5,6 +5,7 @@ end-to-end tests
 from http import HTTPStatus
 from unittest.mock import patch
 
+import pytest
 from starlette.testclient import TestClient
 
 from fia_api.fia_api import app
@@ -482,7 +483,7 @@ def test_get_instrument_specification():
     :return:
     """
 
-    response = client.get("/instrument/het/specification", headers={"Authorization": "Bearer shh"})
+    response = client.get("/instrument/het/specification", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"stop": False}
 
@@ -497,14 +498,13 @@ def test_get_instrument_specification_no_api_key_returns_403():
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-def test_get_instrument_specification_bad_api_key_returns_403():
+def test_get_instrument_specification_bad_api_key():
     """
     Test correct spec for instrument returned
     :return:
     """
-
-    response = client.get("/instrument/het/specification", headers={"Authorization": "foo"})
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    with pytest.raises(ConnectionError):
+        client.get("/instrument/het/specification", headers={"Authorization": "foo"})
 
     response = client.get("/instrument/het/specification", headers={"Authorization": "Bearer foo"})
     assert response.status_code == HTTPStatus.FORBIDDEN
@@ -512,8 +512,8 @@ def test_get_instrument_specification_bad_api_key_returns_403():
 
 def test_put_instrument_specification():
     """Test instrument put is updated"""
-    client.put("/instrument/tosca/specification", json={"foo": "bar"}, headers={"Authorization": "Bearer shh"})
-    response = client.get("/instrument/tosca/specification", headers={"Authorization": "Bearer shh"})
+    client.put("/instrument/tosca/specification", json={"foo": "bar"}, headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/instrument/tosca/specification", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"foo": "bar"}
 
