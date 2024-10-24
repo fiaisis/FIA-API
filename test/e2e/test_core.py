@@ -5,7 +5,6 @@ end-to-end tests
 from http import HTTPStatus
 from unittest.mock import patch
 
-import pytest
 from starlette.testclient import TestClient
 
 from fia_api.fia_api import app
@@ -477,18 +476,19 @@ def test_readiness_probes():
     assert response.text == '"ok"'
 
 
-def test_get_instrument_specification():
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_instrument_specification(mock_post):
     """
     Test correct spec for instrument returned
     :return:
     """
-
+    mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get("/instrument/het/specification", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"stop": False}
 
 
-def test_get_instrument_specification_no_api_key_returns_403():
+def test_get_instrument_specification_no_jwt_returns_403():
     """
     Test correct spec for instrument returned
     :return:
@@ -498,20 +498,19 @@ def test_get_instrument_specification_no_api_key_returns_403():
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-def test_get_instrument_specification_bad_api_key():
+def test_get_instrument_specification_bad_jwt():
     """
     Test correct spec for instrument returned
     :return:
     """
-    with pytest.raises(ConnectionError):
-        client.get("/instrument/het/specification", headers={"Authorization": "foo"})
-
-    response = client.get("/instrument/het/specification", headers={"Authorization": "Bearer foo"})
+    response = client.get("/instrument/het/specification", headers={"Authorization": "foo"})
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-def test_put_instrument_specification():
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_put_instrument_specification(mock_post):
     """Test instrument put is updated"""
+    mock_post.return_value.status_code = HTTPStatus.OK
     client.put(
         "/instrument/tosca/specification", json={"foo": "bar"}, headers={"Authorization": f"Bearer {STAFF_TOKEN}"}
     )
