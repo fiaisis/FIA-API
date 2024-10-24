@@ -262,7 +262,7 @@ async def make_simple_job(
 
 @ROUTER.get("/instrument/{instrument_name}/specification", tags=["instrument"], response_model=None)
 async def get_instrument_specification(
-    instrument_name: str, _: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
+    instrument_name: str, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
 ) -> JSONB | None:
     """
     Return the specification for the given instrument
@@ -270,6 +270,10 @@ async def get_instrument_specification(
     :param instrument_name: The instrument
     :return: The specification
     """
+    user = get_user_from_token(credentials.credentials)
+    if user.role != "staff":
+        # If not staff this is not allowed
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
     return get_specification_by_instrument_name(instrument_name.upper())
 
 
@@ -277,7 +281,7 @@ async def get_instrument_specification(
 async def update_instrument_specification(
     instrument_name: str,
     specification: dict[str, Any],
-    _: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
 ) -> dict[str, Any]:
     """
     Replace the current specification with the given specification for the given instrument
@@ -286,5 +290,9 @@ async def update_instrument_specification(
     :param specification: The new specification
     :return: The new specification
     """
+    user = get_user_from_token(credentials.credentials)
+    if user.role != "staff":
+        # If not staff this is not allowed
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
     update_specification_for_instrument(instrument_name.upper(), specification)
     return specification
