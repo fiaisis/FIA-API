@@ -7,7 +7,7 @@ import pytest
 from starlette.testclient import TestClient
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_file():
     file_names: list[str] = ["test_file_1.txt", "test_file_2.png"]
     files: dict[int, any] = {
@@ -97,13 +97,16 @@ def test_read_instrument_empty(client):
     assert instrument_files == []
 
 
-def test_read_instrument_populated(client, mock_file):
+def test_read_instrument_populated(client):
     """Tests if files under instrument folder are read correctly"""
     root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
+    # Insert two files (creating directories and files)
     file_directory = Path(root_folder / instrument_folders[2]) / "filename1"
     file_directory2 = Path(root_folder / instrument_folders[2]) / "filename2"
+    file_directory.mkdir(parents=True, exist_ok=True)
     Path.touch(file_directory)
     Path.touch(file_directory2)
+    # check contents of the instrument folder
     response = client.get(f"/extras/{instrument_folders[2]}")
 
     assert response.status_code == HTTPStatus.OK
