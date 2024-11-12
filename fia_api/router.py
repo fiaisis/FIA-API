@@ -50,6 +50,7 @@ ROUTER = APIRouter()
 jwt_security = JWTBearer()
 api_key_security = APIKeyBearer()
 
+# HUMZAH consider moving this to /extras
 try:
     load_dotenv()
     extras_dir = Path(os.environ["EXTRAS_DIRECTORY"])
@@ -310,6 +311,7 @@ async def get_extras_top_level_folders() -> list[str]:
     :return: List of folders
     """
     root_directory = extras_dir
+    print("APILOG: THE ROOT DIRECTORY IS:", root_directory)
     if not root_directory.exists():
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=f"Extras directory ({extras_dir}) not found")
 
@@ -325,6 +327,8 @@ async def get_instrument_files(instrument: str) -> list[Path]:
     :return: List of files within an instrument folder
     """
     instrument_directory = extras_dir / instrument
+    root_directory = extras_dir
+    print("APILOG: THE ROOT DIRECTORY IS:", root_directory)
     # Do a check as we are handling user entered data here
     try:
         instrument_directory.resolve(strict=True)
@@ -360,6 +364,8 @@ async def upload_file_to_instrument_folder(instrument: str, filename: str, file:
     """
     # the file path does not exist yet, so do checks with parent directory
     file_directory = extras_dir / instrument / filename
+    root_directory = extras_dir
+    print("APILOG: THE ROOT DIRECTORY IS:", root_directory)
 
     # Do a check as we are handling user entered data here
     try:
