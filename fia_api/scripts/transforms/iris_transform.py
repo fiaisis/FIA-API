@@ -45,12 +45,6 @@ class IrisTransform(Transform):
             if line.startswith("reflection = "):
                 lines[index] = f"reflection = \"{job.inputs['reflection']}\""  # type: ignore
                 continue
-            if line.startswith("spectroscopy_reduction ="):
-                lines[index] = f"spectroscopy_reduction = {job.inputs['spectroscopy_reduction'] == 'true'}"  # type: ignore
-                continue
-            if line.startswith("diffraction_reduction = "):
-                lines[index] = f"diffraction_reduction = {job.inputs['diffraction_reduction'] == 'true'}"  # type: ignore
-                continue
 
         script.value = "\n".join(lines)
         logger.info("Transform complete for job %s", job.id)
