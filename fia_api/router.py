@@ -9,8 +9,6 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-import aiofiles
-from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.dialects.postgresql import JSONB
@@ -19,6 +17,7 @@ from starlette.background import BackgroundTasks
 from fia_api.core.auth.api_keys import APIKeyBearer
 from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.auth.tokens import JWTBearer, get_user_from_token
+from fia_api.core.file_ops import read_dir, write_file_from_remote
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.repositories import test_connection
 from fia_api.core.responses import (
@@ -39,6 +38,7 @@ from fia_api.core.services.job import (
     get_job_by_instrument,
     job_maker,
 )
+from fia_api.core.utility import safe_check_filepath
 from fia_api.scripts.acquisition import (
     get_script_by_sha,
     get_script_for_job,
@@ -49,13 +49,6 @@ from fia_api.scripts.pre_script import PreScript
 ROUTER = APIRouter()
 jwt_security = JWTBearer()
 api_key_security = APIKeyBearer()
-
-# HUMZAH consider moving this to /extras
-try:
-    load_dotenv()
-    extras_dir = Path(os.environ["EXTRAS_DIRECTORY"])
-except KeyError:
-    extras_dir = Path("/extras")
 
 
 @ROUTER.get("/healthz", tags=["k8s"])
@@ -310,44 +303,23 @@ async def get_extras_top_level_folders() -> list[str]:
     \f
     :return: List of folders
     """
-    root_directory = extras_dir
-    print("APILOG: THE ROOT DIRECTORY IS:", root_directory)
-    if not root_directory.exists():
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=f"Extras directory ({extras_dir}) not found")
-
-    return [directory.stem for directory in root_directory.glob("*")]
+    root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
+    return read_dir(root_directory)
 
 
-@ROUTER.get("/extras/{instrument}", tags=["files"])
-async def get_instrument_files(instrument: str) -> list[Path]:
+@ROUTER.get("/extras/{subfolder}", tags=["files"])
+async def get_subfolder_files_list(subdir: str) -> list[Path]:
     """
-    Returns a list of files within an instrument folder. Directs users to use the /extras endpoint if folder not found
+    Returns a list of files within a sub_folder. Directs users to use the /extras endpoint if folder not found
 
-    \f
-    :return: List of files within an instrument folder
+    :param subdir: The subdir to return the contents of
+    :return: List of files within a subdir
     """
-    instrument_directory = extras_dir / instrument
-    root_directory = extras_dir
-    print("APILOG: THE ROOT DIRECTORY IS:", root_directory)
-    # Do a check as we are handling user entered data here
-    try:
-        instrument_directory.resolve(strict=True)
-        if not instrument_directory.is_relative_to(extras_dir):
-            raise HTTPException(
-                status_code=HTTPStatus.FORBIDDEN,
-                detail="Invalid path being accessed, instrument folder may not exist, \
-                      use GET /extras for list of valid folders",
-            )
-    except OSError:
-        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed.") from None
+    root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
+    subdir_path = root_directory / subdir
+    safe_check_filepath(root_directory, subdir_path)
 
-    try:
-        return list(instrument_directory.glob("*"))
-    except Exception as err:
-        raise HTTPException(
-            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=f"There was an error returning the files {err}, {type(err)}",
-        ) from err
+    return read_dir(subdir_path)
 
 
 @ROUTER.post("/extras/{instrument}/{filename}", tags=["files"])
@@ -363,39 +335,10 @@ async def upload_file_to_instrument_folder(instrument: str, filename: str, file:
     :return: String with created filename
     """
     # the file path does not exist yet, so do checks with parent directory
-    file_directory = extras_dir / instrument / filename
-    root_directory = extras_dir
-    print("APILOG: THE ROOT DIRECTORY IS:", root_directory)
+    root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
+    file_directory = root_directory / instrument / filename
+    safe_check_filepath(root_directory, file_directory)
 
-    # Do a check as we are handling user entered data here
-    try:
-        file_directory.parent.resolve(strict=True)
-        if not file_directory.parent.is_relative_to(extras_dir):
-            raise HTTPException(
-                status_code=HTTPStatus.FORBIDDEN,
-                detail="Invalid path being accessed, instrument folder may not exist, \
-                      use GET /extras for list of valid folders",
-            )
-    except OSError as err:
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN, detail=f"Invalid path being accessed. {err}, {type(err)}"
-        ) from None
-
-    try:
-        contents = await file.read()
-        async with aiofiles.open(file_directory, "wb") as f:
-            await f.write(contents)
-    except PermissionError as err:
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN,
-            detail=f"Permissions denied for the instrument folder {err}",
-        ) from err
-    except Exception as err:
-        raise HTTPException(
-            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=f"There was an error uploading the file {err}, {type(err)}",
-        ) from err
-    finally:
-        await file.close()
+    await write_file_from_remote(file, file_directory)
 
     return f"Successfully uploaded {filename}"

@@ -2,38 +2,38 @@ import os
 import random
 from http import HTTPStatus
 from pathlib import Path
-import shutil
-from importlib import reload
+
 import pytest
 from starlette.testclient import TestClient
 
+from fia_api.fia_api import app
 
-@pytest.fixture()
-def mock_file():
-    file_names: list[str] = ["test_file_1.txt", "test_file_2.png"]
-    files: dict[int, any] = {
-        0: (file_names[0], b"Insert file content here", "text/plain"),
-        1: (file_names[1], b"Yet another file", "text/plain"),
-    }
-
-    return files[random.randint(0, 1)]  # noqa: S311
+client = TestClient(app)
 
 
 @pytest.fixture
-def client(permissive_tmp_path, monkeypatch, autouse=True):
-    # tmp_path = tmp_path_factory.mktemp("mock-extras", numbered=True)
-    # APILOG: THE ROOT DIRECTORY IS: /tmp/pytest-of-tuz58699/pytest-16/test_read_extras_empty0
-    # IT NEVER UPDATES
-    # os.environ["EXTRAS_DIRECTORY"] = str(permissive_tmp_path)
-    monkeypatch.setenv("EXTRAS_DIRECTORY", str(permissive_tmp_path))
-    from fia_api.fia_api import app
-
-    yield TestClient(app=app)
-    if "EXTRAS_DIRECTORY" in os.environ:
-        del os.environ["EXTRAS_DIRECTORY"]
+def mock_file():
+    file_names = ["test_file_1.txt", "test_file_2.png"]
+    files = {
+        0: (file_names[0], b"Insert file content here", "text/plain"),
+        1: (file_names[1], b"Yet another file", "text/plain"),
+    }
+    return files[random.randint(0, 1)]  # noqa: S311
 
 
-instrument_folders: list[str] = [
+@pytest.fixture(autouse=True)
+def _setup_env(monkeypatch, tmp_path):
+    monkeypatch.setenv("EXTRAS_DIRECTORY", str(tmp_path))
+
+
+@pytest.fixture
+def _setup_inst_folder(tmp_path):
+    for instrument_folder in sorted(instrument_folders):
+        path = tmp_path / instrument_folder
+        path.mkdir(parents=True, exist_ok=True)
+
+
+instrument_folders = [
     "alf",
     "argus",
     "chipir",
@@ -72,61 +72,26 @@ instrument_folders: list[str] = [
 ]
 
 
-# @pytest.fixture(autouse=True)
-# def test_temp_directory_is_empty():
-#     # Assert that the temporary directory is empty
-#     assert not any(str(os.environ["EXTRAS_DIRECTORY"]).iterdir()), "Temporary directory is not clean!"
-
-#     # # Write something to ensure it's usable
-#     # temp_file = tmp_path / "tempfile.txt"
-#     # temp_file.write_text("Checking isolation!")
-#     # assert temp_file.read_text() == "Checking isolation!"
-
-
-@pytest.fixture
-def permissive_tmp_path(tmp_path):
-    tmp_path.chmod(0o775)
-    tmp_path.parent.chmod(0o775)
-    return tmp_path
-
-
-def test_read_extras_populated(client):
+@pytest.mark.usefixtures("_setup_inst_folder")
+def test_read_extras_populated(tmp_path):
     """Tests the root folders is populated (instrument folders exist)"""
-    root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
-    print("\n root folder in test_read_extras_populated is: ", root_folder)
-
-    print("it contains", os.listdir(root_folder))
-    for folder in sorted(instrument_folders):
-        Path(root_folder / folder).mkdir(parents=True, exist_ok=True)
-
     response = client.get("/extras")
-    print("post test pre assert contains", os.listdir(root_folder))
-    # print(response.json())
-    # print(instrument_folders)
-    assert True == False
+
     assert response.status_code == HTTPStatus.OK
     assert sorted(response.json()) == instrument_folders
 
 
-def test_read_extras_empty(client):
+def test_read_extras_empty():
     """Tests the root folder is empty"""
     root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
-    print("root folder in test_read_extras_empty ", root_folder)
     response = client.get("/extras")
     folders = response.json()
     root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
-    print("root folder is in extras empty", root_folder)
-
-    # '/tmp/pytest-...0/mock-extras
-    # assert os.environ["EXTRAS_DIRECTORY"] == "temp dir keep track"
-
-    # assert os.listdir(Path(os.environ["EXTRAS_DIRECTORY"])) == "This is the actual folders"
-    assert True == False
     assert folders == []
     assert response.status_code == HTTPStatus.OK
 
 
-def test_read_instrument_empty(client):
+def test_read_instrument_empty():
     """Tests that a randomly selected instrument folder is empty"""
     root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
     print("\n root folder in test_read_instrument_empty is: ", root_folder)
@@ -137,7 +102,7 @@ def test_read_instrument_empty(client):
     assert instrument_files == []
 
 
-def test_read_instrument_populated(client):
+def test_read_instrument_populated():
     """Tests if files under instrument folder are read correctly"""
     root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
     print("\n root folder in test_read_instrument_populated is: ", root_folder)
@@ -155,7 +120,7 @@ def test_read_instrument_populated(client):
     assert sorted(response.json()) == sorted([str(file_directory), str(file_directory2)])
 
 
-def test_success_file_upload(client, mock_file):
+def test_success_file_upload(mock_file):
     """Tests if files are uploaded successfully"""
     root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
     print("\n root folder in test_success_file_upload is: ", root_folder)
@@ -168,7 +133,7 @@ def test_success_file_upload(client, mock_file):
     assert response.json() == f"Successfully uploaded {mock_file[0]}"
 
 
-def test_fail_file_upload_to_non_existent_dir(client, mock_file):
+def test_fail_file_upload_to_non_existent_dir(mock_file):
     """Tests if uploads to non existent instrument folders are rejected"""
     root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
     print("\n root folder in test_fail_file_upload_to_non_existent_dir is: ", root_folder)
@@ -182,7 +147,7 @@ def test_fail_file_upload_to_non_existent_dir(client, mock_file):
     assert response.json()["detail"].rfind("No such file or directory") != -1
 
 
-def test_fail_file_upload_to_non_extras(client, mock_file):
+def test_fail_file_upload_to_non_extras(mock_file):
     """Tests if uploads to folders not matching EXTRAS_DIRECTORY (base folder) are rejected"""
     root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
     print("\n root folder in test_fail_file_upload_to_non_extras is: ", root_folder)
