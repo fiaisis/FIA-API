@@ -11,7 +11,7 @@ from fia_api.fia_api import app
 client = TestClient(app)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_file():
     file_names = ["test_file_1.txt", "test_file_2.png"]
     files = {
@@ -26,7 +26,7 @@ def _setup_env(monkeypatch, tmp_path):
     monkeypatch.setenv("EXTRAS_DIRECTORY", str(tmp_path))
 
 
-@pytest.fixture
+@pytest.fixture()
 def _setup_inst_folder(tmp_path):
     for instrument_folder in sorted(instrument_folders):
         path = tmp_path / instrument_folder
