@@ -83,29 +83,24 @@ def test_read_extras_populated(tmp_path):
 
 def test_read_extras_empty():
     """Tests the root folder is empty"""
-    root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
     response = client.get("/extras")
     folders = response.json()
-    root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
     assert folders == []
     assert response.status_code == HTTPStatus.OK
 
 
+@pytest.mark.usefixtures("_setup_inst_folder")
 def test_read_instrument_empty():
     """Tests that a randomly selected instrument folder is empty"""
-    root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
-    print("\n root folder in test_read_instrument_empty is: ", root_folder)
     response = client.get(f"/extras/{instrument_folders[0]}")
     instrument_files = response.json()
-    assert True == False
-    assert response.status_code == HTTPStatus.OK
     assert instrument_files == []
+    assert response.status_code == HTTPStatus.OK
 
 
 def test_read_instrument_populated():
     """Tests if files under instrument folder are read correctly"""
     root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
-    print("\n root folder in test_read_instrument_populated is: ", root_folder)
     # Insert two files (creating directories and files)
     file_directory = Path(root_folder / instrument_folders[2]) / "filename1"
     file_directory2 = Path(root_folder / instrument_folders[2]) / "filename2"
@@ -114,46 +109,36 @@ def test_read_instrument_populated():
     Path.touch(file_directory2)
     # check contents of the instrument folder
     response = client.get(f"/extras/{instrument_folders[2]}")
-    assert True == False
 
     assert response.status_code == HTTPStatus.OK
-    assert sorted(response.json()) == sorted([str(file_directory), str(file_directory2)])
+    assert sorted(response.json()) == sorted([str(file_directory.stem), str(file_directory2.stem)])
 
 
+@pytest.mark.usefixtures("_setup_inst_folder")
 def test_success_file_upload(mock_file):
     """Tests if files are uploaded successfully"""
-    root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
-    print("\n root folder in test_success_file_upload is: ", root_folder)
     upload_file = {"file": mock_file}
     upload_url = f"/extras/{instrument_folders[3]}/{mock_file[0]}"
     response = client.post(upload_url, files=upload_file)
-    assert True == False
 
-    assert response.status_code == HTTPStatus.OK
     assert response.json() == f"Successfully uploaded {mock_file[0]}"
+    assert response.status_code == HTTPStatus.OK
 
 
 def test_fail_file_upload_to_non_existent_dir(mock_file):
     """Tests if uploads to non existent instrument folders are rejected"""
-    root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
-    print("\n root folder in test_fail_file_upload_to_non_existent_dir is: ", root_folder)
     upload_file = {"file": mock_file}
     upload_url = f"/extras/nonexistent-folder/{mock_file[0]}"
     response = client.post(upload_url, files=upload_file)
-    assert True == False
 
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json()["detail"].startswith("Invalid path being accessed")
-    assert response.json()["detail"].rfind("No such file or directory") != -1
 
 
 def test_fail_file_upload_to_non_extras(mock_file):
     """Tests if uploads to folders not matching EXTRAS_DIRECTORY (base folder) are rejected"""
-    root_folder = Path(os.environ["EXTRAS_DIRECTORY"])
-    print("\n root folder in test_fail_file_upload_to_non_extras is: ", root_folder)
     upload_file = {"file": mock_file}
     upload_url = f"/anUnexpectedFolder/{instrument_folders[6]}/{mock_file[0]}"
     response = client.post(upload_url, files=upload_file)
-    assert True == False
 
     assert response.status_code == HTTPStatus.NOT_FOUND

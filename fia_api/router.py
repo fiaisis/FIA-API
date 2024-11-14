@@ -317,7 +317,7 @@ async def get_subfolder_files_list(subdir: str) -> list[Path]:
     """
     root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
     subdir_path = root_directory / subdir
-    safe_check_filepath(root_directory, subdir_path)
+    safe_check_filepath(subdir_path, root_directory)
 
     return read_dir(subdir_path)
 
@@ -337,7 +337,7 @@ async def upload_file_to_instrument_folder(instrument: str, filename: str, file:
     # the file path does not exist yet, so do checks with parent directory
     root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
     file_directory = root_directory / instrument / filename
-    safe_check_filepath(root_directory, file_directory)
+    safe_check_filepath(file_directory, root_directory)
 
     await write_file_from_remote(file, file_directory)
 

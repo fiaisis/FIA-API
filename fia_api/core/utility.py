@@ -47,6 +47,13 @@ def safe_check_filepath(filepath: Path, base_path: Path) -> None:
     :param base_path: base path to check against
     :return:
     """
-    filepath.resolve(strict=True)
-    if not filepath.is_relative_to(base_path):
-        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed.")
+    try:
+        filepath.resolve(strict=True)
+        if not filepath.is_relative_to(base_path):
+            raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed.")
+    except FileNotFoundError as err:
+        # pathlibs is_file and is_dir do not work on non existent paths
+        if "." in filepath.name:
+            safe_check_filepath(filepath.parent, base_path)
+        else:
+            raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed.") from err
