@@ -5,6 +5,7 @@ Tests for the transform factory function
 import pytest
 
 from fia_api.scripts.transforms.factory import get_transform_for_instrument
+from fia_api.scripts.transforms.iris_transform import IrisTransform
 from fia_api.scripts.transforms.mari_transforms import MariTransform
 from fia_api.scripts.transforms.osiris_transform import OsirisTransform
 from fia_api.scripts.transforms.test_transforms import TestTransform
@@ -19,6 +20,7 @@ from fia_api.scripts.transforms.transform import MissingTransformError
         ("tosca", ToscaTransform),
         ("test", TestTransform),
         ("osiris", OsirisTransform),
+        ("iris", IrisTransform),
     ],
 )
 def test_transform_factory(name, expected_transform):
