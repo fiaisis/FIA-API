@@ -28,7 +28,8 @@ instrument = "IRIS"
 instrument_definition_directory = ConfigService.Instance().getString("instrumentDefinition.directory")
 instrument_filename = instrument_definition_directory + instrument + "_Definition.xml"
 instrument_workspace = LoadEmptyInstrument(Filename=instrument_filename, OutputWorkspace="instrument_workspace")
-parameter_filename = instrument_definition_directory + instrument + "_" + analyser + "_" + reflection + "_Parameters.xml"
+parameter_filename = instrument_definition_directory + instrument + "_" + analyser + "_" + reflection \
+    + "_Parameters.xml"
 parameter_file = LoadParameterFile(Filename=parameter_filename, Workspace="instrument_workspace")
 efixed = instrument_workspace.getInstrument().getComponentByName(analyser).getNumberParameter("Efixed")[0]
 spec_spectra_range = "3,53"
@@ -153,7 +154,8 @@ instrument = "IRIS"
 instrument_definition_directory = ConfigService.Instance().getString("instrumentDefinition.directory")
 instrument_filename = instrument_definition_directory + instrument + "_Definition.xml"
 instrument_workspace = LoadEmptyInstrument(Filename=instrument_filename, OutputWorkspace="instrument_workspace")
-parameter_filename = instrument_definition_directory + instrument + "_" + analyser + "_" + reflection + "_Parameters.xml"
+parameter_filename = instrument_definition_directory + instrument + "_" + analyser + "_" + reflection \
+    + "_Parameters.xml"
 parameter_file = LoadParameterFile(Filename=parameter_filename, Workspace="instrument_workspace")
 efixed = instrument_workspace.getInstrument().getComponentByName(analyser).getNumberParameter("Efixed")[0]
 spec_spectra_range = "3,53"
