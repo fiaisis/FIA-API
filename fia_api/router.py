@@ -304,6 +304,7 @@ async def get_extras_top_level_folders() -> list[str]:
     :return: List of folders
     """
     root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
+    safe_check_filepath(root_directory, root_directory)
     return read_dir(root_directory)
 
 
