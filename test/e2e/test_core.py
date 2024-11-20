@@ -5,7 +5,6 @@ end-to-end tests
 from http import HTTPStatus
 from unittest.mock import patch
 
-import requests
 from starlette.testclient import TestClient
 
 from fia_api.fia_api import app
