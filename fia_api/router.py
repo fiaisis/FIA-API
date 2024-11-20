@@ -4,15 +4,15 @@ Module containing the REST endpoints
 
 from __future__ import annotations
 
+import os
 from http import HTTPStatus
 from typing import Annotated, Any, Literal
-import os
 
+import requests
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.dialects.postgresql import JSONB
 from starlette.background import BackgroundTasks
-import requests
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.auth.tokens import JWTBearer, get_user_from_token
@@ -318,7 +318,7 @@ def get_packages(org, image_name):
 
 @ROUTER.get("/jobs/runner_versions", tags=["jobs"])
 async def get_mantid_runner_versions(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
 ) -> list[str]:
     """Return a list of Mantid versions if user is authenticated."""
     user = get_user_from_token(credentials.credentials)
