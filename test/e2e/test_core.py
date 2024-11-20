@@ -5,6 +5,7 @@ end-to-end tests
 from http import HTTPStatus
 from unittest.mock import patch
 
+import requests
 from starlette.testclient import TestClient
 
 from fia_api.fia_api import app
@@ -524,3 +525,33 @@ def test_put_instrument_specification_no_api_key():
     client.put("/instrument/het/specification", json={"foo": "bar"})
     response = client.get("/instrument/het/specification")
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@patch("fia_api.routers.jobs.requests.get")
+def test_get_mantid_runner_versions_success(mock_get):
+    """Test successful retrieval of Mantid runner versions."""
+    mock_response = {"metadata": {"container": {"tags": ["6.11.0", "6.10.0"]}}}
+    mock_get.return_value.status_code = HTTPStatus.OK
+    mock_get.return_value.json.return_value = [mock_response]
+
+    response = client.get("/jobs/runner_versions", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == ["6.11.0", "6.10.0"]
+
+
+@patch("fia_api.routers.jobs.requests.get")
+def test_get_mantid_runner_versions_no_auth():
+    """Test accessing the endpoint without authentication."""
+    response = client.get("/jobs/runner_versions")
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@patch("fia_api.routers.jobs.requests.get")
+def test_get_mantid_runner_versions_api_error(mock_get):
+    """Test handling GitHub API errors."""
+    mock_get.return_value.status_code = 500
+    mock_get.return_value.text = "Internal Server Error"
+
+    response = client.get("/jobs/runner_versions", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "GitHub API request failed" in response.json()["detail"]
