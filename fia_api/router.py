@@ -328,6 +328,3 @@ async def get_mantid_runner_versions(
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="User is not authorized to access this endpoint")
 
     data = get_packages(org="fiaisis", image_name="mantid")
-    versions = [str(tag) for item in data for tag in item.get("metadata", {}).get("container", {}).get("tags", [])]
-
-    return versions
