@@ -526,7 +526,7 @@ def test_put_instrument_specification_no_api_key():
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-@patch("fia_api.routers.jobs.requests.get")
+@patch("fia_api.router.requests.get")
 def test_get_mantid_runner_versions_success(mock_get):
     """Test successful retrieval of Mantid runner versions."""
     mock_response = {"metadata": {"container": {"tags": ["6.11.0", "6.10.0"]}}}
@@ -538,14 +538,14 @@ def test_get_mantid_runner_versions_success(mock_get):
     assert response.json() == ["6.11.0", "6.10.0"]
 
 
-@patch("fia_api.routers.jobs.requests.get")
+@patch("fia_api.router.requests.get")
 def test_get_mantid_runner_versions_no_auth():
     """Test accessing the endpoint without authentication."""
     response = client.get("/jobs/runner_versions")
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-@patch("fia_api.routers.jobs.requests.get")
+@patch("fia_api.router.requests.get")
 def test_get_mantid_runner_versions_api_error(mock_get):
     """Test handling GitHub API errors."""
     mock_get.return_value.status_code = 500
