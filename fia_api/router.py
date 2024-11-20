@@ -308,7 +308,7 @@ def get_packages(org, image_name):
         headers={"Authorization": f"Bearer {PACKAGE_TOKEN}"},
         timeout=10,
     )
-    if response.status_code != 200:
+    if response.status_code != requests.codes.ok:
         raise HTTPException(
             status_code=response.status_code,
             detail=f"GitHub API request failed with status code {response.status_code}: {response.text}",
