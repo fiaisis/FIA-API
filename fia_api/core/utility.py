@@ -56,4 +56,6 @@ def safe_check_filepath(filepath: Path, base_path: Path) -> None:
         if "." in filepath.name:
             safe_check_filepath(filepath.parent, base_path)
         else:
-            raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed.") from err
+            raise HTTPException(
+                status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed and file not found."
+            ) from err
