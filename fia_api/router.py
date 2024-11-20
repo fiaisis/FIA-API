@@ -6,17 +6,16 @@ from __future__ import annotations
 
 import os
 from http import HTTPStatus
-from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+import requests
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.dialects.postgresql import JSONB
 from starlette.background import BackgroundTasks
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.auth.tokens import JWTBearer, get_user_from_token
-from fia_api.core.file_ops import read_dir, write_file_from_remote
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.repositories import test_connection
 from fia_api.core.responses import (
@@ -37,7 +36,6 @@ from fia_api.core.services.job import (
     get_job_by_instrument,
     job_maker,
 )
-from fia_api.core.utility import safe_check_filepath
 from fia_api.scripts.acquisition import (
     get_script_by_sha,
     get_script_for_job,
@@ -47,6 +45,7 @@ from fia_api.scripts.pre_script import PreScript
 
 ROUTER = APIRouter()
 jwt_security = JWTBearer()
+PACKAGE_TOKEN = os.environ.get("PACKAGE_TOKEN", "shh")
 
 
 @ROUTER.get("/healthz", tags=["k8s"])
@@ -302,50 +301,31 @@ async def update_instrument_specification(
     return specification
 
 
-@ROUTER.get("/extras", tags=["files"])
-async def get_extras_top_level_folders() -> list[str]:
-    """
-    Returns top level folders in the extras directory
-    \f
-    :return: List of folders
-    """
-    root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
-    safe_check_filepath(root_directory, root_directory)
-    return read_dir(root_directory)
+def get_packages(org: str, image_name: str) -> Any:
+    """Helper function for getting package versions from GitHub."""
+    response = requests.get(
+        f"https://api.github.com/orgs/{org}/packages/container/{image_name}/versions",
+        headers={"Authorization": f"Bearer {PACKAGE_TOKEN}"},
+        timeout=10,
+    )
+    if response.status_code != HTTPStatus.OK:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"GitHub API request failed with status code {response.status_code}: {response.text}",
+        )
+    return response.json()
 
 
-@ROUTER.get("/extras/{subdir}", tags=["files"])
-async def get_subfolder_files_list(subdir: str) -> list[str]:
-    """
-    Returns a list of files within a sub_folder. Directs users to use the /extras endpoint if folder not found
+@ROUTER.get("/jobs/runner_versions", tags=["jobs"])
+async def get_mantid_runner_versions(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+) -> list[str]:
+    """Return a list of Mantid versions if user is authenticated."""
+    user = get_user_from_token(credentials.credentials)
 
-    :param subdir: The subdir to return the contents of
-    :return: List of files within a subdir
-    """
-    root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
-    subdir_path = root_directory / subdir
-    safe_check_filepath(subdir_path, root_directory)
+    if user.role is None or user.user_number is None:
+        # Must be logged in to do this
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="User is not authorized to access this endpoint")
 
-    return read_dir(subdir_path)
-
-
-@ROUTER.post("/extras/{instrument}/{filename}", tags=["files"])
-async def upload_file_to_instrument_folder(instrument: str, filename: str, file: UploadFile) -> str:
-    """
-    Uploads a file to the instrument folder, prevents access to folder any other
-    directory other than extras and its sub folders.
-
-    \f
-    :param instrument: The instrument name
-    :param filename: The name for the uploaded file
-    :param file: The file contents
-    :return: String with created filename
-    """
-    # the file path does not exist yet, so do checks with parent directory
-    root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
-    file_directory = root_directory / instrument / filename
-    safe_check_filepath(file_directory, root_directory)
-
-    await write_file_from_remote(file, file_directory)
-
-    return f"Successfully uploaded {filename}"
+    data = get_packages(org="fiaisis", image_name="mantid")
+    return [str(tag) for item in data for tag in item.get("metadata", {}).get("container", {}).get("tags", [])]
