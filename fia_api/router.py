@@ -9,6 +9,7 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
+import requests
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.dialects.postgresql import JSONB
@@ -47,6 +48,7 @@ from fia_api.scripts.pre_script import PreScript
 
 ROUTER = APIRouter()
 jwt_security = JWTBearer()
+PACKAGE_TOKEN = os.environ.get("PACKAGE_TOKEN", "shh")
 
 
 @ROUTER.get("/healthz", tags=["k8s"])
@@ -349,3 +351,33 @@ async def upload_file_to_instrument_folder(instrument: str, filename: str, file:
     await write_file_from_remote(file, file_directory)
 
     return f"Successfully uploaded {filename}"
+
+
+def get_packages(org: str, image_name: str) -> Any:
+    """Helper function for getting package versions from GitHub."""
+    response = requests.get(
+        f"https://api.github.com/orgs/{org}/packages/container/{image_name}/versions",
+        headers={"Authorization": f"Bearer {PACKAGE_TOKEN}"},
+        timeout=10,
+    )
+    if response.status_code != HTTPStatus.OK:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"GitHub API request failed with status code {response.status_code}: {response.text}",
+        )
+    return response.json()
+
+
+@ROUTER.get("/jobs/runner_versions", tags=["jobs"])
+async def get_mantid_runner_versions(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+) -> list[str]:
+    """Return a list of Mantid versions if user is authenticated."""
+    user = get_user_from_token(credentials.credentials)
+
+    if user.role is None or user.user_number is None:
+        # Must be logged in to do this
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="User is not authorized to access this endpoint")
+
+    data = get_packages(org="fiaisis", image_name="mantid")
+    return [str(tag) for item in data for tag in item.get("metadata", {}).get("container", {}).get("tags", [])]
