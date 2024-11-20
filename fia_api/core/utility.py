@@ -2,7 +2,11 @@
 
 import functools
 from collections.abc import Callable
+from http import HTTPStatus
+from pathlib import Path
 from typing import Any, TypeVar, cast
+
+from fastapi import HTTPException
 
 from fia_api.core.exceptions import UnsafePathError
 
@@ -34,3 +38,24 @@ def filter_script_for_tokens(script: str) -> str:
     ]
 
     return "\n".join(filtered_script_list)
+
+
+def safe_check_filepath(filepath: Path, base_path: Path) -> None:
+    """
+    Check to ensure the path does contain the base path and that it does not resolve to some other directory
+    :param filepath: the filepath to check
+    :param base_path: base path to check against
+    :return:
+    """
+    try:
+        filepath.resolve(strict=True)
+        if not filepath.is_relative_to(base_path):
+            raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed.")
+    except FileNotFoundError as err:
+        # pathlibs is_file and is_dir do not work on non existent paths
+        if "." in filepath.name:
+            safe_check_filepath(filepath.parent, base_path)
+        else:
+            raise HTTPException(
+                status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed and file not found."
+            ) from err

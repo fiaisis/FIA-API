@@ -4,16 +4,19 @@ Module containing the REST endpoints
 
 from __future__ import annotations
 
+import os
 from http import HTTPStatus
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.dialects.postgresql import JSONB
 from starlette.background import BackgroundTasks
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.auth.tokens import JWTBearer, get_user_from_token
+from fia_api.core.file_ops import read_dir, write_file_from_remote
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.repositories import test_connection
 from fia_api.core.responses import (
@@ -34,6 +37,7 @@ from fia_api.core.services.job import (
     get_job_by_instrument,
     job_maker,
 )
+from fia_api.core.utility import safe_check_filepath
 from fia_api.scripts.acquisition import (
     get_script_by_sha,
     get_script_for_job,
@@ -296,3 +300,52 @@ async def update_instrument_specification(
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
     update_specification_for_instrument(instrument_name.upper(), specification)
     return specification
+
+
+@ROUTER.get("/extras", tags=["files"])
+async def get_extras_top_level_folders() -> list[str]:
+    """
+    Returns top level folders in the extras directory
+    \f
+    :return: List of folders
+    """
+    root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
+    safe_check_filepath(root_directory, root_directory)
+    return read_dir(root_directory)
+
+
+@ROUTER.get("/extras/{subdir}", tags=["files"])
+async def get_subfolder_files_list(subdir: str) -> list[str]:
+    """
+    Returns a list of files within a sub_folder. Directs users to use the /extras endpoint if folder not found
+
+    :param subdir: The subdir to return the contents of
+    :return: List of files within a subdir
+    """
+    root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
+    subdir_path = root_directory / subdir
+    safe_check_filepath(subdir_path, root_directory)
+
+    return read_dir(subdir_path)
+
+
+@ROUTER.post("/extras/{instrument}/{filename}", tags=["files"])
+async def upload_file_to_instrument_folder(instrument: str, filename: str, file: UploadFile) -> str:
+    """
+    Uploads a file to the instrument folder, prevents access to folder any other
+    directory other than extras and its sub folders.
+
+    \f
+    :param instrument: The instrument name
+    :param filename: The name for the uploaded file
+    :param file: The file contents
+    :return: String with created filename
+    """
+    # the file path does not exist yet, so do checks with parent directory
+    root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
+    file_directory = root_directory / instrument / filename
+    safe_check_filepath(file_directory, root_directory)
+
+    await write_file_from_remote(file, file_directory)
+
+    return f"Successfully uploaded {filename}"

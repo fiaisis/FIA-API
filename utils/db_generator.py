@@ -6,11 +6,11 @@ import os
 import random
 import sys
 
+from db.data_models import Base
 from faker import Faker
 from sqlalchemy import NullPool, create_engine
 from sqlalchemy.orm import sessionmaker
 
-from fia_api.core.model import Base
 from test.utils import FIA_FAKER_PROVIDER, FIAProvider
 
 random.seed(1)
