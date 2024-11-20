@@ -301,7 +301,7 @@ async def update_instrument_specification(
     return specification
 
 
-def get_packages(org, image_name):
+def get_packages(org: str, image_name: str) -> Any:
     """Helper function for getting package versions from GitHub."""
     response = requests.get(
         f"https://api.github.com/orgs/{org}/packages/container/{image_name}/versions",
