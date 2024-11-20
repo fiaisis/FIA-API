@@ -309,7 +309,7 @@ async def get_extras_top_level_folders() -> list[str]:
 
 
 @ROUTER.get("/extras/{subdir}", tags=["files"])
-async def get_subfolder_files_list(subdir: str) -> list[Path]:
+async def get_subfolder_files_list(subdir: str) -> list[str]:
     """
     Returns a list of files within a sub_folder. Directs users to use the /extras endpoint if folder not found
 
