@@ -33,8 +33,8 @@ class OsirisTransform(Transform):
                     else f"[{job.inputs['input_runs']}]"  # type: ignore
                 )
                 continue
-            if line.startswith("calibration_run_number ="):
-                lines[index] = f"calibration_run_number = \"{job.inputs['calibration_run_number']}\""  # type: ignore
+            if line.startswith("calibration_run_numbers ="):
+                lines[index] = f"calibration_run_numbers = [{job.inputs['calibration_run_numbers']}]"  # type: ignore
                 continue
             if line.startswith("cycle ="):
                 lines[index] = f"cycle = \"{job.inputs['cycle_string']}\""  # type: ignore
