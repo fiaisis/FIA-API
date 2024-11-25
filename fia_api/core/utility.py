@@ -100,13 +100,11 @@ def find_file_instrument(ceph_dir: str, instrument: str, experiment_number: int,
     :return: path to the filename or None
     """
     # Run normal check
-    # forcing instrument.upper() early to prevent misinterpreting str as PosixPath
-    instrument = instrument.upper()
-    basic_path = Path(ceph_dir) / f"{instrument}/RBNumber/RB{experiment_number}/autoreduced/{filename}"
+    basic_path = Path(ceph_dir) / f"{instrument.upper()}/RBNumber/RB{experiment_number}/autoreduced/{filename}"
 
     # Do a check as we are handling user entered data here
     with suppress(OSError):
-        safe_check_filepath(filepath=basic_path, base_path=ceph_dir)
+        safe_check_filepath_plotting(filepath=basic_path, base_path=ceph_dir)
 
     if basic_path.exists():
         return basic_path
@@ -180,7 +178,7 @@ def _safe_find_file_in_dir(dir_path: Path, base_path: str, filename: str) -> Pat
     """
     # Do a check as we are handling user entered data here
     try:
-        safe_check_filepath(filepath=dir_path, base_path=base_path)
+        safe_check_filepath_plotting(filepath=dir_path, base_path=base_path)
     except OSError:
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed.") from None
 
