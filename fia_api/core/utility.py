@@ -100,7 +100,9 @@ def find_file_instrument(ceph_dir: str, instrument: str, experiment_number: int,
     :return: path to the filename or None
     """
     # Run normal check
-    basic_path = Path(ceph_dir) / f"{instrument.upper()}/RBNumber/RB{experiment_number}/autoreduced/{filename}"
+    # forcing instrument.upper() early to prevent misinterpreting str as PosixPath
+    instrument = instrument.upper()
+    basic_path = Path(ceph_dir) / f"{instrument}/RBNumber/RB{experiment_number}/autoreduced/{filename}"
 
     # Do a check as we are handling user entered data here
     with suppress(OSError):
@@ -152,8 +154,6 @@ def find_experiment_number(request: Request) -> int:
             experiment_number_index = url_parts.index("experiment_number")
             return int(url_parts[experiment_number_index + 1])
         except (ValueError, IndexError):
-            # from plotting_service.plotting_api import logger
-
             logger.warning(
                 f"The requested path {request.url.path} does not include an experiment number. "
                 f"Permissions cannot be checked"
@@ -162,8 +162,6 @@ def find_experiment_number(request: Request) -> int:
     match = re.search(r"%2FRB(\d+)%2F", request.url.query)
     if match is not None:
         return int(match.group(1))
-    # Avoiding circular import
-    # from plotting_service.plotting_api import logger
 
     logger.warning(
         f"The requested nexus metadata path {request.url.path} does not include an experiment number. "
@@ -202,7 +200,6 @@ def request_path_check(path: Path, base_dir: str) -> Path:
     :return: Path without the base_dir
     """
     if path is None:
-        # from plotting_service.plotting_api import logger
         logger.error("Could not find the file requested.")
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST)
     # Remove CEPH_DIR
