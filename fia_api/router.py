@@ -37,7 +37,7 @@ from fia_api.core.services.job import (
     get_job_by_instrument,
     job_maker,
 )
-from fia_api.core.utility import safe_check_filepath, get_packages
+from fia_api.core.utility import get_packages, safe_check_filepath
 from fia_api.scripts.acquisition import (
     get_script_by_sha,
     get_script_for_job,

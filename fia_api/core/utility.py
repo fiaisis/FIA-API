@@ -1,7 +1,7 @@
 """Collection of utility functions"""
 
-import os
 import functools
+import os
 from collections.abc import Callable
 from http import HTTPStatus
 from pathlib import Path
