@@ -524,3 +524,24 @@ def test_put_instrument_specification_no_api_key():
     client.put("/instrument/het/specification", json={"foo": "bar"})
     response = client.get("/instrument/het/specification")
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_get_mantid_runners():
+    """Test endpoint contains all the Mantid runners."""
+    expected_runners = ["6.8.0", "6.9.0", "6.9.1", "6.10.0", "6.11.0"]
+    response = client.get("/jobs/runners", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    assert response.status_code == HTTPStatus.OK
+    for runner in expected_runners:
+        assert runner in response.json()
+
+
+def test_get_mantid_runners_no_api_key():
+    """Test endpoint returns forbidden if no API key supplied."""
+    response = client.get("/jobs/runners")
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_get_mantid_runners_bad_jwt():
+    """Test endpoint returns forbidden if bad JWT supplied."""
+    response = client.get("/jobs/runners", headers={"Authorization": "foo"})
+    assert response.status_code == HTTPStatus.FORBIDDEN
