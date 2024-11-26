@@ -3,12 +3,20 @@ Tests for utility functions
 """
 
 from pathlib import Path
+from unittest.mock import patch
+from http import HTTPStatus
 
 import pytest
 from fastapi import HTTPException
 
 from fia_api.core.exceptions import UnsafePathError
-from fia_api.core.utility import filter_script_for_tokens, forbid_path_characters, safe_check_filepath
+from fia_api.core.utility import (
+    filter_script_for_tokens,
+    forbid_path_characters,
+    safe_check_filepath,
+    get_packages,
+    GITHUB_PACKAGE_TOKEN,
+)
 
 
 def dummy_string_arg_function(arg: str) -> str:
@@ -123,3 +131,86 @@ def test_non_existing_folder_path(tmp_path):
         safe_check_filepath(file_path, base_path)
     assert exc_info.errisinstance(HTTPException)
     assert "Invalid path being accessed and file not found" in exc_info.exconly()
+
+
+def test_get_packages():
+    """Test the get_packages() function for a successful API call."""
+    mock_response_data = [
+        {
+            "id": 294659748,
+            "metadata": {"package_type": "container", "container": {"tags": ["6.11.0"]}},
+        },
+        {
+            "id": 265303494,
+            "metadata": {"package_type": "container", "container": {"tags": ["6.10.0"]}},
+        },
+        {
+            "id": 220505057,
+            "metadata": {"package_type": "container", "container": {"tags": ["6.9.1"]}},
+        },
+        {
+            "id": 220504408,
+            "metadata": {"package_type": "container", "container": {"tags": ["6.9.0"]}},
+        },
+        {
+            "id": 220503717,
+            "metadata": {"package_type": "container", "container": {"tags": ["6.8.0"]}},
+        },
+    ]
+
+    with patch("fia_api.core.utility.requests.get") as mock_get:
+        mock_get.return_value.status_code = HTTPStatus.OK
+        mock_get.return_value.json.return_value = mock_response_data
+
+        package_data = get_packages(org="fiaisis", image_name="mantid")
+        assert package_data == mock_response_data
+
+        # Verify the request was made with the correct URL and headers
+        mock_get.assert_called_once_with(
+            "https://api.github.com/orgs/fiaisis/packages/container/mantid/versions",
+            headers={"Authorization": f"Bearer {GITHUB_PACKAGE_TOKEN}"},
+            timeout=10,
+        )
+
+
+def test_get_packages_error():
+    "Test the get_packages() function for an unsuccessful API call."
+    with patch("fia_api.core.utility.requests.get") as mock_get:
+        mock_get.return_value.status_code = HTTPStatus.NOT_FOUND
+        mock_get.return_value.text = "Not Found"
+
+        with pytest.raises(HTTPException) as excinfo:
+            get_packages(org="fiaisis", image_name="mantid")
+
+        assert excinfo.value.status_code == HTTPStatus.NOT_FOUND
+
+        # Verify the request was made with the correct URL and headers
+        mock_get.assert_called_once_with(
+            "https://api.github.com/orgs/fiaisis/packages/container/mantid/versions",
+            headers={"Authorization": f"Bearer {GITHUB_PACKAGE_TOKEN}"},
+            timeout=10,
+        )
+
+
+def test_get_packages_forbidden_invalid_token():
+    """
+    Test the get_packages() function for a forbidden API call caused by an invalid Bearer token.
+    """
+    invalid_token = "invalid_token_value"
+
+    with patch("fia_api.core.utility.requests.get") as mock_get:
+        mock_get.return_value.status_code = HTTPStatus.FORBIDDEN
+        mock_get.return_value.text = "Forbidden"
+
+        with patch("fia_api.core.utility.GITHUB_PACKAGE_TOKEN", invalid_token):
+            with pytest.raises(HTTPException) as excinfo:
+                get_packages(org="fiaisis", image_name="mantid")
+
+            assert excinfo.value.status_code == HTTPStatus.FORBIDDEN
+
+            # Verify the request was made with the incorrect token
+            mock_get.assert_called_once_with(
+                "https://api.github.com/orgs/fiaisis/packages/container/mantid/versions",
+                headers={"Authorization": f"Bearer {invalid_token}"},
+                timeout=10,
+            )
