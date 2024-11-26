@@ -177,7 +177,6 @@ def test_get_packages_error():
     "Test the get_packages() function for an unsuccessful API call."
     with patch("fia_api.core.utility.requests.get") as mock_get:
         mock_get.return_value.status_code = HTTPStatus.NOT_FOUND
-        mock_get.return_value.text = "Not Found"
 
         with pytest.raises(HTTPException) as excinfo:
             get_packages(org="fiaisis", image_name="mantid")
@@ -200,7 +199,6 @@ def test_get_packages_forbidden_invalid_token():
 
     with patch("fia_api.core.utility.requests.get") as mock_get:
         mock_get.return_value.status_code = HTTPStatus.FORBIDDEN
-        mock_get.return_value.text = "Forbidden"
 
         with patch("fia_api.core.utility.GITHUB_PACKAGE_TOKEN", invalid_token):
             with pytest.raises(HTTPException) as excinfo:
