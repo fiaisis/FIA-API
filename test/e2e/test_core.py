@@ -4,11 +4,12 @@ end-to-end tests
 
 from http import HTTPStatus
 from unittest.mock import patch
+from test.utils import FIA_FAKER_PROVIDER
 
 from starlette.testclient import TestClient
 
 from fia_api.fia_api import app
-from test.utils import FIA_FAKER_PROVIDER
+from fia_api.core.utility import GITHUB_PACKAGE_TOKEN
 
 client = TestClient(app)
 
@@ -529,7 +530,7 @@ def test_put_instrument_specification_no_api_key():
 def test_get_mantid_runners():
     """Test endpoint contains all the Mantid runners."""
     expected_runners = ["6.8.0", "6.9.0", "6.9.1", "6.10.0", "6.11.0"]
-    response = client.get("/jobs/runners", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/jobs/runners", headers={"Authorization": f"Bearer {GITHUB_PACKAGE_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
     for runner in expected_runners:
         assert runner in response.json()
