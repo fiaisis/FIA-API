@@ -2,20 +2,20 @@
 Tests for utility functions
 """
 
+from http import HTTPStatus
 from pathlib import Path
 from unittest.mock import patch
-from http import HTTPStatus
 
 import pytest
 from fastapi import HTTPException
 
 from fia_api.core.exceptions import UnsafePathError
 from fia_api.core.utility import (
+    GITHUB_PACKAGE_TOKEN,
     filter_script_for_tokens,
     forbid_path_characters,
-    safe_check_filepath,
     get_packages,
-    GITHUB_PACKAGE_TOKEN,
+    safe_check_filepath,
 )
 
 
