@@ -526,8 +526,10 @@ def test_put_instrument_specification_no_api_key():
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-def test_get_mantid_runners():
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_mantid_runners(mock_post):
     """Test endpoint contains all the Mantid runners."""
+    mock_post.return_value.status_code = HTTPStatus.OK
     expected_runners = ["6.8.0", "6.9.0", "6.9.1", "6.10.0", "6.11.0"]
     response = client.get("/jobs/runners", headers={"Authorization": f"Bearer {USER_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
@@ -535,13 +537,17 @@ def test_get_mantid_runners():
         assert runner in response.json()
 
 
-def test_get_mantid_runners_no_api_key():
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_mantid_runners_no_api_key(mock_post):
     """Test endpoint returns forbidden if no API key supplied."""
+    mock_post.return_value.status_code = HTTPStatus.FORBIDDEN
     response = client.get("/jobs/runners")
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-def test_get_mantid_runners_bad_jwt():
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_mantid_runners_bad_jwt(mock_post):
     """Test endpoint returns forbidden if bad JWT supplied."""
+    mock_post.return_value.status_code = HTTPStatus.FORBIDDEN
     response = client.get("/jobs/runners", headers={"Authorization": "foo"})
     assert response.status_code == HTTPStatus.FORBIDDEN
