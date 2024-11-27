@@ -58,8 +58,9 @@ class JWTAPIBearer(HTTPBearer):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token") from exc
 
         if not self._is_api_key_valid(token) and not self._is_jwt_access_token_valid(token):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                                detail="Invalid token, expired token or invalid API key")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token, expired token or invalid API key"
+            )
 
         return credentials
 

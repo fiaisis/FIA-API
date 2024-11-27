@@ -49,7 +49,6 @@ ROUTER = APIRouter()
 jwt_api_security = JWTAPIBearer()
 
 
-
 @ROUTER.get("/healthz", tags=["k8s"])
 async def get() -> Literal["ok"]:
     """Health Check endpoint."""
