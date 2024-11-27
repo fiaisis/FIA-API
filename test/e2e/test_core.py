@@ -4,12 +4,12 @@ end-to-end tests
 
 from http import HTTPStatus
 from unittest.mock import patch
-from test.utils import FIA_FAKER_PROVIDER
 
 from starlette.testclient import TestClient
 
-from fia_api.fia_api import app
 from fia_api.core.utility import GITHUB_PACKAGE_TOKEN
+from fia_api.fia_api import app
+from test.utils import FIA_FAKER_PROVIDER
 
 client = TestClient(app)
 
