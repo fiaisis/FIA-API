@@ -195,7 +195,7 @@ def test_get_packages_forbidden_invalid_token():
     """
     Test the get_packages() function for a forbidden API call caused by an invalid Bearer token.
     """
-    invalid_token = "invalid_token_value"
+    invalid_token = "invalid_token_value"  # noqa: S105
 
     with patch("fia_api.core.utility.requests.get") as mock_get:
         mock_get.return_value.status_code = HTTPStatus.FORBIDDEN
