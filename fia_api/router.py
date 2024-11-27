@@ -15,7 +15,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from starlette.background import BackgroundTasks
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
-from fia_api.core.auth.tokens import JWTBearer, get_user_from_token
+from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.file_ops import read_dir, write_file_from_remote
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.repositories import test_connection
@@ -46,7 +46,8 @@ from fia_api.scripts.acquisition import (
 from fia_api.scripts.pre_script import PreScript
 
 ROUTER = APIRouter()
-jwt_security = JWTBearer()
+jwt_api_security = JWTAPIBearer()
+
 
 
 @ROUTER.get("/healthz", tags=["k8s"])
@@ -118,7 +119,7 @@ OrderField = Literal[
 
 @ROUTER.get("/jobs", tags=["jobs"])
 async def get_jobs(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
     limit: int = 0,
     offset: int = 0,
     order_by: OrderField = "start",
@@ -152,7 +153,7 @@ async def get_jobs(
 @ROUTER.get("/instrument/{instrument}/jobs", tags=["jobs"])
 async def get_jobs_by_instrument(
     instrument: str,
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
     limit: int = 0,
     offset: int = 0,
     order_by: OrderField = "start",
@@ -206,7 +207,7 @@ async def count_jobs_for_instrument(
 
 @ROUTER.get("/job/{job_id}", tags=["jobs"])
 async def get_job(
-    job_id: int, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
+    job_id: int, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)]
 ) -> JobWithRunResponse:
     """
     Retrieve a job with nested run data, by iD.
@@ -232,7 +233,7 @@ async def count_all_jobs() -> CountResponse:
 @ROUTER.post("/job/rerun", tags=["job"])
 async def make_rerun_job(
     rerun_job: RerunJob,
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
     job_maker: Annotated[JobMaker, Depends(job_maker)],
 ) -> None:
     user = get_user_from_token(credentials.credentials)
@@ -254,7 +255,7 @@ async def make_rerun_job(
 @ROUTER.post("/job/simple", tags=["job"])
 async def make_simple_job(
     simple_job: SimpleJob,
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
     job_maker: Annotated[JobMaker, Depends(job_maker)],
 ) -> None:
     user = get_user_from_token(credentials.credentials)
@@ -266,7 +267,7 @@ async def make_simple_job(
 
 @ROUTER.get("/instrument/{instrument_name}/specification", tags=["instrument"], response_model=None)
 async def get_instrument_specification(
-    instrument_name: str, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)]
+    instrument_name: str, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)]
 ) -> JSONB | None:
     """
     Return the specification for the given instrument
@@ -285,7 +286,7 @@ async def get_instrument_specification(
 async def update_instrument_specification(
     instrument_name: str,
     specification: dict[str, Any],
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
 ) -> dict[str, Any]:
     """
     Replace the current specification with the given specification for the given instrument
