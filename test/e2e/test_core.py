@@ -7,7 +7,6 @@ from unittest.mock import patch
 
 from starlette.testclient import TestClient
 
-from fia_api.core.utility import GITHUB_PACKAGE_TOKEN
 from fia_api.fia_api import app
 from test.utils import FIA_FAKER_PROVIDER
 
@@ -530,7 +529,7 @@ def test_put_instrument_specification_no_api_key():
 def test_get_mantid_runners():
     """Test endpoint contains all the Mantid runners."""
     expected_runners = ["6.8.0", "6.9.0", "6.9.1", "6.10.0", "6.11.0"]
-    response = client.get("/jobs/runners", headers={"Authorization": f"Bearer {GITHUB_PACKAGE_TOKEN}"})
+    response = client.get("/jobs/runners", headers={"Authorization": f"Bearer {USER_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
     for runner in expected_runners:
         assert runner in response.json()
