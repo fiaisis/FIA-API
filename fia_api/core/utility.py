@@ -1,16 +1,20 @@
 """Collection of utility functions"""
 
 import functools
+import os
 from collections.abc import Callable
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any, TypeVar, cast
 
+import requests
 from fastapi import HTTPException
 
 from fia_api.core.exceptions import UnsafePathError
 
 FuncT = TypeVar("FuncT", bound=Callable[[str], Any])
+
+GITHUB_PACKAGE_TOKEN = os.environ.get("GITHUB_PACKAGE_TOKEN", "shh")
 
 
 def forbid_path_characters(func: FuncT) -> FuncT:
@@ -59,3 +63,18 @@ def safe_check_filepath(filepath: Path, base_path: Path) -> None:
             raise HTTPException(
                 status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed and file not found."
             ) from err
+
+
+def get_packages(org: str, image_name: str) -> Any:
+    """Helper function for getting package versions from GitHub."""
+    response = requests.get(
+        f"https://api.github.com/orgs/{org}/packages/container/{image_name}/versions",
+        headers={"Authorization": f"Bearer {GITHUB_PACKAGE_TOKEN}"},
+        timeout=10,
+    )
+    if response.status_code != HTTPStatus.OK:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"GitHub API request failed with status code {response.status_code}: {response.text}",
+        )
+    return response.json()

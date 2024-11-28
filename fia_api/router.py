@@ -37,7 +37,7 @@ from fia_api.core.services.job import (
     get_job_by_instrument,
     job_maker,
 )
-from fia_api.core.utility import safe_check_filepath
+from fia_api.core.utility import get_packages, safe_check_filepath
 from fia_api.scripts.acquisition import (
     get_script_by_sha,
     get_script_for_job,
@@ -349,3 +349,18 @@ async def upload_file_to_instrument_folder(instrument: str, filename: str, file:
     await write_file_from_remote(file, file_directory)
 
     return f"Successfully uploaded {filename}"
+
+
+@ROUTER.get("/jobs/runners", tags=["jobs"])
+async def get_mantid_runners(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+) -> list[str]:
+    """Return a list of Mantid versions if user is authenticated."""
+    user = get_user_from_token(credentials.credentials)
+
+    if user.role is None or user.user_number is None:
+        # Must be logged in to do this
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="User is not authorized to access this endpoint")
+
+    data = get_packages(org="fiaisis", image_name="mantid")
+    return [str(tag) for item in data for tag in item.get("metadata", {}).get("container", {}).get("tags", [])]
