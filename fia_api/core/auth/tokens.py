@@ -27,6 +27,8 @@ class User:
 def get_user_from_token(token: str) -> User:
     if DEV_MODE:
         return User(user_number=123, role="staff")
+    if token == API_KEY:
+        return User(user_number=-1, role="staff")
     try:
         payload = jwt.decode(token, options={"verify_signature": False})
         return User(user_number=payload.get("usernumber"), role=payload.get("role"))
