@@ -15,6 +15,7 @@ from fia_api.core.exceptions import AuthenticationError
 logger = logging.getLogger(__name__)
 
 DEV_MODE = bool(os.environ.get("DEV_MODE", False))
+API_KEY = os.environ["FIA_API_API_KEY"]
 
 
 @dataclass
@@ -26,6 +27,8 @@ class User:
 def get_user_from_token(token: str) -> User:
     if DEV_MODE:
         return User(user_number=123, role="staff")
+    if token == API_KEY:
+        return User(user_number=-1, role="staff")
     try:
         payload = jwt.decode(token, options={"verify_signature": False})
         return User(user_number=payload.get("usernumber"), role=payload.get("role"))
@@ -33,7 +36,7 @@ def get_user_from_token(token: str) -> User:
         raise AuthenticationError("Problem unpacking jwt token") from exc
 
 
-class JWTBearer(HTTPBearer):
+class JWTAPIBearer(HTTPBearer):
     """
     Extends the FastAPI `HTTPBearer` class to provide JSON Web Token (JWT) based authentication/authorization.
     """
@@ -56,8 +59,10 @@ class JWTBearer(HTTPBearer):
         except RuntimeError as exc:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token") from exc
 
-        if not self._is_jwt_access_token_valid(token):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token")
+        if not self._is_api_key_valid(token) and not self._is_jwt_access_token_valid(token):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token, expired token or invalid API key"
+            )
 
         return credentials
 
@@ -80,3 +85,14 @@ class JWTBearer(HTTPBearer):
         except RuntimeError:  # pylint: disable=broad-exception-caught)
             logger.exception("Error decoding JWT access token")
             return False
+
+    def _is_api_key_valid(self, api_key: str) -> bool:
+        """
+        Check if the JWT access token is valid.
+
+        It does this by checking that it was signed by the corresponding private key and has not expired. It also
+        requires the payload to contain a username.
+        :param api_key: The JWT access token to check.
+        :return: `True` if the JWT access token is valid and its payload contains a username, `False` otherwise.
+        """
+        return api_key == API_KEY
