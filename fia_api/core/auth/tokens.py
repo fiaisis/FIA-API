@@ -15,7 +15,6 @@ from fia_api.core.exceptions import AuthenticationError
 logger = logging.getLogger(__name__)
 
 DEV_MODE = bool(os.environ.get("DEV_MODE", False))
-API_KEY = os.environ["FIA_API_API_KEY"]
 
 
 @dataclass
@@ -27,7 +26,8 @@ class User:
 def get_user_from_token(token: str) -> User:
     if DEV_MODE:
         return User(user_number=123, role="staff")
-    if token == API_KEY:
+    api_key = os.environ["FIA_API_API_KEY"]
+    if token == api_key:
         return User(user_number=-1, role="staff")
     try:
         payload = jwt.decode(token, options={"verify_signature": False})
@@ -95,4 +95,5 @@ class JWTAPIBearer(HTTPBearer):
         :param api_key: The JWT access token to check.
         :return: `True` if the JWT access token is valid and its payload contains a username, `False` otherwise.
         """
-        return api_key == API_KEY
+        env_api_key = os.environ["FIA_API_API_KEY"]
+        return api_key == env_api_key
