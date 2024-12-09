@@ -1,6 +1,7 @@
 """
 end-to-end tests
 """
+
 import os
 from http import HTTPStatus
 from unittest import mock
