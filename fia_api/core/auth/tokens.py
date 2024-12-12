@@ -26,6 +26,9 @@ class User:
 def get_user_from_token(token: str) -> User:
     if DEV_MODE:
         return User(user_number=123, role="staff")
+    api_key = os.environ["FIA_API_API_KEY"]
+    if token == api_key:
+        return User(user_number=-1, role="staff")
     try:
         payload = jwt.decode(token, options={"verify_signature": False})
         return User(user_number=payload.get("usernumber"), role=payload.get("role"))
@@ -33,7 +36,7 @@ def get_user_from_token(token: str) -> User:
         raise AuthenticationError("Problem unpacking jwt token") from exc
 
 
-class JWTBearer(HTTPBearer):
+class JWTAPIBearer(HTTPBearer):
     """
     Extends the FastAPI `HTTPBearer` class to provide JSON Web Token (JWT) based authentication/authorization.
     """
@@ -42,11 +45,12 @@ class JWTBearer(HTTPBearer):
         """
         Callable method for JWT access token authentication/authorization.
 
-        This method is called when `JWTBearer` is used as a dependency in a FastAPI route. It performs authentication/
-        authorization by calling the parent class method and then verifying the JWT access token.
+        This method is called when `JWTAPIBearer` is used as a dependency in a FastAPI route. It performs
+        authentication/authorization by calling the parent class method and then verifying the JWT access
+        token also checks if the value received as a valid API Key.
         :param request: The FastAPI `Request` object.
         :return: The JWT access token if authentication is successful.
-        :raises HTTPException: If the supplied JWT access token is invalid or has expired.
+        :raises HTTPException: If the supplied JWT access token or the API key is invalid or has expired.
         """
         if DEV_MODE:
             return HTTPAuthorizationCredentials(scheme="Bearer", credentials="foo")
@@ -56,8 +60,10 @@ class JWTBearer(HTTPBearer):
         except RuntimeError as exc:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token") from exc
 
-        if not self._is_jwt_access_token_valid(token):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token")
+        if not self._is_api_key_valid(token) and not self._is_jwt_access_token_valid(token):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token, expired token or invalid API key"
+            )
 
         return credentials
 
@@ -80,3 +86,14 @@ class JWTBearer(HTTPBearer):
         except RuntimeError:  # pylint: disable=broad-exception-caught)
             logger.exception("Error decoding JWT access token")
             return False
+
+    def _is_api_key_valid(self, api_key: str) -> bool:
+        """
+        Check if the API key is valid.
+
+        It does this by checking that it was signed by the corresponding private key and has not expired.
+        :param api_key: The API key to check.
+        :return: `True` if the API key is valid, `False` otherwise.
+        """
+        env_api_key = os.environ["FIA_API_API_KEY"]
+        return api_key == env_api_key
