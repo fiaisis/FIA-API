@@ -45,11 +45,12 @@ class JWTAPIBearer(HTTPBearer):
         """
         Callable method for JWT access token authentication/authorization.
 
-        This method is called when `JWTBearer` is used as a dependency in a FastAPI route. It performs authentication/
-        authorization by calling the parent class method and then verifying the JWT access token.
+        This method is called when `JWTAPIBearer` is used as a dependency in a FastAPI route. It performs authentication/
+        authorization by calling the parent class method and then verifying the JWT access token also checks if the value
+        received as a valid API Key.
         :param request: The FastAPI `Request` object.
         :return: The JWT access token if authentication is successful.
-        :raises HTTPException: If the supplied JWT access token is invalid or has expired.
+        :raises HTTPException: If the supplied JWT access token or the API key is invalid or has expired.
         """
         if DEV_MODE:
             return HTTPAuthorizationCredentials(scheme="Bearer", credentials="foo")
@@ -88,12 +89,11 @@ class JWTAPIBearer(HTTPBearer):
 
     def _is_api_key_valid(self, api_key: str) -> bool:
         """
-        Check if the JWT access token is valid.
+        Check if the API key is valid.
 
-        It does this by checking that it was signed by the corresponding private key and has not expired. It also
-        requires the payload to contain a username.
-        :param api_key: The JWT access token to check.
-        :return: `True` if the JWT access token is valid and its payload contains a username, `False` otherwise.
+        It does this by checking that it was signed by the corresponding private key and has not expired.
+        :param api_key: The API key to check.
+        :return: `True` if the API key is valid, `False` otherwise.
         """
         env_api_key = os.environ["FIA_API_API_KEY"]
         return api_key == env_api_key
