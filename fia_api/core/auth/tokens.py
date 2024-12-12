@@ -45,8 +45,8 @@ class JWTAPIBearer(HTTPBearer):
         """
         Callable method for JWT access token authentication/authorization.
 
-        This method is called when `JWTAPIBearer` is used as a dependency in a FastAPI route. It performs 
-        authentication/authorization by calling the parent class method and then verifying the JWT access 
+        This method is called when `JWTAPIBearer` is used as a dependency in a FastAPI route. It performs
+        authentication/authorization by calling the parent class method and then verifying the JWT access
         token also checks if the value received as a valid API Key.
         :param request: The FastAPI `Request` object.
         :return: The JWT access token if authentication is successful.
