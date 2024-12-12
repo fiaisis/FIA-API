@@ -353,7 +353,7 @@ async def upload_file_to_instrument_folder(instrument: str, filename: str, file:
 
 @ROUTER.get("/jobs/runners", tags=["jobs"])
 async def get_mantid_runners(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_security)],
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
 ) -> list[str]:
     """Return a list of Mantid versions if user is authenticated."""
     user = get_user_from_token(credentials.credentials)
