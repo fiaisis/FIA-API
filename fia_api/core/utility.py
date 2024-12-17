@@ -3,7 +3,6 @@
 import functools
 import logging
 import os
-import re
 import sys
 from collections.abc import Callable
 from contextlib import suppress
@@ -12,7 +11,6 @@ from pathlib import Path
 from typing import Any, TypeVar, cast
 
 from fastapi import HTTPException
-from starlette.requests import Request
 
 from fia_api.core.exceptions import UnsafePathError
 
@@ -136,36 +134,6 @@ def find_file_user_number(ceph_dir: str, user_number: int, filename: str) -> Pat
     """
     dir_path = Path(ceph_dir) / f"GENERIC/autoreduce/UserNumbers/{user_number}/"
     return _safe_find_file_in_dir(dir_path=dir_path, base_path=ceph_dir, filename=filename)
-
-
-def find_experiment_number(request: Request) -> int:
-    """
-    Find the experiment number from a request
-    :param request: Request to be used to get the experiment number
-    :return: Experiment number in the request
-    """
-    if request.url.path.startswith("/text"):
-        return int(request.url.path.split("/")[-1])
-    if request.url.path.startswith("/find_file"):
-        url_parts = request.url.path.split("/")
-        try:
-            experiment_number_index = url_parts.index("experiment_number")
-            return int(url_parts[experiment_number_index + 1])
-        except (ValueError, IndexError):
-            logger.warning(
-                f"The requested path {request.url.path} does not include an experiment number. "
-                f"Permissions cannot be checked"
-            )
-            raise HTTPException(HTTPStatus.BAD_REQUEST, "Request missing experiment number") from None
-    match = re.search(r"%2FRB(\d+)%2F", request.url.query)
-    if match is not None:
-        return int(match.group(1))
-
-    logger.warning(
-        f"The requested nexus metadata path {request.url.path} does not include an experiment number. "
-        f"Permissions cannot be checked"
-    )
-    raise HTTPException(HTTPStatus.BAD_REQUEST, "Request missing experiment number")
 
 
 def _safe_find_file_in_dir(dir_path: Path, base_path: str, filename: str) -> Path | None:

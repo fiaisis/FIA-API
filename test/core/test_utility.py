@@ -7,7 +7,6 @@ from collections.abc import Callable
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
-from unittest import mock
 
 import pytest
 from fastapi import HTTPException
@@ -15,7 +14,6 @@ from fastapi import HTTPException
 from fia_api.core.exceptions import UnsafePathError
 from fia_api.core.utility import (
     filter_script_for_tokens,
-    find_experiment_number,
     find_file_experiment_number,
     find_file_instrument,
     find_file_user_number,
@@ -271,29 +269,3 @@ def test_find_file_method_when_failed(find_file_method: Callable, method_inputs:
 def test_find_file_methods_does_not_allow_path_injection(find_file_method: Callable, method_inputs: dict[str, Any]):
     with pytest.raises(HTTPException):
         find_file_method(*method_inputs)
-
-
-def test_find_experiment_number_text():
-    request = mock.MagicMock()
-    experiment_number = 1245
-    request.url.path = f"/text/instrument/LOQ/experiment_number/{experiment_number}"
-
-    assert find_experiment_number(request) == experiment_number
-
-
-def test_find_experiment_number_find_file():
-    request = mock.MagicMock()
-    experiment_number = 1245
-    request.url.path = f"/find_file/instrument/LOQ/experiment_number/{experiment_number}"
-
-    assert find_experiment_number(request) == experiment_number
-
-
-def test_find_experiment_number_other():
-    request = mock.MagicMock()
-    experiment_number = 1245
-    path = f"/meta/?file=LOQ%2FRBNumber%2FRB{experiment_number}%2Fautoreduced%2Frun-110754%2F110754.h5&path=%2F"
-    request.url.query = path
-    request.url.path = path
-
-    assert find_experiment_number(request) == experiment_number
