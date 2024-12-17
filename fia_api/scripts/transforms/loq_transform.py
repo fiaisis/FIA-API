@@ -21,6 +21,7 @@ class LoqTransform(Transform):
     LoqTransform applies modifications to LOQ instrument scripts based on reduction input parameters in a Job
     entity.
     """
+
     def apply(self, script: PreScript, job: Job) -> None:  # noqa: C901
         logger.info("Beginning LOQ transform for job %s...", job.id)
         lines = script.value.splitlines()
