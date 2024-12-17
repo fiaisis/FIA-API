@@ -24,7 +24,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logger.info("Starting Plotting Service")
-CEPH_DIR = os.environ.get("CEPH_DIR", "/ceph")
+CEPH_DIR = os.environ.get("CEPH_DIR", "../../test/test_ceph")
 logger.info("Setting ceph directory to %s", CEPH_DIR)
 
 
