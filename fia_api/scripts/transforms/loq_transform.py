@@ -15,6 +15,7 @@ from fia_api.scripts.transforms.transform import Transform
 logger = logging.getLogger(__name__)
 
 
+# mypy: disable-error-code="operator, index"
 class LoqTransform(Transform):
     """
     LoqTransform applies modifications to LOQ instrument scripts based on reduction input parameters in a Job
@@ -27,28 +28,48 @@ class LoqTransform(Transform):
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
         # If you get here in the future, try removing the type ignore and see if it passes with newer mypy
         for index, line in enumerate(lines):
-            if "/extras/loq/MaskFile.toml" in line:
-                lines[index] = line.replace("/extras/loq/MaskFile.toml", job.inputs["user_file"])  # type: ignore
+            if "/extras/loq/MaskFile.toml" in line and "user_file" in job.inputs:
+                lines[index] = line.replace("/extras/loq/MaskFile.toml", job.inputs["user_file"])
                 continue
-            if self._replace_input(line, lines, index, "sample_scatter", job.inputs["run_number"]):  # type: ignore
+            if "run_number" in job.inputs and self._replace_input(
+                line, lines, index, "sample_scatter", job.inputs["run_number"]
+            ):
                 continue
-            if self._replace_input(line, lines, index, "sample_transmission", job.inputs["scatter_transmission"]):  # type: ignore
+            if "scatter_transmission" in job.inputs and self._replace_input(
+                line, lines, index, "sample_transmission", job.inputs["scatter_transmission"]
+            ):
                 continue
-            if self._replace_input(line, lines, index, "sample_direct", job.inputs["scatter_direct"]):  # type: ignore
+            if "scatter_direct" in job.inputs and self._replace_input(
+                line, lines, index, "sample_direct", job.inputs["scatter_direct"]
+            ):
                 continue
-            if self._replace_input(line, lines, index, "can_scatter", job.inputs["can_scatter"]):  # type: ignore
+            if "can_scatter" in job.inputs and self._replace_input(
+                line, lines, index, "can_scatter", job.inputs["can_scatter"]
+            ):
                 continue
-            if self._replace_input(line, lines, index, "can_transmission", job.inputs["can_transmission"]):  # type: ignore
+            if "can_transmission" in job.inputs and self._replace_input(
+                line, lines, index, "can_transmission", job.inputs["can_transmission"]
+            ):
                 continue
-            if self._replace_input(line, lines, index, "can_direct", job.inputs["can_direct"]):  # type: ignore
+            if "can_direct" in job.inputs and self._replace_input(
+                line, lines, index, "can_direct", job.inputs["can_direct"]
+            ):
                 continue
-            if self._replace_input(line, lines, index, "sample_thickness", job.inputs["sample_thickness"]):  # type: ignore
+            if "sample_thickness" in job.inputs and self._replace_input(
+                line, lines, index, "sample_thickness", job.inputs["sample_thickness"]
+            ):
                 continue
-            if self._replace_input(line, lines, index, "sample_geometry", '"' + job.inputs["sample_geometry"] + '"'):  # type: ignore
+            if "sample_geometry" in job.inputs and self._replace_input(
+                line, lines, index, "sample_geometry", '"' + job.inputs["sample_geometry"] + '"'
+            ):
                 continue
-            if self._replace_input(line, lines, index, "sample_height", job.inputs["sample_height"]):  # type: ignore
+            if "sample_height" in job.inputs and self._replace_input(
+                line, lines, index, "sample_height", job.inputs["sample_height"]
+            ):
                 continue
-            if self._replace_input(line, lines, index, "sample_width", job.inputs["sample_width"]):  # type: ignore
+            if "sample_width" in job.inputs and self._replace_input(
+                line, lines, index, "sample_width", job.inputs["sample_width"]
+            ):
                 continue
         script.value = "\n".join(lines)
         logger.info("Transform complete for reduction %s", job.id)
