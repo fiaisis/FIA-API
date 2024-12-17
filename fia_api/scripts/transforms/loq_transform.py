@@ -27,28 +27,38 @@ class LoqTransform(Transform):
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
         # If you get here in the future, try removing the type ignore and see if it passes with newer mypy
         for index, line in enumerate(lines):
-            if "/extras/loq/MaskFile.toml" in line:
+            if "/extras/loq/MaskFile.toml" in line and "user_file" in job.inputs:
                 lines[index] = line.replace("/extras/loq/MaskFile.toml", job.inputs["user_file"])  # type: ignore
                 continue
-            if self._replace_input(line, lines, index, "sample_scatter", job.inputs["run_number"]):  # type: ignore
+            if "run_number" in job.inputs and self._replace_input(
+                    line, lines, index, "sample_scatter", job.inputs["run_number"]):  # type: ignore
                 continue
-            if self._replace_input(line, lines, index, "sample_transmission", job.inputs["scatter_transmission"]):  # type: ignore
+            if "scatter_transmission" in job.inputs and self._replace_input(
+                    line, lines, index, "sample_transmission", job.inputs["scatter_transmission"]):  # type: ignore
                 continue
-            if self._replace_input(line, lines, index, "sample_direct", job.inputs["scatter_direct"]):  # type: ignore
+            if "scatter_direct" in job.inputs and self._replace_input(
+                    line, lines, index, "sample_direct", job.inputs["scatter_direct"]):  # type: ignore
                 continue
-            if self._replace_input(line, lines, index, "can_scatter", job.inputs["can_scatter"]):  # type: ignore
+            if "can_scatter" in job.inputs and self._replace_input(
+                    line, lines, index, "can_scatter", job.inputs["can_scatter"]):  # type: ignore
                 continue
-            if self._replace_input(line, lines, index, "can_transmission", job.inputs["can_transmission"]):  # type: ignore
+            if "can_transmission" in job.inputs and self._replace_input(
+                    line, lines, index, "can_transmission", job.inputs["can_transmission"]):  # type: ignore
                 continue
-            if self._replace_input(line, lines, index, "can_direct", job.inputs["can_direct"]):  # type: ignore
+            if "can_direct" in job.inputs and self._replace_input(
+                    line, lines, index, "can_direct", job.inputs["can_direct"]):  # type: ignore
                 continue
-            if self._replace_input(line, lines, index, "sample_thickness", job.inputs["sample_thickness"]):  # type: ignore
+            if "sample_thickness" in job.inputs and self._replace_input(
+                    line, lines, index, "sample_thickness", job.inputs["sample_thickness"]):  # type: ignore
                 continue
-            if self._replace_input(line, lines, index, "sample_geometry", '"' + job.inputs["sample_geometry"] + '"'):  # type: ignore
+            if "sample_geometry" in job.inputs and self._replace_input(
+                    line, lines, index, "sample_geometry", '"' + job.inputs["sample_geometry"] + '"'):  # type: ignore
                 continue
-            if self._replace_input(line, lines, index, "sample_height", job.inputs["sample_height"]):  # type: ignore
+            if "sample_height" in job.inputs and self._replace_input(
+                    line, lines, index, "sample_height", job.inputs["sample_height"]):  # type: ignore
                 continue
-            if self._replace_input(line, lines, index, "sample_width", job.inputs["sample_width"]):  # type: ignore
+            if "sample_width" in job.inputs and self._replace_input(
+                    line, lines, index, "sample_width", job.inputs["sample_width"]):  # type: ignore
                 continue
         script.value = "\n".join(lines)
         logger.info("Transform complete for reduction %s", job.id)
