@@ -31,34 +31,44 @@ class LoqTransform(Transform):
                 lines[index] = line.replace("/extras/loq/MaskFile.toml", job.inputs["user_file"])  # type: ignore
                 continue
             if "run_number" in job.inputs and self._replace_input(
-                    line, lines, index, "sample_scatter", job.inputs["run_number"]):  # type: ignore
+                line, lines, index, "sample_scatter", job.inputs["run_number"]
+            ):  # type: ignore
                 continue
             if "scatter_transmission" in job.inputs and self._replace_input(
-                    line, lines, index, "sample_transmission", job.inputs["scatter_transmission"]):  # type: ignore
+                line, lines, index, "sample_transmission", job.inputs["scatter_transmission"]
+            ):  # type: ignore
                 continue
             if "scatter_direct" in job.inputs and self._replace_input(
-                    line, lines, index, "sample_direct", job.inputs["scatter_direct"]):  # type: ignore
+                line, lines, index, "sample_direct", job.inputs["scatter_direct"]
+            ):  # type: ignore
                 continue
             if "can_scatter" in job.inputs and self._replace_input(
-                    line, lines, index, "can_scatter", job.inputs["can_scatter"]):  # type: ignore
+                line, lines, index, "can_scatter", job.inputs["can_scatter"]
+            ):  # type: ignore
                 continue
             if "can_transmission" in job.inputs and self._replace_input(
-                    line, lines, index, "can_transmission", job.inputs["can_transmission"]):  # type: ignore
+                line, lines, index, "can_transmission", job.inputs["can_transmission"]
+            ):  # type: ignore
                 continue
             if "can_direct" in job.inputs and self._replace_input(
-                    line, lines, index, "can_direct", job.inputs["can_direct"]):  # type: ignore
+                line, lines, index, "can_direct", job.inputs["can_direct"]
+            ):  # type: ignore
                 continue
             if "sample_thickness" in job.inputs and self._replace_input(
-                    line, lines, index, "sample_thickness", job.inputs["sample_thickness"]):  # type: ignore
+                line, lines, index, "sample_thickness", job.inputs["sample_thickness"]
+            ):  # type: ignore
                 continue
             if "sample_geometry" in job.inputs and self._replace_input(
-                    line, lines, index, "sample_geometry", '"' + job.inputs["sample_geometry"] + '"'):  # type: ignore
+                line, lines, index, "sample_geometry", '"' + job.inputs["sample_geometry"] + '"'
+            ):  # type: ignore
                 continue
             if "sample_height" in job.inputs and self._replace_input(
-                    line, lines, index, "sample_height", job.inputs["sample_height"]):  # type: ignore
+                line, lines, index, "sample_height", job.inputs["sample_height"]
+            ):  # type: ignore
                 continue
             if "sample_width" in job.inputs and self._replace_input(
-                    line, lines, index, "sample_width", job.inputs["sample_width"]):  # type: ignore
+                line, lines, index, "sample_width", job.inputs["sample_width"]
+            ):  # type: ignore
                 continue
         script.value = "\n".join(lines)
         logger.info("Transform complete for reduction %s", job.id)
