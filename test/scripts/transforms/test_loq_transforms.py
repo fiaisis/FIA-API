@@ -10,7 +10,7 @@ from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.loq_transform import LoqTransform
 
 
-@pytest.fixture
+@pytest.fixture()
 def script():
     """
     LoqTransform  PreScript fixture
@@ -43,7 +43,7 @@ slice_wavs = [16.0, 2.0, 3.0, 5.0, 9.0],
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def reduction_1():
     """
     Reduction fixture
@@ -67,7 +67,7 @@ def reduction_1():
     return mock
 
 
-@pytest.fixture
+@pytest.fixture()
 def reduction_2():
     """
     Reduction fixture
