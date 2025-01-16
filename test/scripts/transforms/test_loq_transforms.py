@@ -38,6 +38,7 @@ sample_thickness = 1.0
 sample_geometry = "Square"
 sample_height = 0.0
 sample_width = 0.0
+slice_wavs = [16.0, 2.0, 3.0, 5.0, 9.0],
 """
     )
 
@@ -61,6 +62,7 @@ def reduction_1():
         "sample_geometry": "Disc",
         "sample_height": 8.0,
         "sample_width": 8.0,
+        "slice_wavs": "[1.0, 2.0, 3.0]",
     }
     return mock
 
@@ -79,6 +81,7 @@ def reduction_2():
         "sample_geometry": "Disc",
         "sample_height": 8.0,
         "sample_width": 8.0,
+        "slice_wavs": "[1.0, 2.0, 3.0]",
     }
     return mock
 
@@ -108,6 +111,7 @@ def test_loq_transform_apply(script, reduction_1):
         "sample_geometry": 'sample_geometry = "Disc"',
         "sample_height": "sample_height = 8.0",
         "sample_width": "sample_width = 8.0",
+        "slice_wavs": "slice_wavs = [1.0, 2.0, 3.0]",
     }
 
     for index, line in enumerate(updated_lines):
@@ -144,6 +148,7 @@ def test_loq_transform_apply_with_optionals(script, reduction_2):
         "sample_geometry": 'sample_geometry = "Disc"',
         "sample_height": "sample_height = 8.0",
         "sample_width": "sample_width = 8.0",
+        "slice_wavs": "slice_wavs = [1.0, 2.0, 3.0]",
     }
 
     for index, line in enumerate(updated_lines):

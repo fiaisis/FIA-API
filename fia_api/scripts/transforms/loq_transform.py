@@ -22,7 +22,7 @@ class LoqTransform(Transform):
     entity.
     """
 
-    def apply(self, script: PreScript, job: Job) -> None:  # noqa: C901
+    def apply(self, script: PreScript, job: Job) -> None:  # noqa: C901, PLR0912
         logger.info("Beginning LOQ transform for job %s...", job.id)
         lines = script.value.splitlines()
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
@@ -69,6 +69,10 @@ class LoqTransform(Transform):
                 continue
             if "sample_width" in job.inputs and self._replace_input(
                 line, lines, index, "sample_width", job.inputs["sample_width"]
+            ):
+                continue
+            if "slice_wavs" in job.inputs and self._replace_input(
+                line, lines, index, "slice_wavs", job.inputs["slice_wavs"]
             ):
                 continue
         script.value = "\n".join(lines)
