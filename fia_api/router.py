@@ -124,6 +124,7 @@ async def get_jobs(
     order_by: OrderField = "start",
     order_direction: Literal["asc", "desc"] = "desc",
     include_run: bool = False,
+    as_user: bool = False,
 ) -> list[JobResponse] | list[JobWithRunResponse]:
     """
     Retrieve all jobs.
@@ -139,7 +140,14 @@ async def get_jobs(
     :return: List of JobResponse objects
     """
     user = get_user_from_token(credentials.credentials)
-    user_number = None if user.role == "staff" else user.user_number
+
+    if as_user:
+        user_number = user.user_number
+    elif user.role == "staff":
+        user_number = None
+    else:
+        user_number = user.user_number
+
     jobs = get_all_jobs(
         limit=limit, offset=offset, order_by=order_by, order_direction=order_direction, user_number=user_number
     )
