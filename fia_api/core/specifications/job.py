@@ -97,27 +97,15 @@ class JobSpecification(Specification[Job]):
         return self
 
     @paginate
-    def by_instrument(
+    def by_instruments(
         self,
-        instrument: str,
+        instruments: list[str],
         limit: int | None = None,
         offset: int | None = None,
         order_by: JointRunJobOrderField = "id",
         order_direction: Literal["asc", "desc"] = "desc",
         user_number: int | None = None,
     ) -> JobSpecification:
-        """
-        Filters jobs by the specified instrument and applies ordering, limit, and offset to the query.
-
-        :param instrument: The name of the instrument to filter jobs by.
-        :param limit: The maximum number of jobs to return. None indicates no limit.
-        :param offset: The number of jobs to skip before starting to return the results. None for no offset.
-        :param order_by: The attribute to order the jobs by. Can be attributes of Job or Run entities.
-        :param order_direction: The direction to order the jobs, either 'asc' for ascending or 'desc' for
-        descending.
-        :param user_number: The user number by which we should find the experiment numbers.
-        :return: An instance of JobSpecification with the applied filters and ordering.
-        """
         if user_number:
             experiment_numbers = get_experiments_for_user_number(user_number)
             self.value = (
@@ -126,13 +114,15 @@ class JobSpecification(Specification[Job]):
                 .join(Run, Job.run)
                 .where(
                     and_(
-                        Instrument.instrument_name == instrument,
+                        Instrument.instrument_name.in_(instruments),
                         or_(JobOwner.user_number == user_number, JobOwner.experiment_number.in_(experiment_numbers)),
                     )
                 )
             )
         else:
-            self.value = self.value.join(Instrument).where(Instrument.instrument_name == instrument).join(Run, Job.run)
+            self.value = (
+                self.value.join(Instrument).where(Instrument.instrument_name.in_(instruments)).join(Run, Job.run)
+            )
 
         self._apply_ordering(order_by, order_direction)
 

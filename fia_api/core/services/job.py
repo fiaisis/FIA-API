@@ -70,12 +70,13 @@ def get_job_by_instrument(
     :param offset: (int) - the number of jobs to offset the sequence from the entire job set
     :param order_direction: (str) Direction to der by "asc" | "desc"
     :param order_by: (str) Field to order by.
+    :param user_number: (optional[str]) The user number of who is making the request
     :return: Sequence of Jobs for an instrument
     """
 
     return _REPO.find(
-        JobSpecification().by_instrument(
-            instrument=instrument,
+        JobSpecification().by_instruments(
+            instrument=[instrument],
             limit=limit,
             offset=offset,
             order_by=order_by,
