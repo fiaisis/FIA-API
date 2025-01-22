@@ -68,8 +68,10 @@ def test_get_jobs_as_user(mock_post, mock_get_experiment_numbers_for_user_number
     assert response.json() == []
 
 
-def test_get_jobs_as_user_dev_mode():
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+def test_get_jobs_as_user_dev_mode(mock_get_experiment_numbers_for_user_number):
     """Test get all jobs with as_user flag in dev mode"""
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
     with patch("fia_api.core.auth.tokens.DEV_MODE", True):
         response = client.get("/jobs?as_user=true")
         assert response.status_code == HTTPStatus.OK
