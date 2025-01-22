@@ -65,51 +65,8 @@ def test_get_jobs_as_user(mock_post, mock_get_experiment_numbers_for_user_number
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
     response = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        "id": 5001,
-        "end": None,
-        "inputs": {
-            "ei": "'auto'",
-            "sam_mass": 0.0,
-            "sam_rmm": 0.0,
-            "monovan": 0,
-            "remove_bkg": True,
-            "sum_runs": False,
-            "runno": 25581,
-            "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
-            "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
-            "wbvan": 12345,
-        },
-        "outputs": None,
-        "start": None,
-        "state": "NOT_STARTED",
-        "status_message": None,
-        "run": {
-            "experiment_number": 1820497,
-            "filename": "MAR25581.nxs",
-            "good_frames": 6452,
-            "instrument_name": "TEST",
-            "raw_frames": 8067,
-            "run_end": "2019-03-22T10:18:26",
-            "run_start": "2019-03-22T10:15:44",
-            "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT on not on all LAB",
-            "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
-        },
-        "script": None,
-        "stacktrace": None,
-        "runner_image": None,
-        "type": "JobType.AUTOREDUCTION",
-    }
-
-
-@patch("fia_api.core.services.job.get_experiments_for_user_number")
-def test_get_jobs_as_user_dev_mode(mock_get_experiment_numbers_for_user_number):
-    """Test get all jobs with as_user flag in dev mode"""
-    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
-    with patch("fia_api.core.auth.tokens.DEV_MODE", True):
-        response = client.get("/jobs?as_user=true")
-        assert response.status_code == HTTPStatus.OK
-        assert response.json() == {
+    assert response.json() == [
+        {
             "id": 5001,
             "end": None,
             "inputs": {
@@ -144,6 +101,53 @@ def test_get_jobs_as_user_dev_mode(mock_get_experiment_numbers_for_user_number):
             "runner_image": None,
             "type": "JobType.AUTOREDUCTION",
         }
+    ]
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+def test_get_jobs_as_user_dev_mode(mock_get_experiment_numbers_for_user_number):
+    """Test get all jobs with as_user flag in dev mode"""
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+    with patch("fia_api.core.auth.tokens.DEV_MODE", True):
+        response = client.get("/jobs?as_user=true")
+        assert response.status_code == HTTPStatus.OK
+        assert response.json() == [
+            {
+                "id": 5001,
+                "end": None,
+                "inputs": {
+                    "ei": "'auto'",
+                    "sam_mass": 0.0,
+                    "sam_rmm": 0.0,
+                    "monovan": 0,
+                    "remove_bkg": True,
+                    "sum_runs": False,
+                    "runno": 25581,
+                    "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
+                    "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
+                    "wbvan": 12345,
+                },
+                "outputs": None,
+                "start": None,
+                "state": "NOT_STARTED",
+                "status_message": None,
+                "run": {
+                    "experiment_number": 1820497,
+                    "filename": "MAR25581.nxs",
+                    "good_frames": 6452,
+                    "instrument_name": "TEST",
+                    "raw_frames": 8067,
+                    "run_end": "2019-03-22T10:18:26",
+                    "run_start": "2019-03-22T10:15:44",
+                    "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT on not on all LAB",
+                    "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
+                },
+                "script": None,
+                "stacktrace": None,
+                "runner_image": None,
+                "type": "JobType.AUTOREDUCTION",
+            }
+        ]
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
