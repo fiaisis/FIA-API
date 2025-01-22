@@ -57,6 +57,33 @@ def test_get_all_jobs_for_dev_mode():
         assert len(response.json()) == expected_number_of_jobs
 
 
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_jobs_as_user(mock_post):
+    """Test get all jobs with as_user flag for staff"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == []
+
+
+def test_get_jobs_as_user_dev_mode():
+    """Test get all jobs with as_user flag in dev mode"""
+    with patch("fia_api.core.auth.tokens.DEV_MODE", True):
+        response = client.get("/jobs?as_user=true")
+        assert response.status_code == HTTPStatus.OK
+        assert response.json() == []
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_jobs_as_user_false(mock_post):
+    """Test get all jobs with as_user flag set to false"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get("/jobs?as_user=false&limit=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    assert response.status_code == HTTPStatus.OK
+    expected_number_of_jobs = 10
+    assert len(response.json()) == expected_number_of_jobs
+
+
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_get_all_job_for_user(mock_post, mock_get_experiment_numbers_for_user_number):
@@ -116,7 +143,7 @@ def test_get_all_job_for_user_include_run(mock_post, mock_get_experiment_numbers
                 "raw_frames": 8067,
                 "run_end": "2019-03-22T10:18:26",
                 "run_start": "2019-03-22T10:15:44",
-                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT " "on not on all LAB",
+                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT on not on all LAB",
                 "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
             },
             "inputs": {
@@ -384,7 +411,7 @@ def test_get_jobs_for_instrument_runs_included_for_staff(mock_post):
                 "raw_frames": 8067,
                 "run_end": "2019-03-22T10:18:26",
                 "run_start": "2019-03-22T10:15:44",
-                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT " "on not on all LAB",
+                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT on not on all LAB",
                 "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
             },
             "script": None,
