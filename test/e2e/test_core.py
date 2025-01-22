@@ -75,7 +75,7 @@ def test_get_jobs_as_user_dev_mode():
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_get_jobs_as_user_false(mock_post):
+def test_get_jobs_as_user_false_for_staff(mock_post):
     """Test get all jobs with as_user flag set to false"""
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get("/jobs?as_user=false&limit=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
