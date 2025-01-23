@@ -549,7 +549,7 @@ def test_get_instrument_jobs_as_user_dev_mode(mock_get_experiment_numbers_for_us
     """Test get MARI jobs with as_user flag in dev mode"""
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
     with patch("fia_api.core.auth.tokens.DEV_MODE", True):
-        response = client.get("/instrument/mari.jobs?as_user=true")
+        response = client.get("/instrument/mari/jobs?as_user=true")
         assert response.status_code == HTTPStatus.OK
         assert response.json() == [
             {
