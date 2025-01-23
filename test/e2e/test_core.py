@@ -559,28 +559,17 @@ def test_get_instrument_jobs_as_user_dev_mode(mock_get_experiment_numbers_for_us
         assert response.status_code == HTTPStatus.OK
         assert response.json() == [
             {
-                "id": 5001,
-                "end": None,
-                "inputs": {
-                    "ei": "'auto'",
-                    "sam_mass": 0.0,
-                    "sam_rmm": 0.0,
-                    "monovan": 0,
-                    "remove_bkg": True,
-                    "sum_runs": False,
-                    "runno": 25581,
-                    "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
-                    "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
-                    "wbvan": 12345,
-                },
-                "outputs": None,
+                "id": 89,
                 "start": None,
+                "end": None,
                 "state": "NOT_STARTED",
                 "status_message": None,
-                "script": None,
-                "stacktrace": None,
+                "inputs": {"community": 9252},
+                "outputs": None,
+                "stacktrace": "some stacktrace",
+                "script": {"value": "import os\nprint('foo')"},
                 "runner_image": None,
-                "type": "JobType.AUTOREDUCTION",
+                "type": "JobType.SIMPLE",
             }
         ]
 
