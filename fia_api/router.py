@@ -167,6 +167,7 @@ async def get_jobs_by_instrument(
     order_by: OrderField = "start",
     order_direction: Literal["asc", "desc"] = "desc",
     include_run: bool = False,
+    as_user: bool = False,
 ) -> list[JobResponse] | list[JobWithRunResponse]:
     """
     Retrieve a list of jobs for a given instrument.
@@ -183,6 +184,14 @@ async def get_jobs_by_instrument(
     :return: List of JobResponse objects
     """
     user = get_user_from_token(credentials.credentials)
+
+    if as_user:
+        user_number = user.user_number
+    elif user.role == "staff":
+        user_number = None
+    else:
+        user_number = user.user_number
+
     instrument = instrument.upper()
     user_number = None if user.role == "staff" else user.user_number
     jobs = get_job_by_instrument(
