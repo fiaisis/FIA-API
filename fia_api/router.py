@@ -137,6 +137,7 @@ async def get_jobs(
     "experiment_title", "filename",]
     :param order_direction: Literal["asc", "desc"]
     :param include_run: bool
+    :param as_user: bool
     :return: List of JobResponse objects
     """
     user = get_user_from_token(credentials.credentials)
