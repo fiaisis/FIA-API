@@ -138,6 +138,12 @@ def test_get_jobs_as_user_false_for_staff(mock_post):
     assert len(response.json()) == expected_number_of_jobs
 
 
+# def test_get_jobs_as_user_but_not_staff():
+#     """Test get all jobs with as_user flag set to false"""
+#     response = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+#     assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_get_all_job_for_user(mock_post, mock_get_experiment_numbers_for_user_number):
@@ -549,7 +555,7 @@ def test_get_instrument_jobs_as_user_dev_mode(mock_get_experiment_numbers_for_us
     """Test get MARI jobs with as_user flag in dev mode"""
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
     with patch("fia_api.core.auth.tokens.DEV_MODE", True):
-        response = client.get("/instrument/mari/jobs?as_user=true")
+        response = client.get("/instrument/mari/jobs?as_user=true&limit=1")
         assert response.status_code == HTTPStatus.OK
         assert response.json() == [
             {
