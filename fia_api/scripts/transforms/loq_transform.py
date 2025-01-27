@@ -75,6 +75,10 @@ class LoqTransform(Transform):
                 line, lines, index, "slice_wavs", job.inputs["slice_wavs"]
             ):
                 continue
+            if "phi_limits" in job.inputs and self._replace_input(
+                line, lines, index, "phi_limits_list", job.inputs["phi_limits"]
+            ):
+                continue
         script.value = "\n".join(lines)
         logger.info("Transform complete for reduction %s", job.id)
 
