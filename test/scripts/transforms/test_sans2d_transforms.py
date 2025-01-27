@@ -24,7 +24,7 @@ import csv
 import datetime
 
 from mantid.kernel import ConfigService
-from mantid.simpleapi import RenameWorkspace, SaveRKH, SaveNXcanSAS, GroupWorkspaces, mtd, ConjoinWorkspaces, SaveNexusProcessed
+from mantid.simpleapi import RenameWorkspace, SaveRKH, SaveNXcanSAS, GroupWorkspaces, mtd, ConjoinWorkspaces
 from mantid import config
 from sans.user_file.toml_parsers.toml_reader import TomlReader
 import sans.command_interface.ISISCommandInterface as ici
