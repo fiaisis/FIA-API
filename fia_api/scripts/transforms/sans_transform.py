@@ -29,7 +29,9 @@ class SansTransform(Transform):
         # If you get here in the future, try removing the type ignore and see if it passes with newer mypy
         for index, line in enumerate(lines):
             if f"/extras/{job.instrument.instrument_name.lower()}/MaskFile.toml" in line and "user_file" in job.inputs:
-                lines[index] = line.replace(f"/extras/{job.instrument.instrument_name.lower()}/MaskFile.toml", job.inputs["user_file"])
+                lines[index] = line.replace(
+                    f"/extras/{job.instrument.instrument_name.lower()}/MaskFile.toml", job.inputs["user_file"]
+                )
                 continue
             if "run_number" in job.inputs and self._replace_input(
                 line, lines, index, "sample_scatter", job.inputs["run_number"]

@@ -10,7 +10,7 @@ from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.sans_transform import SansTransform
 
 
-@pytest.fixture
+@pytest.fixture()
 def script():
     """
     LoqTransform  PreScript fixture
@@ -44,7 +44,7 @@ phi_limits_list = [(-20, 20), (30, 160)]
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def reduction_1():
     """
     Reduction fixture
@@ -70,7 +70,7 @@ def reduction_1():
     return mock
 
 
-@pytest.fixture
+@pytest.fixture()
 def reduction_2():
     """
     Reduction fixture
