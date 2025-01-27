@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # mypy: disable-error-code="operator, index"
 class SansTransform(Transform):
     """
-    LoqTransform applies modifications to LOQ instrument scripts based on reduction input parameters in a Job
+    SansTransform applies modifications to LOQ instrument scripts based on reduction input parameters in a Job
     entity.
     """
 
