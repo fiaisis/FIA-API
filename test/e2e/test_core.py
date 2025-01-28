@@ -59,6 +59,93 @@ def test_get_all_jobs_for_dev_mode():
 
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
+def test_get_jobs_as_user(mock_post, mock_get_experiment_numbers_for_user_number):
+    """Test get all jobs with as_user flag for staff"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+    response = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == [
+        {
+            "id": 5001,
+            "end": None,
+            "inputs": {
+                "ei": "'auto'",
+                "sam_mass": 0.0,
+                "sam_rmm": 0.0,
+                "monovan": 0,
+                "remove_bkg": True,
+                "sum_runs": False,
+                "runno": 25581,
+                "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
+                "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
+                "wbvan": 12345,
+            },
+            "outputs": None,
+            "start": None,
+            "state": "NOT_STARTED",
+            "status_message": None,
+            "script": None,
+            "stacktrace": None,
+            "runner_image": None,
+            "type": "JobType.AUTOREDUCTION",
+        }
+    ]
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+def test_get_jobs_as_user_dev_mode(mock_get_experiment_numbers_for_user_number):
+    """Test get all jobs with as_user flag in dev mode"""
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+    with patch("fia_api.core.auth.tokens.DEV_MODE", True):
+        response = client.get("/jobs?as_user=true")
+        assert response.status_code == HTTPStatus.OK
+        assert response.json() == [
+            {
+                "id": 5001,
+                "end": None,
+                "inputs": {
+                    "ei": "'auto'",
+                    "sam_mass": 0.0,
+                    "sam_rmm": 0.0,
+                    "monovan": 0,
+                    "remove_bkg": True,
+                    "sum_runs": False,
+                    "runno": 25581,
+                    "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
+                    "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
+                    "wbvan": 12345,
+                },
+                "outputs": None,
+                "start": None,
+                "state": "NOT_STARTED",
+                "status_message": None,
+                "script": None,
+                "stacktrace": None,
+                "runner_image": None,
+                "type": "JobType.AUTOREDUCTION",
+            }
+        ]
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_jobs_as_user_false_for_staff(mock_post):
+    """Test get all jobs with as_user flag set to false"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get("/jobs?as_user=false&limit=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    assert response.status_code == HTTPStatus.OK
+    expected_number_of_jobs = 10
+    assert len(response.json()) == expected_number_of_jobs
+
+
+# def test_get_jobs_as_user_but_not_staff():
+#     """Test get all jobs with as_user flag set to false"""
+#     response = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+#     assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
 def test_get_all_job_for_user(mock_post, mock_get_experiment_numbers_for_user_number):
     """Test get all jobs for staff"""
     mock_post.return_value.status_code = HTTPStatus.OK
@@ -116,7 +203,7 @@ def test_get_all_job_for_user_include_run(mock_post, mock_get_experiment_numbers
                 "raw_frames": 8067,
                 "run_end": "2019-03-22T10:18:26",
                 "run_start": "2019-03-22T10:15:44",
-                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT " "on not on all LAB",
+                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT on not on all LAB",
                 "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
             },
             "inputs": {
@@ -384,7 +471,7 @@ def test_get_jobs_for_instrument_runs_included_for_staff(mock_post):
                 "raw_frames": 8067,
                 "run_end": "2019-03-22T10:18:26",
                 "run_start": "2019-03-22T10:15:44",
-                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT " "on not on all LAB",
+                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT on not on all LAB",
                 "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
             },
             "script": None,
@@ -449,6 +536,29 @@ def test_limit_offset_jobs(mock_post):
 
     assert len(response_two.json()) == 4  # noqa: PLR2004
     assert response_one.json() != response_two.json()
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_instrument_jobs_as_user_false_for_staff(mock_post):
+    """Test get MARI jobs with as_user flag set to false"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get(
+        "/instrument/mari/jobs?limit=10&as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"}
+    )
+    assert response.status_code == HTTPStatus.OK
+    expected_number_of_jobs = 10
+    assert len(response.json()) == expected_number_of_jobs
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+def test_get_instrument_jobs_as_user_dev_mode(mock_get_experiment_numbers_for_user_number):
+    """Test get MARI jobs with as_user flag in dev mode"""
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+    with patch("fia_api.core.auth.tokens.DEV_MODE", True):
+        response = client.get("/instrument/mari/jobs?as_user=true&limit=1")
+        assert response.status_code == HTTPStatus.OK
+        expected_number_of_jobs = 1
+        assert len(response.json()) == expected_number_of_jobs
 
 
 def test_instrument_jobs_count():
