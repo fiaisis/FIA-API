@@ -574,7 +574,7 @@ def test_get_jobs_as_user_off_and_user(mock_post):
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_get_jobs_by_instrument_as_user_on_and_staff(mock_post, mock_get_experiment_numbers_for_user_number):
+def test_get_jobs_by_instrument_as_user_on_and_staff(mock_post):
     """Test get instrument jobs with as_user=True for a staff"""
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get("/instrument/test/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
@@ -583,7 +583,7 @@ def test_get_jobs_by_instrument_as_user_on_and_staff(mock_post, mock_get_experim
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_get_jobs_by_instrument_as_user_on_and_user(mock_post, mock_get_experiment_numbers_for_user_number):
+def test_get_jobs_by_instrument_as_user_on_and_user(mock_post):
     """Test get instrument jobs with as_user=True for a user"""
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get("/instrument/test/jobs?as_user=true", headers={"Authorization": f"Bearer {USER_TOKEN}"})
