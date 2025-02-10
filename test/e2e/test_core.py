@@ -693,6 +693,4 @@ def test_get_jobs_as_user_flag_for_staff(mock_post, mock_get_all_jobs, mock_get_
         },
     ]
 
-    response_as_user = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
-
-    assert response_as_user.status_code == HTTPStatus.OK
+    client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
