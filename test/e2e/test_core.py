@@ -686,3 +686,8 @@ def test_get_jobs_as_user_flag_for_staff(mock_get_all_jobs):
             "type": "JobType.AUTOREDUCTION",
         },
     ]
+
+    response_as_user = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+
+    y = 2
+    assert len(response_as_user.status_code) == y
