@@ -669,3 +669,24 @@ def test_get_jobs_as_user_flag_for_staff(mock_post, mock_get_all_jobs, mock_get_
     x = 1
     assert x == 1
     mock_post.return_value.status_code = HTTPStatus.OK
+
+    mock_get_all_jobs.return_value = [
+        {
+            "id": 1234,
+            "state": "COMPLETED",
+            "inputs": {},
+            "outputs": None,
+            "start": None,
+            "end": None,
+            "type": "JobType.AUTOREDUCTION",
+        },
+        {
+            "id": 5678,
+            "state": "FAILED",
+            "inputs": {},
+            "outputs": None,
+            "start": None,
+            "end": None,
+            "type": "JobType.AUTOREDUCTION",
+        },
+    ]
