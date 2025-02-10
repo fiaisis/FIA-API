@@ -675,4 +675,4 @@ def test_get_jobs_as_user_flag_for_staff(mock_post, mock_get_experiment_numbers_
 
     response_as_user_false = client.get("/jobs?as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
 
-    assert len(response_as_user_true.json()) == len(response_as_user_false.json())
+    assert len(response_as_user_true.json()) != len(response_as_user_false.json())
