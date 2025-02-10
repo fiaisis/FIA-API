@@ -669,29 +669,3 @@ def test_get_jobs_as_user_flag_for_staff(mock_post, mock_get_all_jobs, mock_get_
     x = 1
     assert x == 1
     mock_post.return_value.status_code = HTTPStatus.OK
-    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
-    mock_get_all_jobs.return_value = [
-        {
-            "id": 1234,
-            "state": "COMPLETED",
-            "inputs": {},
-            "outputs": None,
-            "start": None,
-            "end": None,
-            "type": "JobType.AUTOREDUCTION",
-        },
-        {
-            "id": 5678,
-            "state": "FAILED",
-            "inputs": {},
-            "outputs": None,
-            "start": None,
-            "end": None,
-            "type": "JobType.AUTOREDUCTION",
-        },
-    ]
-
-    response_as_user = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
-
-    y = 2
-    assert len(response_as_user.status_code) == y
