@@ -554,3 +554,131 @@ def test_get_mantid_runners_bad_jwt(mock_post):
     mock_post.return_value.status_code = HTTPStatus.FORBIDDEN
     response = client.get("/jobs/runners", headers={"Authorization": "foo"})
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_all_jobs_response_body_as_user_true_and_as_staff(mock_post, mock_get_experiment_numbers_for_user_number):
+    """Test that a single job is returned when a staff user gets all jobs with the as_user flag set to true"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+    response = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == [
+        {
+            "id": 5001,
+            "end": None,
+            "inputs": {
+                "ei": "'auto'",
+                "sam_mass": 0.0,
+                "sam_rmm": 0.0,
+                "monovan": 0,
+                "remove_bkg": True,
+                "sum_runs": False,
+                "runno": 25581,
+                "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
+                "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
+                "wbvan": 12345,
+            },
+            "outputs": None,
+            "start": None,
+            "state": "NOT_STARTED",
+            "status_message": None,
+            "script": None,
+            "stacktrace": None,
+            "runner_image": None,
+            "type": "JobType.AUTOREDUCTION",
+        }
+    ]
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_all_jobs_as_user_false_and_as_staff(mock_post, mock_get_experiment_numbers_for_user_number):
+    """Test that multiple jobs are returned when a staff user gets all jobs with the as_user flag set to false"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+    response = client.get("/jobs?limit=10&as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() > 1
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+def test_get_all_jobs_response_body_as_user_true_and_dev_mode_true(mock_get_experiment_numbers_for_user_number):
+    """Test that being in dev mode makes no difference when getting all jobs with the as_user flag set to true"""
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+    with patch("fia_api.core.auth.tokens.DEV_MODE", True):
+        response = client.get("/jobs?as_user=true")
+        assert response.status_code == HTTPStatus.OK
+        assert response.json() == [
+            {
+                "id": 5001,
+                "end": None,
+                "inputs": {
+                    "ei": "'auto'",
+                    "sam_mass": 0.0,
+                    "sam_rmm": 0.0,
+                    "monovan": 0,
+                    "remove_bkg": True,
+                    "sum_runs": False,
+                    "runno": 25581,
+                    "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
+                    "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
+                    "wbvan": 12345,
+                },
+                "outputs": None,
+                "start": None,
+                "state": "NOT_STARTED",
+                "status_message": None,
+                "script": None,
+                "stacktrace": None,
+                "runner_image": None,
+                "type": "JobType.AUTOREDUCTION",
+            }
+        ]
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_mari_jobs_as_user_true_and_as_staff(mock_post):
+    """Test that a single job is returned when a staff user gets jobs from MARI with the as_user flag set to true"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get("/instrument/mari/jobs?&as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()) == 1
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_mari_jobs_as_user_false_and_as_staff(mock_post):
+    """Test that multiple jobs are returned when a staff user gets jobs from MARI with the as_user flag set to false"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get(
+        "/instrument/mari/jobs?limit=10&as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"}
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()) > 1
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+def test_get_mari_jobs_as_user_false_and_as_staff_and_dev_mode_true(mock_get_experiment_numbers_for_user_number):
+    """Test that being in dev mode makes no difference when getting MARI jobs with the as_user flag set to true"""
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+    with patch("fia_api.core.auth.tokens.DEV_MODE", True):
+        response = client.get("/instrument/mari/jobs?as_user=true")
+        assert response.status_code == HTTPStatus.OK
+        assert len(response.json()) == 1
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_multiple_get_job_requests_with_different_as_user_values(
+    mock_post, mock_get_experiment_numbers_for_user_number
+):
+    """Test get all jobs with as_user flag set to true and false for a staff user yield responses of different lengths"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+
+    response_as_user_true = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+
+    response_as_user_false = client.get("/jobs?as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+
+    assert len(response_as_user_true.json()) != len(response_as_user_false.json())
