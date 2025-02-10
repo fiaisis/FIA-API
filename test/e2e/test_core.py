@@ -672,25 +672,8 @@ def test_get_jobs_as_user_flag_for_staff(mock_post, mock_get_all_jobs, mock_get_
 
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
 
-    mock_get_all_jobs.return_value = [
-        {
-            "id": 1234,
-            "state": "COMPLETED",
-            "inputs": {},
-            "outputs": None,
-            "start": None,
-            "end": None,
-            "type": "JobType.AUTOREDUCTION",
-        },
-        {
-            "id": 5678,
-            "state": "FAILED",
-            "inputs": {},
-            "outputs": None,
-            "start": None,
-            "end": None,
-            "type": "JobType.AUTOREDUCTION",
-        },
-    ]
+    response_as_user_true = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
 
-    client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response_as_user_false = client.get("/jobs?as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+
+    assert len(response_as_user_true.response()) == len(response_as_user_false.response())
