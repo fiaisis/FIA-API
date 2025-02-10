@@ -660,9 +660,8 @@ def test_get_mantid_runners_bad_jwt(mock_post):
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-@patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
-def test_get_jobs_as_user_flag_for_staff(mock_post, mock_get_experiment_numbers_for_user_number):
+def test_get_jobs_as_user_flag_for_staff(mock_get_experiment_numbers_for_user_number):
     """Test get all jobs with as_user flag set to true and false for a staff user"""
 
     x = 1
