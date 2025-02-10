@@ -193,7 +193,7 @@ async def get_jobs_by_instrument(
         user_number = user.user_number
 
     instrument = instrument.upper()
-    user_number = None if user.role == "staff" else user.user_number
+
     jobs = get_job_by_instrument(
         instrument,
         limit=limit,
