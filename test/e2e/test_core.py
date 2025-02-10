@@ -658,3 +658,36 @@ def test_get_mantid_runners_bad_jwt(mock_post):
     mock_post.return_value.status_code = HTTPStatus.FORBIDDEN
     response = client.get("/jobs/runners", headers={"Authorization": "foo"})
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+# @patch("fia_api.core.auth.tokens.requests.post")
+# @patch("fia_api.core.services.job.get_all_jobs")
+def test_get_jobs_as_user_flag_for_staff(mock_post, mock_get_all_jobs):
+    """Test get all jobs with as_user flag set to true and false for a staff user"""
+    pass
+    # mock_get_all_jobs.return_value = [
+    #     {
+    #         "id": 1234,
+    #         "state": "COMPLETED",
+    #         "inputs": {},
+    #         "outputs": None,
+    #         "start": None,
+    #         "end": None,
+    #         "type": "JobType.AUTOREDUCTION",
+    #     },
+    #     {
+    #         "id": 5678,
+    #         "state": "FAILED",
+    #         "inputs": {},
+    #         "outputs": None,
+    #         "start": None,
+    #         "end": None,
+    #         "type": "JobType.AUTOREDUCTION",
+    #     },
+    # ]
+
+    # response_as_user = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+
+    # response_not_as_user = client.get("/jobs?as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+
+    # assert len(response_as_user.json()) == len(response_not_as_user.json())
