@@ -670,6 +670,8 @@ def test_get_jobs_as_user_flag_for_staff(mock_post, mock_get_all_jobs, mock_get_
     assert x == 1
     mock_post.return_value.status_code = HTTPStatus.OK
 
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+
     mock_get_all_jobs.return_value = [
         {
             "id": 1234,
