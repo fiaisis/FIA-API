@@ -600,7 +600,7 @@ def test_get_all_jobs_as_user_false_and_as_staff(mock_post, mock_get_experiment_
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
     response = client.get("/jobs?limit=10&as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
-    assert response.json() > 1
+    assert len(response.json()) > 1
 
 
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
