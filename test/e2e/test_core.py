@@ -664,11 +664,7 @@ def test_get_mantid_runners_bad_jwt(mock_post):
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_get_jobs_as_user_flag_for_staff(mock_post, mock_get_experiment_numbers_for_user_number):
     """Test get all jobs with as_user flag set to true and false for a staff user"""
-
     mock_post.return_value.status_code = HTTPStatus.OK
-    x = 1
-    assert x == 1
-
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
 
     response_as_user_true = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
@@ -676,3 +672,13 @@ def test_get_jobs_as_user_flag_for_staff(mock_post, mock_get_experiment_numbers_
     response_as_user_false = client.get("/jobs?as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
 
     assert len(response_as_user_true.json()) != len(response_as_user_false.json())
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_jobs_as_user_flag_for_staff_2(mock_post):
+    """Test get all jobs with as_user flag set to true and false for a staff user"""
+    mock_post.return_value.status_code = HTTPStatus.FORBIDDEN
+
+    response = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
