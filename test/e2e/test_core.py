@@ -684,8 +684,10 @@ def test_get_jobs_as_user_flag_for_staff_2(mock_post):
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-def test_3():
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_3(mock_post):
     """Test get all jobs with as_user flag set to true and false for a staff user"""
+    mock_post.return_value.status_code = HTTPStatus.OK
     response_as_user_true = client.get(
         "/instrument/mari/jobs?&as_user=true", headers={"Authorization": f"Bearer {USER_TOKEN}"}
     )
