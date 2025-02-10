@@ -661,9 +661,11 @@ def test_get_mantid_runners_bad_jwt(mock_post):
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_get_jobs_as_user_flag_for_staff(mock_post):
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+def test_get_jobs_as_user_flag_for_staff(mock_post, mock_get_experiment_numbers_for_user_number):
     """Test get all jobs with as_user flag set to true and false for a staff user"""
     mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
 
     response_as_user = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response_as_user.status_code == HTTPStatus.OK
