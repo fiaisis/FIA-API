@@ -667,7 +667,6 @@ def test_get_jobs_as_user_flag_for_staff(mock_post, mock_get_experiment_numbers_
 
     x = 1
     assert x == 1
-    mock_post.return_value.status_code = HTTPStatus.OK
 
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
 
