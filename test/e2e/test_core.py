@@ -682,3 +682,16 @@ def test_get_jobs_as_user_flag_for_staff_2(mock_post):
     response = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
 
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_3():
+    """Test get all jobs with as_user flag set to true and false for a staff user"""
+    response_as_user_true = client.get(
+        "/instrument/mari/jobs?&as_user=true", headers={"Authorization": f"Bearer {USER_TOKEN}"}
+    )
+
+    response_as_user_false = client.get(
+        "/instrument/mari/jobs?&as_user=false", headers={"Authorization": f"Bearer {USER_TOKEN}"}
+    )
+
+    assert len(response_as_user_true.json()) == len(response_as_user_false.json())
