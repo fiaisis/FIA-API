@@ -9,10 +9,10 @@ from unittest import mock
 from unittest.mock import patch
 
 import pytest
-from db.data_models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
+from db.data_models import Instrument, Job, JobOwner, JobType, Run, Script, State
 from starlette.testclient import TestClient
 
-from fia_api.core.repositories import ENGINE, SESSION
+from fia_api.core.repositories import SESSION
 from fia_api.fia_api import app
 from test.utils import FIA_FAKER_PROVIDER
 
@@ -58,15 +58,12 @@ TEST_RUN = Run(
 TEST_RUN.jobs.append(TEST_JOB)
 
 
-@pytest.fixture(autouse=True)
-def user_owned_data_setup() -> None:
+@pytest.fixture()
+def _user_owned_data_setup() -> None:
     """
     Set up the test database before module
     :return: None
     """
-    Base.metadata.drop_all(ENGINE)
-    Base.metadata.create_all(ENGINE)
-
     with SESSION() as session:
         session.add(TEST_SCRIPT)
         session.add(TEST_INSTRUMENT)
@@ -687,10 +684,10 @@ def test_get_all_jobs_response_body_as_user_true_and_dev_mode_true(mock_get_expe
         ]
 
 
-@patch("fia_api.core.specifcations.job.get_experiments_for_user_number")
+@patch("fia_api.core.specifications.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_get_mari_jobs_as_user_true_and_as_staff(
-    mock_post, mock_get_experiment_numbers_for_user_number, user_owned_data_setup
+    mock_post, mock_get_experiment_numbers_for_user_number, _user_owned_data_setup
 ):
     """Test that a single job is returned when a staff user gets jobs from MARI with the as_user flag set to true"""
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
