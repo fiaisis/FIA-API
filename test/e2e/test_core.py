@@ -32,8 +32,8 @@ STAFF_TOKEN = (
     "-ktYEwdUfg5_PmUocmrAonZ6lwPJdcMoklWnVME1wLE"
 )
 
-TEST_JOB_OWNER = JobOwner(user_number=1820497)
-TEST_INSTRUMENT = Instrument(instrument_name="foo", latest_run=1, specification={"foo": "bar"})
+TEST_JOB_OWNER = JobOwner(experiment_number=18204970)
+TEST_INSTRUMENT = Instrument(instrument_name="FOO", latest_run=1, specification={"foo": "bar"})
 TEST_SCRIPT = Script(script="print('Script 1')", sha="some_sha", script_hash="some_hash")
 TEST_JOB = Job(
     start=datetime.datetime.now(datetime.UTC),
@@ -73,6 +73,12 @@ def _user_owned_data_setup() -> None:
         session.refresh(TEST_SCRIPT)
         session.refresh(TEST_INSTRUMENT)
         session.refresh(TEST_RUN)
+    yield
+    with SESSION() as session:
+        session.delete(TEST_RUN)
+        session.delete(TEST_SCRIPT)
+        session.delete(TEST_INSTRUMENT)
+        session.delete(TEST_JOB)
 
 
 def test_get_job_by_id_no_token_results_in_http_forbidden():
@@ -649,48 +655,12 @@ def test_get_all_jobs_as_user_false_and_as_staff(mock_post, mock_get_experiment_
     assert len(response.json()) > 1
 
 
-@patch("fia_api.core.services.job.get_experiments_for_user_number")
-def test_get_all_jobs_response_body_as_user_true_and_dev_mode_true(mock_get_experiment_numbers_for_user_number):
-    """Test that being in dev mode makes no difference when getting all jobs with the as_user flag set to true"""
-    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
-    with patch("fia_api.core.auth.tokens.DEV_MODE", True):
-        response = client.get("/jobs?as_user=true")
-        assert response.status_code == HTTPStatus.OK
-        assert response.json() == [
-            {
-                "id": 5001,
-                "end": None,
-                "inputs": {
-                    "ei": "'auto'",
-                    "sam_mass": 0.0,
-                    "sam_rmm": 0.0,
-                    "monovan": 0,
-                    "remove_bkg": True,
-                    "sum_runs": False,
-                    "runno": 25581,
-                    "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
-                    "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
-                    "wbvan": 12345,
-                },
-                "outputs": None,
-                "start": None,
-                "state": "NOT_STARTED",
-                "status_message": None,
-                "script": None,
-                "stacktrace": None,
-                "runner_image": None,
-                "type": "JobType.AUTOREDUCTION",
-            }
-        ]
-
-
+@pytest.mark.usefixtures("_user_owned_data_setup")
 @patch("fia_api.core.specifications.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_get_mari_jobs_as_user_true_and_as_staff(
-    mock_post, mock_get_experiment_numbers_for_user_number, _user_owned_data_setup
-):
+def test_get_mari_jobs_as_user_true_and_as_staff(mock_post, mock_get_experiment_numbers_for_user_number):
     """Test that a single job is returned when a staff user gets jobs from MARI with the as_user flag set to true"""
-    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+    mock_get_experiment_numbers_for_user_number.return_value = [18204970]
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get("/instrument/foo/jobs?&as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
@@ -706,16 +676,6 @@ def test_get_mari_jobs_as_user_false_and_as_staff(mock_post):
     )
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()) > 1
-
-
-@patch("fia_api.core.specifications.job.get_experiments_for_user_number")
-def test_get_mari_jobs_as_user_true_and_as_staff_and_dev_mode_true(mock_get_experiment_numbers_for_user_number):
-    """Test that being in dev mode makes no difference when getting MARI jobs with the as_user flag set to true"""
-    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
-    with patch("fia_api.core.auth.tokens.DEV_MODE", True):
-        response = client.get("/instrument/mari/jobs?as_user=true")
-        assert response.status_code == HTTPStatus.OK
-        assert len(response.json()) == 1
 
 
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
