@@ -660,7 +660,7 @@ def test_get_mari_jobs_as_user_false_and_as_staff(mock_post):
 
 
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
-def test_get_mari_jobs_as_user_false_and_as_staff_and_dev_mode_true(mock_get_experiment_numbers_for_user_number):
+def test_get_mari_jobs_as_user_true_and_as_staff_and_dev_mode_true(mock_get_experiment_numbers_for_user_number):
     """Test that being in dev mode makes no difference when getting MARI jobs with the as_user flag set to true"""
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
     with patch("fia_api.core.auth.tokens.DEV_MODE", True):
