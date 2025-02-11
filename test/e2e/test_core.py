@@ -638,7 +638,7 @@ def test_get_all_jobs_response_body_as_user_true_and_dev_mode_true(mock_get_expe
         ]
 
 
-@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.specifcations.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_get_mari_jobs_as_user_true_and_as_staff(mock_post, mock_get_experiment_numbers_for_user_number):
     """Test that a single job is returned when a staff user gets jobs from MARI with the as_user flag set to true"""
@@ -660,7 +660,7 @@ def test_get_mari_jobs_as_user_false_and_as_staff(mock_post):
     assert len(response.json()) > 1
 
 
-@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.specifcations.job.get_experiments_for_user_number")
 def test_get_mari_jobs_as_user_true_and_as_staff_and_dev_mode_true(mock_get_experiment_numbers_for_user_number):
     """Test that being in dev mode makes no difference when getting MARI jobs with the as_user flag set to true"""
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
