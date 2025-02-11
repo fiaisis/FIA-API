@@ -639,7 +639,8 @@ def test_get_all_jobs_response_body_as_user_true_and_dev_mode_true(mock_get_expe
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_get_mari_jobs_as_user_true_and_as_staff(mock_post):
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+def test_get_mari_jobs_as_user_true_and_as_staff(mock_post, mock_get_experiment_numbers_for_user_number):
     """Test that a single job is returned when a staff user gets jobs from MARI with the as_user flag set to true"""
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get("/instrument/mari/jobs?&as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
