@@ -683,7 +683,8 @@ def test_get_mari_jobs_as_user_false_and_as_staff(mock_post):
 def test_multiple_get_job_requests_with_different_as_user_values(
     mock_post, mock_get_experiment_numbers_for_user_number
 ):
-    """Test get all jobs with as_user flag set to true and false for a staff user yield responses of different lengths"""
+    """Test get all jobs with as_user flag set to true and false for a staff
+    user yield responses of different lengths"""
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
 
