@@ -33,7 +33,7 @@ STAFF_TOKEN = (
 )
 
 TEST_JOB_OWNER = JobOwner(experiment_number=18204970)
-TEST_INSTRUMENT = Instrument(instrument_name="FOO", latest_run=1, specification={"foo": "bar"})
+TEST_INSTRUMENT = Instrument(instrument_name="NEWBIE", latest_run=1, specification={"foo": "bar"})
 TEST_SCRIPT = Script(script="print('Script 1')", sha="some_sha", script_hash="some_hash")
 TEST_JOB = Job(
     start=datetime.datetime.now(datetime.UTC),
@@ -662,7 +662,7 @@ def test_get_mari_jobs_as_user_true_and_as_staff(mock_post, mock_get_experiment_
     """Test that a single job is returned when a staff user gets jobs from MARI with the as_user flag set to true"""
     mock_get_experiment_numbers_for_user_number.return_value = [18204970]
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/instrument/foo/jobs?&as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/instrument/newbie/jobs?&as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()) == 1
 
