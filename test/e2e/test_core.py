@@ -466,7 +466,7 @@ def test_jobs_count():
     """
     response = client.get("/jobs/count")
     assert response.status_code == HTTPStatus.OK
-    assert response.json()["count"] == 5001  # noqa: PLR2004
+    assert response.json()["count"] == 5002  # noqa: PLR2004
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
