@@ -1,6 +1,4 @@
-"""
-Tests for job service
-"""
+"""Tests for job service"""
 
 from unittest.mock import Mock, patch
 
@@ -122,9 +120,7 @@ def test_get_job_by_id_for_user_with_user_number(mock_get_exp, mock_repo):
 @patch("fia_api.core.services.job._REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_without_user(mock_spec_class, mock_repo):
-    """
-    Test get_all_jobs without a user number
-    """
+    """Test get_all_jobs without a user number"""
     spec = mock_spec_class.return_value
     get_all_jobs(limit=10, offset=5, order_by="end", order_direction="asc")
     spec.all.assert_called_once_with(limit=10, offset=5, order_by="end", order_direction="asc")
@@ -135,9 +131,7 @@ def test_get_all_jobs_without_user(mock_spec_class, mock_repo):
 @patch("fia_api.core.services.job.JobSpecification")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 def test_get_all_jobs_with_user_having_access(mock_get_experiments, mock_spec_class, mock_repo):
-    """
-    Test get_all_jobs with a user number and the user has access to experiments
-    """
+    """Test get_all_jobs with a user number and the user has access to experiments"""
     mock_get_experiments.return_value = [123, 456]
     spec = mock_spec_class.return_value
     get_all_jobs(user_number=1234, limit=5, offset=0, order_by="start", order_direction="desc")
@@ -152,9 +146,7 @@ def test_get_all_jobs_with_user_having_access(mock_get_experiments, mock_spec_cl
 @patch("fia_api.core.services.job.JobSpecification")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 def test_get_all_jobs_with_user_no_access(mock_get_experiments, mock_spec_class, mock_repo):
-    """
-    Test get_all_jobs with a user number but no access to any experiments
-    """
+    """Test get_all_jobs with a user number but no access to any experiments"""
     mock_repo.find.return_value = []
     mock_get_experiments.return_value = []
     spec = mock_spec_class.return_value
@@ -189,9 +181,7 @@ def test_get_experiment_number_from_job_id_expect_raise(mock_repo):
 @patch("fia_api.core.services.job._REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_order_by_run_start_desc(mock_spec_class, mock_repo):
-    """
-    Test get_all_jobs with order_by 'run_start' in descending order.
-    """
+    """Test get_all_jobs with order_by 'run_start' in descending order."""
     spec = mock_spec_class.return_value
     get_all_jobs(limit=5, offset=0, order_by="run_start", order_direction="desc")
     spec.all.assert_called_once_with(limit=5, offset=0, order_by="run_start", order_direction="desc")
@@ -201,9 +191,7 @@ def test_get_all_jobs_order_by_run_start_desc(mock_spec_class, mock_repo):
 @patch("fia_api.core.services.job._REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_order_by_run_start_asc(mock_spec_class, mock_repo):
-    """
-    Test get_all_jobs with order_by 'run_start' in ascending order.
-    """
+    """Test get_all_jobs with order_by 'run_start' in ascending order."""
     spec = mock_spec_class.return_value
     get_all_jobs(limit=5, offset=0, order_by="run_start", order_direction="asc")
     spec.all.assert_called_once_with(limit=5, offset=0, order_by="run_start", order_direction="asc")
@@ -213,9 +201,7 @@ def test_get_all_jobs_order_by_run_start_asc(mock_spec_class, mock_repo):
 @patch("fia_api.core.services.job._REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_default_order_by_start(mock_spec_class, mock_repo):
-    """
-    Test get_all_jobs without specifying a different order_by, per the function signature it should order by 'start'.
-    """
+    """Test get_all_jobs without specifying a different order_by, per the function signature it should order by 'start'."""
     spec = mock_spec_class.return_value
     get_all_jobs(limit=5, offset=0)
     spec.all.assert_called_once_with(limit=5, offset=0, order_by="start", order_direction="desc")
@@ -225,9 +211,7 @@ def test_get_all_jobs_default_order_by_start(mock_spec_class, mock_repo):
 @patch("fia_api.core.services.job._REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_with_pagination(mock_spec_class, mock_repo):
-    """
-    Test get_all_jobs with custom pagination (limit and offset).
-    """
+    """Test get_all_jobs with custom pagination (limit and offset)."""
     spec = mock_spec_class.return_value
     get_all_jobs(limit=15, offset=30)
     spec.all.assert_called_once_with(limit=15, offset=30, order_by="start", order_direction="desc")

@@ -1,6 +1,4 @@
-"""
-Tests for utility functions
-"""
+"""Tests for utility functions"""
 
 from http import HTTPStatus
 from pathlib import Path
@@ -73,18 +71,14 @@ EXPECTED_SCRIPT = "from mantid.kernel import ConfigService\nfrom mantid.simpleap
     [(GHP_SCRIPT, EXPECTED_SCRIPT), (SCRIPT, EXPECTED_SCRIPT)],
 )
 def test_filter_script_for_tokens(input_script, expected_script):
-    """
-    Test the filter script for tokens
-    """
+    """Test the filter script for tokens"""
     output_script = filter_script_for_tokens(input_script)
 
     assert output_script == expected_script
 
 
 def test_safe_check_file_path(tmp_path):
-    """
-    Test no exceptions raised when checking a safe relative file path
-    """
+    """Test no exceptions raised when checking a safe relative file path"""
     base_path = Path(tmp_path / "folder")
     file_path = base_path / "file.txt"
     file_path.mkdir(parents=True, exist_ok=True)
@@ -94,9 +88,7 @@ def test_safe_check_file_path(tmp_path):
 
 
 def test_non_relative_file_path(tmp_path):
-    """
-    Tests non relative file path without trigerring FileNotFound
-    """
+    """Tests non relative file path without trigerring FileNotFound"""
     base_path = Path(tmp_path / "folder")
     file_path = tmp_path / "non_relative_folder" / "file.txt"
     file_path.mkdir(parents=True, exist_ok=True)
@@ -108,9 +100,7 @@ def test_non_relative_file_path(tmp_path):
 
 
 def test_non_existing_file_path(tmp_path):
-    """
-    Tests non relative and non existing file to see if FileNotFound logic is triggered
-    """
+    """Tests non relative and non existing file to see if FileNotFound logic is triggered"""
     base_path = Path(tmp_path / "folder")
     file_path = tmp_path / "non_relative_folder" / "file.txt"
     with pytest.raises(HTTPException) as exc_info:
@@ -174,7 +164,7 @@ def test_get_packages():
 
 
 def test_get_packages_error():
-    "Test the get_packages() function for an unsuccessful API call."
+    """Test the get_packages() function for an unsuccessful API call."""
     with patch("fia_api.core.utility.requests.get") as mock_get:
         mock_get.return_value.status_code = HTTPStatus.NOT_FOUND
 
@@ -192,9 +182,7 @@ def test_get_packages_error():
 
 
 def test_get_packages_forbidden_invalid_token():
-    """
-    Test the get_packages() function for a forbidden API call caused by an invalid Bearer token.
-    """
+    """Test the get_packages() function for a forbidden API call caused by an invalid Bearer token."""
     invalid_token = "invalid_token_value"  # noqa: S105
 
     with patch("fia_api.core.utility.requests.get") as mock_get:

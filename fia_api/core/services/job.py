@@ -1,6 +1,4 @@
-"""
-Service Layer for jobs
-"""
+"""Service Layer for jobs"""
 
 import os
 from collections.abc import Sequence

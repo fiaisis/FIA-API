@@ -1,6 +1,4 @@
-"""
-end-to-end tests
-"""
+"""end-to-end tests"""
 
 import os
 from http import HTTPStatus

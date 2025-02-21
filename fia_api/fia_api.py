@@ -1,6 +1,4 @@
-"""
-Main module contains the uvicorn entrypoint
-"""
+"""Main module contains the uvicorn entrypoint"""
 
 import logging
 import sys

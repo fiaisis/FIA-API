@@ -1,6 +1,4 @@
-"""
-Testing utils
-"""
+"""Testing utils"""
 
 import random
 from datetime import UTC, datetime, timedelta
@@ -18,9 +16,7 @@ faker = Faker()
 
 
 class FIAProvider(BaseProvider):
-    """
-    Custom fia faker provider
-    """
+    """Custom fia faker provider"""
 
     INSTRUMENTS: ClassVar[list[str]] = [
         "ALF",
@@ -203,7 +199,7 @@ TEST_RUN = Run(
 
 
 def setup_database() -> None:
-    """Setup database for e2e tests"""
+    """Set up database for e2e tests"""
     Base.metadata.drop_all(ENGINE)
     Base.metadata.create_all(ENGINE)
     with SESSION() as session:

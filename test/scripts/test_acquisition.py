@@ -1,6 +1,4 @@
-"""
-Tests for script acquisition
-"""
+"""Tests for script acquisition"""
 
 import os
 from pathlib import Path, PosixPath
@@ -177,7 +175,7 @@ def test_write_script_locally():
 @patch("fia_api.scripts.acquisition._get_script_locally")
 def test_get_by_instrument_name_remote_(mock_get_local, mock_get_remote):
     """
-    test will not get locally when script retrieved from remote
+    Test will not get locally when script retrieved from remote
     :param mock_get_local: mock - mocked get local
     :param mock_get_remote: mock - mocked get remote
     :return: None

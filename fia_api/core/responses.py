@@ -1,6 +1,4 @@
-"""
-responses module contains api response definitions
-"""
+"""responses module contains api response definitions"""
 
 from __future__ import annotations
 

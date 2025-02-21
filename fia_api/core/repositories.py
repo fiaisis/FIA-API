@@ -1,6 +1,4 @@
-"""
-Provides a generic repository class for performing database operations.
-"""
+"""Provides a generic repository class for performing database operations."""
 
 import logging
 import os

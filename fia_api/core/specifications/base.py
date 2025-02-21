@@ -1,5 +1,5 @@
 """
-Base Specification Module
+Base Specification Module.
 
 Defines the abstract base class for creating query specifications.
 These specifications are designed to encapsulate the logic for querying the database,
@@ -26,7 +26,7 @@ def apply_pagination(spec_value: Select[tuple[T]], limit: int, offset: int) -> S
     :param spec_value: The Select
     :param limit: The limit
     :param offset: The offset
-    :return: The select with limits and offsets applied
+    :return: The select with limits and offsets applied.
     """
     if limit:
         spec_value = spec_value.limit(limit)

@@ -1,6 +1,4 @@
-"""
-Global fixture for e2e tests
-"""
+"""Global fixture for e2e tests"""
 
 import pytest
 

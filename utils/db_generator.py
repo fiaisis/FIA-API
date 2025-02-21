@@ -1,6 +1,4 @@
-"""
-Script to generate a database for a development environment
-"""
+"""Script to generate a database for a development environment"""
 
 import os
 import random
@@ -31,6 +29,7 @@ SESSION = sessionmaker(ENGINE)
 
 
 def main():
+    """Start DB Generator"""
     fia_provider = FIA_FAKER_PROVIDER
 
     if "localhost" not in ENGINE.url:

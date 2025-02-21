@@ -30,16 +30,16 @@ def get_user_from_token(token: str) -> User:
     if token == api_key:
         return User(user_number=-1, role="staff")
     try:
-        payload = jwt.decode(token, options={"verify_signature": False})
+        payload = jwt.decode(
+            token, options={"verify_signature": False}
+        )  # We don't verify here as it is verified by the auth api after
         return User(user_number=payload.get("usernumber"), role=payload.get("role"))
     except RuntimeError as exc:
         raise AuthenticationError("Problem unpacking jwt token") from exc
 
 
 class JWTAPIBearer(HTTPBearer):
-    """
-    Extends the FastAPI `HTTPBearer` class to provide JSON Web Token (JWT) based authentication/authorization.
-    """
+    """Extends the FastAPI `HTTPBearer` class to provide JSON Web Token (JWT) based authentication/authorization."""
 
     async def __call__(self, request: Request) -> HTTPAuthorizationCredentials | None:
         """

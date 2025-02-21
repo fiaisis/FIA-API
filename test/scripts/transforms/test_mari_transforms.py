@@ -1,6 +1,4 @@
-"""
-Test cases for MariTransform
-"""
+"""Test cases for MariTransform"""
 
 from unittest.mock import Mock
 
