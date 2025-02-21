@@ -54,7 +54,7 @@ _REPO: Repo[Job] = Repo()
 
 def get_job_by_instrument(
     instrument: str,
-    limit: int = 0,
+    limit: int = 100,
     offset: int = 0,
     order_by: OrderField = "start",
     order_direction: Literal["asc", "desc"] = "desc",
@@ -85,7 +85,7 @@ def get_job_by_instrument(
 
 
 def get_all_jobs(
-    limit: int = 0,
+    limit: int = 100,
     offset: int = 0,
     order_by: OrderField = "start",
     order_direction: Literal["asc", "desc"] = "desc",

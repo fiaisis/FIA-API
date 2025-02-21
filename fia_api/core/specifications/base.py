@@ -103,7 +103,7 @@ class Specification(Generic[T], ABC):
 
     def all(
         self,
-        limit: int = 0,
+        limit: int = 100,
         offset: int = 0,
         order_by: str = "id",
         order_direction: Literal["asc", "desc"] = "desc",
