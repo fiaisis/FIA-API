@@ -1,8 +1,8 @@
 """Service Layer for jobs"""
 
 import os
-from collections.abc import Sequence
-from typing import Literal
+from collections.abc import Mapping, Sequence
+from typing import Any, Literal
 
 from db.data_models import Job
 from pydantic import BaseModel
@@ -11,6 +11,7 @@ from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.exceptions import AuthenticationError, MissingRecordError
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.repositories import Repo
+from fia_api.core.specifications.filters import apply_filters_to_spec
 from fia_api.core.specifications.job import JobSpecification
 
 
@@ -59,6 +60,7 @@ def get_job_by_instrument(
     order_by: OrderField = "start",
     order_direction: Literal["asc", "desc"] = "desc",
     user_number: int | None = None,
+    filters: Mapping[str, Any] | None = None,
 ) -> Sequence[Job]:
     """
     Given an instrument name return a sequence of jobs for that instrument. Optionally providing a limit and
@@ -69,19 +71,20 @@ def get_job_by_instrument(
     :param order_direction: (str) Direction to der by "asc" | "desc"
     :param order_by: (str) Field to order by.
     :param user_number: (optional[str]) The user number of who is making the request
+    :param filters: Optional Mapping[str,Any] the filters to be applied to the query
     :return: Sequence of Jobs for an instrument
     """
-
-    return _REPO.find(
-        JobSpecification().by_instruments(
-            instrument=[instrument],
-            limit=limit,
-            offset=offset,
-            order_by=order_by,
-            order_direction=order_direction,
-            user_number=user_number,
-        )
+    specification = JobSpecification().by_instruments(
+        instruments=[instrument],
+        limit=limit,
+        offset=offset,
+        order_by=order_by,
+        order_direction=order_direction,
+        user_number=user_number,
     )
+    if filters:
+        specification = apply_filters_to_spec(filters, specification)
+    return _REPO.find(specification)
 
 
 def get_all_jobs(
@@ -90,6 +93,7 @@ def get_all_jobs(
     order_by: OrderField = "start",
     order_direction: Literal["asc", "desc"] = "desc",
     user_number: int | None = None,
+    filters: Mapping[str, Any] | None = None,
 ) -> Sequence[Job]:
     """
     Get all jobs, if a user number is provided then only the jobs that user has permission for will be
@@ -99,18 +103,23 @@ def get_all_jobs(
     :param offset: (int) - the number of jobs to offset the sequence from the entire job set
     :param order_direction: (str) Direction to der by "asc" | "desc"
     :param order_by: (str) Field to order by.
+    :param filters: Optional Mapping[str,Any] the filters to be applied
     :return: A Sequence of Jobs
     """
+    specification = JobSpecification()
     if user_number is None:
-        return _REPO.find(
-            JobSpecification().all(limit=limit, offset=offset, order_by=order_by, order_direction=order_direction)
+        specification = specification.all(
+            limit=limit, offset=offset, order_by=order_by, order_direction=order_direction
         )
-    experiment_numbers = get_experiments_for_user_number(user_number)
-    return _REPO.find(
-        JobSpecification().by_experiment_numbers(
-            experiment_numbers, limit=limit, offset=offset, order_direction=order_direction, order_by=order_by
+    else:
+        experiment_numbers = get_experiments_for_user_number(user_number)
+        specification = specification.by_experiment_numbers(
+            experiment_numbers, limit=limit, offset=offset, order_by=order_by, order_direction=order_direction
         )
-    )
+    if filters:
+        apply_filters_to_spec(filters, specification)
+
+    return _REPO.find(specification)
 
 
 def get_job_by_id(job_id: int, user_number: int | None = None) -> Job:
@@ -134,21 +143,27 @@ def get_job_by_id(job_id: int, user_number: int | None = None) -> Job:
     return job
 
 
-def count_jobs_by_instrument(instrument: str) -> int:
+def count_jobs_by_instrument(instrument: str, filters: Mapping[str, Any]) -> int:
     """
     Given an instrument name, count the jobs for that instrument
-    :param instrument: Instrument to count from
+    :param instrument: Instruments to count from
     :return: Number of jobs
     """
-    return _REPO.count(JobSpecification().by_instrument(instrument=instrument))
+    spec = JobSpecification().by_instruments(instruments=[instrument])
+    if filters:
+        spec = apply_filters_to_spec(filters, spec)
+    return _REPO.count(spec)
 
 
-def count_jobs() -> int:
+def count_jobs(filters: Mapping[str, Any] | None = None) -> int:
     """
     Count the total number of jobs
     :return: (int) number of jobs
     """
-    return _REPO.count(JobSpecification().all())
+    spec = JobSpecification().all()
+    if filters:
+        spec = apply_filters_to_spec(filters, spec)
+    return _REPO.count(spec)
 
 
 def get_experiment_number_for_job_id(job_id: int) -> int:
