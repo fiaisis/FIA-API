@@ -142,11 +142,11 @@ def test_jobs_by_instrument_sort_by_run_field(job_repo, order_field, expected_as
     """Test jobs by run fields"""
     expected = expected_ascending
     result = job_repo.find(
-        JobSpecification().by_instrument("instrument 1", order_by=order_field, order_direction="asc")
+        JobSpecification().by_instruments(["instrument 1"], order_by=order_field, order_direction="asc")
     )
     assert expected == result
     result = job_repo.find(
-        JobSpecification().by_instrument("instrument 1", order_by=order_field, order_direction="desc")
+        JobSpecification().by_instruments(["instrument 1"], order_by=order_field, order_direction="desc")
     )
     expected.reverse()
     assert expected == result
@@ -154,11 +154,11 @@ def test_jobs_by_instrument_sort_by_run_field(job_repo, order_field, expected_as
 
 def test_jobs_by_instrument_sort_by_job_field(job_repo):
     """Test sorting by job field"""
-    result = job_repo.find(JobSpecification().by_instrument("instrument 1", order_by="state", order_direction="asc"))
+    result = job_repo.find(JobSpecification().by_instruments(["instrument 1"], order_by="state", order_direction="asc"))
     expected = [TEST_JOB_2, TEST_JOB]
     assert result == expected
 
-    result = job_repo.find(JobSpecification().by_instrument("instrument 1", order_by="state", order_direction="desc"))
+    result = job_repo.find(JobSpecification().by_instruments(["instrument 1"], order_by="state", order_direction="desc"))
     expected.reverse()
     assert result == expected
 
