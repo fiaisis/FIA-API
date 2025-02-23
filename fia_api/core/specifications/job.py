@@ -56,7 +56,7 @@ class JobSpecification(Specification[Job]):
                     else self.value.order_by(Run.run_end.asc())
                 )
             case "experiment_number":
-                self.value = self.value.join(JobOwner)
+                self.value = self.value.join(JobOwner, onclause=Job.owner)
                 self.value = (
                     self.value.order_by(JobOwner.experiment_number.desc())
                     if order_direction == "desc"
@@ -81,7 +81,7 @@ class JobSpecification(Specification[Job]):
         order_direction: Literal["asc", "desc"] = "desc",
     ) -> JobSpecification:
         """
-        Filters jobs by the given experiment numbers and applies ordering, limit, and offset to the query
+        Filter jobs by the given experiment numbers and applies ordering, limit, and offset to the query
         :param experiment_numbers: The experiment numbers linked to the jobs
         :param limit: The maximum number of jobs to return. None indicates no limit.
         :param offset: The number of jobs to skip before starting to return the results. None for no offset.
@@ -106,6 +106,16 @@ class JobSpecification(Specification[Job]):
         order_direction: Literal["asc", "desc"] = "desc",
         user_number: int | None = None,
     ) -> JobSpecification:
+        """
+        Filter jobs by the given instruments and applies ordering, limit, and offset to the query
+        :param instruments: The instruments linked to the jobs
+        :param limit: The maximum number of jobs to return. None indicates no limit.
+        :param offset: The number of jobs to skip before starting to return the results. None for no offset.
+        :param order_by: The attribute to order the jobs by. Can be attributes of Job or Run entities.
+        :param order_direction: The direction to order the jobs, either 'asc' for ascending or 'desc' for descending.
+        :param user_number: The user number of the requested jobs, only those for that user will be returned
+        :return: An instance of JobSpecification with the applied filters and ordering.
+        """
         if user_number:
             experiment_numbers = get_experiments_for_user_number(user_number)
             self.value = (
@@ -137,7 +147,7 @@ class JobSpecification(Specification[Job]):
         order_direction: Literal["asc", "desc"] = "desc",
     ) -> JobSpecification:
         """
-        Fetches all jobs and applies ordering, limit, and offset to the query.
+        Fetch all jobs and applies ordering, limit, and offset to the query.
 
         :param limit: The maximum number of jobs to return. None indicates no limit.
         :param offset: The number of jobs to skip before starting to return the results. None for no offset.
@@ -145,7 +155,7 @@ class JobSpecification(Specification[Job]):
         :param order_direction: The direction to order the jobs, either 'asc' for ascending or 'desc' for descending.
         :return: An instance of JobSpecification with the applied filters and ordering.
         """
-        self.value = self.value.join(Run)
+        self.value = self.value.join(Run).join(Instrument)
         self._apply_ordering(order_by, order_direction)
 
         return self
