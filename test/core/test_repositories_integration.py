@@ -158,7 +158,9 @@ def test_jobs_by_instrument_sort_by_job_field(job_repo):
     expected = [TEST_JOB_2, TEST_JOB]
     assert result == expected
 
-    result = job_repo.find(JobSpecification().by_instruments(["instrument 1"], order_by="state", order_direction="desc"))
+    result = job_repo.find(
+        JobSpecification().by_instruments(["instrument 1"], order_by="state", order_direction="desc")
+    )
     expected.reverse()
     assert result == expected
 

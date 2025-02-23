@@ -27,7 +27,7 @@ def test_get_jobs_by_instrument(mock_spec_class, mock_repo):
     spec = mock_spec_class.return_value
     get_job_by_instrument("test", limit=5, offset=6)
 
-    mock_repo.find.assert_called_once_with(spec.by_instrument("test", limit=5, offset=6))
+    mock_repo.find.assert_called_once_with(spec.by_instruments(["test"], limit=5, offset=6))
 
 
 @patch("fia_api.core.services.job._REPO")
@@ -74,8 +74,8 @@ def test_count_jobs_by_instrument(mock_spec_class, mock_repo):
     :return: None
     """
     spec = mock_spec_class.return_value
-    count_jobs_by_instrument("TEST")
-    mock_repo.count.assert_called_once_with(spec.by_instrument("TEST"))
+    count_jobs_by_instrument("TEST", filters={})
+    mock_repo.count.assert_called_once_with(spec.by_instruments(["TEST"]))
 
 
 @patch("fia_api.core.services.job._REPO")
@@ -152,7 +152,9 @@ def test_get_all_jobs_with_user_no_access(mock_get_experiments, mock_spec_class,
     spec = mock_spec_class.return_value
     jobs = get_all_jobs(user_number=9876)
     mock_get_experiments.assert_called_once_with(9876)
-    spec.by_experiment_numbers.assert_called_once_with([], order_by="start", order_direction="desc", limit=0, offset=0)
+    spec.by_experiment_numbers.assert_called_once_with(
+        [], order_by="start", order_direction="desc", limit=100, offset=0
+    )
     mock_repo.find.assert_called_once_with(spec.by_experiment_numbers())
     assert jobs == []
 
