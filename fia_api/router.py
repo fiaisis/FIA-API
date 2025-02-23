@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import os
 from http import HTTPStatus
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.dialects.postgresql import JSONB
 from starlette.background import BackgroundTasks
@@ -117,11 +118,12 @@ OrderField = Literal[
 @ROUTER.get("/jobs", tags=["jobs"])
 async def get_jobs(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-    limit: int = 0,
+    limit: int = 100,
     offset: int = 0,
     order_by: OrderField = "start",
     order_direction: Literal["asc", "desc"] = "desc",
     include_run: bool = False,
+    filters: Annotated[str | None, Query(description="json string of filters")] = None,
 ) -> list[JobResponse] | list[JobWithRunResponse]:
     """
     Retrieve all jobs.
@@ -134,12 +136,19 @@ async def get_jobs(
     "experiment_title", "filename",]
     :param order_direction: Literal["asc", "desc"]
     :param include_run: bool
+    :param filters: dict[str any]
     :return: List of JobResponse objects
     """
+    filters = json.loads(filters) if filters else {}
     user = get_user_from_token(credentials.credentials)
     user_number = None if user.role == "staff" else user.user_number
     jobs = get_all_jobs(
-        limit=limit, offset=offset, order_by=order_by, order_direction=order_direction, user_number=user_number
+        limit=limit,
+        offset=offset,
+        order_by=order_by,
+        order_direction=order_direction,
+        user_number=user_number,
+        filters=filters,
     )
 
     if include_run:
@@ -151,11 +160,12 @@ async def get_jobs(
 async def get_jobs_by_instrument(
     instrument: str,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-    limit: int = 0,
+    limit: int = 100,
     offset: int = 0,
     order_by: OrderField = "start",
     order_direction: Literal["asc", "desc"] = "desc",
     include_run: bool = False,
+    filters: Annotated[str | None, Query(description="json string of filters")] = None,
 ) -> list[JobResponse] | list[JobWithRunResponse]:
     """
     Retrieve a list of jobs for a given instrument.
@@ -171,6 +181,7 @@ async def get_jobs_by_instrument(
     :param include_run: bool
     :return: List of JobResponse objects
     """
+    filters = json.loads(filters) if filters else {}
     user = get_user_from_token(credentials.credentials)
     instrument = instrument.upper()
     user_number = None if user.role == "staff" else user.user_number
@@ -181,6 +192,7 @@ async def get_jobs_by_instrument(
         order_by=order_by,
         order_direction=order_direction,
         user_number=user_number,
+        filters=filters,
     )
 
     if include_run:
@@ -191,6 +203,7 @@ async def get_jobs_by_instrument(
 @ROUTER.get("/instrument/{instrument}/jobs/count", tags=["jobs"])
 async def count_jobs_for_instrument(
     instrument: str,
+    filters: Annotated[str | None, Query(description="json string of filters")] = None,
 ) -> CountResponse:
     """
     Count jobs for a given instrument.
@@ -199,7 +212,7 @@ async def count_jobs_for_instrument(
     :return: CountResponse containing the count
     """
     instrument = instrument.upper()
-    return CountResponse(count=count_jobs_by_instrument(instrument))
+    return CountResponse(count=count_jobs_by_instrument(instrument, filters=json.loads(filters) if filters else {}))
 
 
 @ROUTER.get("/job/{job_id}", tags=["jobs"])
@@ -218,13 +231,15 @@ async def get_job(
 
 
 @ROUTER.get("/jobs/count", tags=["jobs"])
-async def count_all_jobs() -> CountResponse:
+async def count_all_jobs(
+    filters: Annotated[str | None, Query(description="json string of filters")] = None,
+) -> CountResponse:
     """
     Count all jobs
     \f
     :return: CountResponse containing the count
     """
-    return CountResponse(count=count_jobs())
+    return CountResponse(count=count_jobs(json.loads(filters) if filters else {}))
 
 
 @ROUTER.post("/job/rerun", tags=["job"])
