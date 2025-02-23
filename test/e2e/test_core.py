@@ -5,6 +5,7 @@ from http import HTTPStatus
 from unittest import mock
 from unittest.mock import patch
 
+import pytest
 from starlette.testclient import TestClient
 
 from fia_api.fia_api import app
@@ -44,6 +45,76 @@ def test_get_all_job_for_staff(mock_post):
     assert response.status_code == HTTPStatus.OK
     expected_number_of_jobs = 10
     assert len(response.json()) == expected_number_of_jobs
+
+
+@pytest.mark.parametrize("endpoint", ["/jobs", "/instrument/mari/jobs"])
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_jobs_with_filters(mock_post, endpoint):
+    """Test get all jobs for staff with filters"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get(
+        f"{endpoint}?include_run=true&limit=5&filters={{"
+        '"instrument_in":["MARI"],'
+        '"job_state_in":["ERROR","UNSUCCESSFUL"],'
+        '"title":"pro",'
+        '"experiment_number_after":115662,'
+        '"experiment_number_after":115662,'
+        '"experiment_number_before":623367,'
+        '"filename":"MAR","job_start_before":"2023-02-05T00:00:00.000Z",'
+        '"job_start_after":"2019-02-23T00:00:00.000Z",'
+        '"job_end_before":"2022-03-23T00:00:00.000Z",'
+        '"job_end_after":"2021-02-04T00:00:00.000Z",'
+        '"run_start_before":"2022-02-17T00:00:00.000Z",'
+        '"run_start_after":"2017-02-09T00:00:00.000Z",'
+        '"run_end_before":"2022-02-04T00:00:00.000Z",'
+        '"run_end_after":"2018-02-09T00:00:00.000Z"}',
+        headers={"Authorization": f"Bearer {STAFF_TOKEN}"},
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == [
+        {
+            "end": "2021-10-15T01:42:54",
+            "id": 1120,
+            "inputs": {
+                "PM": "HyhrNPKxIqKQiDwFWEiQ",
+                "base": False,
+                "board": 5579006175.83758,
+                "generation": True,
+                "research": 7177,
+                "under": -41792599944432.1,
+            },
+            "outputs": "What should this be?",
+            "run": {
+                "experiment_number": 115662,
+                "filename": "/archive/NDXMARI/Instrument/data/cycle_20_01/MARI115662.nxs",
+                "good_frames": 1373,
+                "instrument_name": "MARI",
+                "raw_frames": 7010,
+                "run_end": "2020-05-08T22:08:45",
+                "run_start": "2020-05-08T21:57:45",
+                "title": "If structure big under raise final process prepare century " "hair.",
+                "users": "Jonathan Davis, Michael Johnson",
+            },
+            "runner_image": None,
+            "script": {"value": "import os\nprint('foo')"},
+            "stacktrace": "some stacktrace",
+            "start": "2021-10-15T01:10:54",
+            "state": "ERROR",
+            "status_message": "Figure usually near million point have cause eye as " "about.",
+            "type": "JobType.SIMPLE",
+        }
+    ]
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_all_job_for_staff_with_bad_filter_returns_400(mock_post):
+    """Test get all jobs for staff with bad filter"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get(
+        '/jobs?limit=20&filters={"the game":["MARI"]}&include_run=True',
+        headers={"Authorization": f"Bearer {STAFF_TOKEN}"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_get_all_jobs_for_dev_mode():
@@ -425,9 +496,7 @@ def test_limit_jobs(mock_post):
 
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_offset_jobs(mock_post):
-    """
-    Test results are offset
-    """
+    """Test results are offset"""
     mock_post.return_value.status_code = HTTPStatus.OK
     response_one = client.get("/instrument/mari/jobs", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     response_two = client.get("/instrument/mari/jobs?offset=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
@@ -436,9 +505,7 @@ def test_offset_jobs(mock_post):
 
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_limit_offset_jobs(mock_post):
-    """
-    Test offset with limit
-    """
+    """Test offset with limit"""
     mock_post.return_value.status_code = HTTPStatus.OK
     response_one = client.get("/instrument/mari/jobs?limit=4", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     response_two = client.get(
@@ -450,9 +517,7 @@ def test_limit_offset_jobs(mock_post):
 
 
 def test_instrument_jobs_count():
-    """
-    Test instrument jobs count
-    """
+    """Test instrument jobs count"""
     response = client.get("/instrument/TEST/jobs/count")
     assert response.json()["count"] == 1
 
@@ -494,7 +559,6 @@ def test_get_instrument_specification_no_jwt_returns_403():
     Test correct spec for instrument returned
     :return:
     """
-
     response = client.get("/instrument/het/specification")
     assert response.status_code == HTTPStatus.FORBIDDEN
 
