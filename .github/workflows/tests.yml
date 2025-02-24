@@ -83,7 +83,62 @@ jobs:
         uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3 # v5.3.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-  e2e:
+
+  e2e-job-maker:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:14.7
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: fia
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      rabbit-mq:
+        image: "rabbitmq:3.12-management"
+        ports:
+          - "5672:5672"
+          - "15672:15672"
+        env:
+          RABBITMQ_USER: guest
+          RABBITMQ_PASSWORD: guest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Set up cache for Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .[test]
+
+
+      - name: Run test job maker
+        env:
+          DEV_MODE: True
+        run: |
+          pytest test/e2e/test_job_maker.py --random-order --random-order-bucket=global --cov --cov-report=xml
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3 # v5.3.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+  e2e-core:
     runs-on: ubuntu-latest
 
     services:
@@ -133,18 +188,6 @@ jobs:
           GITHUB_PACKAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pytest test/e2e --random-order --random-order-bucket=global --cov --cov-report=xml --ignore=test/e2e/test_job_maker.py
-
-      #      - name: Upload coverage
-      #        uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3 # v5.3.1
-      #        with:
-      #          token: ${{ secrets.CODECOV_TOKEN }}
-
-
-      - name: Run test job maker
-        env:
-          DEV_MODE: True
-        run: |
-          pytest test/e2e/test_job_maker.py --random-order --random-order-bucket=global --cov --cov-report=xml
 
       - name: Upload coverage
         uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3 # v5.3.1
