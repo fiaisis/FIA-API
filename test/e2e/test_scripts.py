@@ -1,6 +1,4 @@
-"""
-end 2 end test cases for script acquisition
-"""
+"""end 2 end test cases for script acquisition"""
 
 # pylint: disable=line-too-long, wrong-import-order
 import re
@@ -16,7 +14,7 @@ client = TestClient(app)
 
 def assert_is_commit_sha(string: str) -> None:
     """
-    assert given string is a commit sha
+    Assert given string is a commit sha
     :param string: the string to check
     :return: None
     """

@@ -1,6 +1,4 @@
-"""
-Test cases for response objects
-"""
+"""Test cases for response objects"""
 
 import copy
 import datetime

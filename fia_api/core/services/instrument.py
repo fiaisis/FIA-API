@@ -1,6 +1,4 @@
-""" "
-Service Layer for instruments
-"""
+"""Service Layer for instruments"""
 
 from typing import Any
 

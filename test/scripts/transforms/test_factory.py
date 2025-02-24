@@ -1,6 +1,4 @@
-"""
-Tests for the transform factory function
-"""
+"""Tests for the transform factory function"""
 
 import pytest
 

@@ -1,6 +1,4 @@
-"""
-Module containing user experiment fetching
-"""
+"""Module containing user experiment fetching"""
 
 import os
 from http import HTTPStatus

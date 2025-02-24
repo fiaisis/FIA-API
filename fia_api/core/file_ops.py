@@ -24,9 +24,7 @@ def read_dir(path: Path) -> list[str]:
 
 
 async def write_file_from_remote(remote_file: UploadFile, local_file: Path) -> None:
-    """
-    Write the contents of the remote_file from called to the local path given.
-    """
+    """Write the contents of the remote_file from called to the local path given."""
     try:
         contents = await remote_file.read()
         path = anyio.Path(local_file)

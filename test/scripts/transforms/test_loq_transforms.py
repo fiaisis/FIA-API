@@ -1,6 +1,4 @@
-"""
-Test cases for LoqTransform
-"""
+"""Test cases for LoqTransform"""
 
 from unittest.mock import Mock
 

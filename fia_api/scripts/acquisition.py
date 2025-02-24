@@ -1,6 +1,4 @@
-"""
-Acquisition module contains all the functionality for obtaining the script locally and from the remote repository
-"""
+"""Acquisition module contains all the functionality for obtaining the script locally and from the remote repository"""
 
 import logging
 import os
@@ -49,7 +47,6 @@ def _get_script_from_remote(instrument: str) -> PreScript:
     :param instrument: str - instrument name
     :return: Script - Returned script
     """
-
     try:
         logger.info("Attempting to get latest %s script...", instrument)
         request = requests.get(

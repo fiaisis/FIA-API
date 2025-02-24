@@ -1,6 +1,4 @@
-"""
-Test transform used in e2e
-"""
+"""Test transform used in e2e"""
 
 from db.data_models import Job
 
@@ -9,9 +7,7 @@ from fia_api.scripts.transforms.transform import Transform
 
 
 class TestTransform(Transform):
-    """
-    Test transform used for the test instrument in e2e tests
-    """
+    """Test transform used for the test instrument in e2e tests"""
 
     def apply(self, script: PreScript, job: Job) -> None:
         lines = script.value.splitlines()

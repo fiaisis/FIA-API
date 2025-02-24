@@ -1,6 +1,4 @@
-"""
-Test for tosca transform
-"""
+"""Test for tosca transform"""
 
 from unittest.mock import Mock
 
