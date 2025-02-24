@@ -22,7 +22,7 @@ TEST_INSTRUMENT_2 = Instrument(instrument_name="instrument 2", latest_run=1, spe
 TEST_SCRIPT = Script(script="print('Script 1')", sha="some_sha", script_hash="some_hash")
 TEST_JOB = Job(
     start=datetime.datetime.now(datetime.UTC),
-    owner=TEST_JOB_OWNER_2,
+    owner=TEST_JOB_OWNER,
     state=State.NOT_STARTED,
     inputs={"input": "value"},
     script=TEST_SCRIPT,
@@ -31,7 +31,7 @@ TEST_JOB = Job(
 )
 TEST_JOB_2 = Job(
     start=datetime.datetime.now(datetime.UTC),
-    owner=TEST_JOB_OWNER,
+    owner=TEST_JOB_OWNER_2,
     state=State.UNSUCCESSFUL,
     inputs={"input": "value"},
     script=TEST_SCRIPT,

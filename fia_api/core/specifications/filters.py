@@ -49,9 +49,7 @@ class ExperimentNumberInFilter(Filter):
     """Filter implementation that checks if experiment numbers are included in the query by joining related tables."""
 
     def apply(self, specification: JobSpecification) -> JobSpecification:
-        specification.value = specification.value.join(JobOwner, onclause=Run.owner).where(
-            JobOwner.experiment_number.in_(self.value)
-        )
+        specification.value = specification.value.where(JobOwner.experiment_number.in_(self.value))
         logger.info(specification.value)
         return specification
 
@@ -92,9 +90,7 @@ class ExperimentNumberAfterFilter(Filter):
     """Filter implementation that retrieves entries with experiment numbers greater than the specified value."""
 
     def apply(self, specification: JobSpecification) -> JobSpecification:
-        specification.value = specification.value.join(JobOwner, onclause=Run.owner).where(
-            JobOwner.experiment_number >= self.value
-        )
+        specification.value = specification.value.where(JobOwner.experiment_number >= self.value)
         return specification
 
 
