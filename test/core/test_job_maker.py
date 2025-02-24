@@ -4,9 +4,6 @@ from unittest import mock
 import pytest  # type: ignore
 
 from fia_api.core.job_maker import JobMaker
-from test.utils import FIA_FAKER_PROVIDER
-
-faker = FIA_FAKER_PROVIDER
 
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
@@ -24,7 +21,7 @@ def test_send_message(broker):
 
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
-def test_rerun_job_experiment_number(broker):
+def test_rerun_job_experiment_number(broker, faker):
     job_maker = JobMaker("", "", "", "")
     job_maker._send_message = mock.MagicMock()
     job_id = faker.generator.random.randint(1, 10000)
@@ -45,7 +42,7 @@ def test_rerun_job_experiment_number(broker):
 
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
-def test_rerun_job_user_number(broker):
+def test_rerun_job_user_number(broker, faker):
     job_maker = JobMaker("", "", "", "")
     job_maker._send_message = mock.MagicMock()
     job_id = faker.generator.random.randint(1, 10000)
@@ -64,7 +61,7 @@ def test_rerun_job_user_number(broker):
 
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
-def test_rerun_job_user_and_experiment_number(broker):
+def test_rerun_job_user_and_experiment_number(broker, faker):
     job_maker = JobMaker("", "", "", "")
     job_maker._send_message = mock.MagicMock()
     job_id = faker.generator.random.randint(1, 10000)
@@ -91,7 +88,7 @@ def test_rerun_job_user_and_experiment_number(broker):
     )
 
 
-def test_rerun_job_user_and_experiment_number_is_none():
+def test_rerun_job_user_and_experiment_number_is_none(faker):
     with mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker"):
         job_maker = JobMaker("", "", "", "")
     job_maker._send_message = mock.MagicMock()
@@ -112,7 +109,7 @@ def test_rerun_job_user_and_experiment_number_is_none():
 
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
-def test_simple_job_experiment_number(broker):
+def test_simple_job_experiment_number(broker, faker):
     job_maker = JobMaker("", "", "", "")
     job_maker._send_message = mock.MagicMock()
     runner_image = str(mock.MagicMock())
@@ -130,7 +127,7 @@ def test_simple_job_experiment_number(broker):
 
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
-def test_simple_job_user_number(broker):
+def test_simple_job_user_number(broker, faker):
     job_maker = JobMaker("", "", "", "")
     job_maker._send_message = mock.MagicMock()
     runner_image = str(mock.MagicMock())
@@ -148,7 +145,7 @@ def test_simple_job_user_number(broker):
 
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
-def test_simple_job_user_and_experiment_number(broker):
+def test_simple_job_user_and_experiment_number(broker, faker):
     job_maker = JobMaker("", "", "", "")
     job_maker._send_message = mock.MagicMock()
     runner_image = str(mock.MagicMock())
