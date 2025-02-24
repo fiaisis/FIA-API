@@ -230,7 +230,7 @@ async def count_jobs_for_instrument(
     :return: CountResponse containing the count
     """
     instrument = instrument.upper()
-    return CountResponse(count=count_jobs_by_instrument(instrument, filters=json.loads(filters) if filters else {}))
+    return CountResponse(count=count_jobs_by_instrument(instrument, filters=json.loads(filters) if filters else None))
 
 
 @ROUTER.get("/job/{job_id}", tags=["jobs"])
@@ -257,7 +257,7 @@ async def count_all_jobs(
     \f
     :return: CountResponse containing the count
     """
-    return CountResponse(count=count_jobs(json.loads(filters) if filters else {}))
+    return CountResponse(count=count_jobs(json.loads(filters) if filters else None))
 
 
 @ROUTER.post("/job/rerun", tags=["job"])
