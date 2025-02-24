@@ -108,7 +108,7 @@ def test_get_jobs_with_filters(mock_post, endpoint):
     response = client.get(
         f"{endpoint}?include_run=true&limit=5&filters={{"
         '"instrument_in":["MARI"],'
-        '"job_state_in":["ERROR","SUCCESSFUL"],'
+        '"job_state_in":["ERROR","SUCCESSFUL","UNSUCCESSFUL"],'
         '"title":"pro",'
         '"experiment_number_after":115662,'
         '"experiment_number_before":923367,'
@@ -126,7 +126,7 @@ def test_get_jobs_with_filters(mock_post, endpoint):
     data = response.json()[0]
     assert 115661 < data["run"]["experiment_number"] < 923367  # noqa: PLR2004
     assert data["run"]["instrument_name"] == "MARI"
-    assert data["state"] in ["ERROR", "SUCCESSFUL"]
+    assert data["state"] in ["ERROR", "SUCCESSFUL", "UNSUCCESSFUL"]
     assert "pro" in data["run"]["title"].lower()
     assert data["run"]["filename"].startswith("/archive/NDXMAR")
     assert "2019-02-23T00:00:00.000Z" <= data["start"] <= "2023-02-05T00:00:00.000Z"
