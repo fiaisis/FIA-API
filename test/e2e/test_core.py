@@ -98,6 +98,19 @@ def test_get_all_job_for_staff(mock_post):
     assert len(response.json()) == expected_number_of_jobs
 
 
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_job_filtered_on_exact_experiment_number(mock_post):
+    expected_experiment_number = 606272
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get(
+        '/jobs?include_run=true&filters={"experiment_number_in": [606272]}',
+        headers={"Authorization": f"Bearer {STAFF_TOKEN}"},
+    )
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["run"]["experiment_number"] == expected_experiment_number
+
+
 @pytest.mark.parametrize("endpoint", ["/jobs", "/instrument/mari/jobs"])
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_get_jobs_with_filters(mock_post, endpoint):
@@ -109,6 +122,7 @@ def test_get_jobs_with_filters(mock_post, endpoint):
         '"job_state_in":["ERROR","SUCCESSFUL","UNSUCCESSFUL"],'
         '"title":"n",'
         '"experiment_number_after":115662,'
+        # '"experiment_number_in":[606272],'
         '"experiment_number_before":923367,'
         '"filename":"MAR","job_start_before":"2023-02-05T00:00:00.000Z",'
         '"job_start_after":"2019-02-23T00:00:00.000Z",'
@@ -122,6 +136,7 @@ def test_get_jobs_with_filters(mock_post, endpoint):
     )
     assert response.status_code == HTTPStatus.OK
     data = response.json()[0]
+    # assert data == 1
     assert 115661 < data["run"]["experiment_number"] < 923367  # noqa: PLR2004
     assert data["run"]["instrument_name"] == "MARI"
     assert data["state"] in ["ERROR", "SUCCESSFUL", "UNSUCCESSFUL"]

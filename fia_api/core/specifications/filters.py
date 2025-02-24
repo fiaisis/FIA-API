@@ -49,7 +49,6 @@ class ExperimentNumberInFilter(Filter):
 
     def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(JobOwner.experiment_number.in_(self.value))
-        logger.info(specification.value)
         return specification
 
 
@@ -58,14 +57,6 @@ class JobStateFilter(Filter):
 
     def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(Job.state.in_(self.value))
-        return specification
-
-
-class JobTypeFilter(Filter):
-    """Filter implementation that checks if job types match the specified value in the query."""
-
-    def apply(self, specification: Specification[T]) -> Specification[T]:
-        specification.value = specification.value.where(Job.job_type == self.value)
         return specification
 
 
