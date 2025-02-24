@@ -77,6 +77,7 @@ def _user_owned_data_setup() -> None:
         session.delete(TEST_SCRIPT)
         session.delete(TEST_INSTRUMENT)
         session.delete(TEST_JOB)
+        session.commit()
 
 
 def test_get_job_by_id_no_token_results_in_http_forbidden():
