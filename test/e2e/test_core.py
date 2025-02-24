@@ -128,7 +128,7 @@ def test_get_jobs_with_filters(mock_post, endpoint):
     assert 115661 < data["run"]["experiment_number"] < 623367
     assert data["run"]["instrument_name"] == "MARI"
     assert data["state"] in ["ERROR", "UNSUCCESSFUL"]
-    assert "pro" in data["run"]["title"]
+    assert "pro" in data["run"]["title"].lower()
     assert data["run"]["filename"].startswith("/archive/NDXMAR")
     assert "2019-02-23T00:00:00.000Z" <= data["start"] <= "2023-02-05T00:00:00.000Z"
     assert "2021-02-04T00:00:00.000Z" <= data["end"] <= "2022-03-23T00:00:00.000Z"
