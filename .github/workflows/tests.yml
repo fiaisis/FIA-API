@@ -33,7 +33,7 @@ jobs:
         run: pytest . --random-order --random-order-bucket=global --ignore=test/e2e --ignore=test/core/test_repositories_integration.py --cov --cov-report=xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3 # v5.3.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -80,7 +80,7 @@ jobs:
           pytest test/core/test_repositories_integration.py --random-order --random-order-bucket=global --cov --cov-report=xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3 # v5.3.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
   e2e:
@@ -135,7 +135,7 @@ jobs:
           pytest test/e2e --random-order --random-order-bucket=global --cov --cov-report=xml --ignore=test/e2e/test_job_maker.py
 
       - name: Upload coverage
-        uses: codecov/codecov-action@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3 # v5.3.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
