@@ -15,7 +15,6 @@ from db.data_models import Instrument, Job, JobOwner, Run
 from fastapi import HTTPException
 
 from fia_api.core.specifications.base import Specification, T
-from fia_api.core.specifications.job import JobSpecification
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +39,7 @@ class Filter(ABC):
 class InstrumentInFilter(Filter):
     """Filter implementation that checks if instrument names are included in the query."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(Instrument.instrument_name.in_(self.value))
         return specification
 
@@ -48,7 +47,7 @@ class InstrumentInFilter(Filter):
 class ExperimentNumberInFilter(Filter):
     """Filter implementation that checks if experiment numbers are included in the query by joining related tables."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(JobOwner.experiment_number.in_(self.value))
         logger.info(specification.value)
         return specification
@@ -57,7 +56,7 @@ class ExperimentNumberInFilter(Filter):
 class JobStateFilter(Filter):
     """Filter implementation that checks if job states match the specified value in the query."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(Job.state.in_(self.value))
         return specification
 
@@ -65,7 +64,7 @@ class JobStateFilter(Filter):
 class JobTypeFilter(Filter):
     """Filter implementation that checks if job types match the specified value in the query."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(Job.job_type == self.value)
         return specification
 
@@ -73,7 +72,7 @@ class JobTypeFilter(Filter):
 class TitleFilter(Filter):
     """Filter implementation that searches for entries with titles matching the specified value using ilike."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(Run.title.icontains(self.value))
         return specification
 
@@ -81,7 +80,7 @@ class TitleFilter(Filter):
 class ExperimentNumberBeforeFilter(Filter):
     """Filter implementation that retrieves entries with experiment numbers less than the specified value."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(JobOwner.experiment_number <= self.value)
         return specification
 
@@ -89,7 +88,7 @@ class ExperimentNumberBeforeFilter(Filter):
 class ExperimentNumberAfterFilter(Filter):
     """Filter implementation that retrieves entries with experiment numbers greater than the specified value."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(JobOwner.experiment_number >= self.value)
         return specification
 
@@ -97,7 +96,7 @@ class ExperimentNumberAfterFilter(Filter):
 class FilenameFilter(Filter):
     """Filter implementation that searches for entries with filenames matching the specified value using ilike."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(Run.filename.icontains(self.value))
         return specification
 
@@ -105,7 +104,7 @@ class FilenameFilter(Filter):
 class JobStartBeforeFilter(Filter):
     """Filter implementation that retrieves entries where job start is before the specified value."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(Job.start < self.value)
         return specification
 
@@ -113,7 +112,7 @@ class JobStartBeforeFilter(Filter):
 class JobStartAfterFilter(Filter):
     """Filter implementation that retrieves entries where job start is after the specified value."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(Job.start > self.value)
         return specification
 
@@ -121,7 +120,7 @@ class JobStartAfterFilter(Filter):
 class RunStartBeforeFilter(Filter):
     """Filter implementation that retrieves entries where run start is before the specified value."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(Run.run_start < self.value)
         return specification
 
@@ -129,7 +128,7 @@ class RunStartBeforeFilter(Filter):
 class RunStartAfterFilter(Filter):
     """Filter implementation that retrieves entries where run start is after the specified value."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(Run.run_start > self.value)
         return specification
 
@@ -137,7 +136,7 @@ class RunStartAfterFilter(Filter):
 class JobEndBeforeFilter(Filter):
     """Filter implementation that retrieves entries where job end is before the specified value."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(Job.end < self.value)
         return specification
 
@@ -145,7 +144,7 @@ class JobEndBeforeFilter(Filter):
 class JobEndAfterFilter(Filter):
     """Filter implementation that retrieves entries where job end is after the specified value."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(Job.end > self.value)
         return specification
 
@@ -153,7 +152,7 @@ class JobEndAfterFilter(Filter):
 class RunEndBeforeFilter(Filter):
     """Filter implementation that retrieves entries where run end is before the specified value."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(Run.run_end < self.value)
         return specification
 
@@ -161,7 +160,7 @@ class RunEndBeforeFilter(Filter):
 class RunEndAfterFilter(Filter):
     """Filter implementation that retrieves entries where run end is after the specified value."""
 
-    def apply(self, specification: JobSpecification) -> JobSpecification:
+    def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(Run.run_end > self.value)
         return specification
 

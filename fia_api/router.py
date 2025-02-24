@@ -141,7 +141,7 @@ async def get_jobs(
     :param as_user: bool
     :return: List of JobResponse objects
     """
-    filters = json.loads(filters) if filters else {}
+    filters = json.loads(filters) if filters else None
     user = get_user_from_token(credentials.credentials)
 
     if as_user:
@@ -191,7 +191,7 @@ async def get_jobs_by_instrument(
     :param include_run: bool
     :return: List of JobResponse objects
     """
-    filters = json.loads(filters) if filters else {}
+    filters = json.loads(filters) if filters else None
     user = get_user_from_token(credentials.credentials)
 
     instrument = instrument.upper()
