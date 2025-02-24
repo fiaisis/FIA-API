@@ -12,7 +12,6 @@ from fia_api.core.specifications.filters import (
     JobStartAfterFilter,
     JobStartBeforeFilter,
     JobStateFilter,
-    JobTypeFilter,
     RunEndAfterFilter,
     RunEndBeforeFilter,
     RunStartAfterFilter,
@@ -36,7 +35,6 @@ def test_get_filter_invalid_key():
     [
         ("instrument_in", "value1", InstrumentInFilter),
         ("job_state_in", "value2", JobStateFilter),
-        ("job_type", "value3", JobTypeFilter),
         ("experiment_number_in", "value4", ExperimentNumberInFilter),
         ("title", "value5", TitleFilter),
         ("filename", "value6", FilenameFilter),
