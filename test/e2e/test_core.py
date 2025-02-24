@@ -578,7 +578,18 @@ def test_get_instrument_specification(mock_post):
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get("/instrument/het/specification", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {"stop": False}
+    assert response.json() == {
+        "ask": 8893.939623321,
+        "attorney": 4274,
+        "become": 5873,
+        "begin": 54.6477170013272,
+        "decade": "dSKUxJgukcXlhktChZZh",
+        "do": False,
+        "purpose": False,
+        "so": -8539.92322065455,
+        "sure": 78316125067539.8,
+        "system": 7065,
+    }
 
 
 def test_get_instrument_specification_no_jwt_returns_403():
