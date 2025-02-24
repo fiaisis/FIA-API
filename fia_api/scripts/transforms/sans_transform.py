@@ -16,20 +16,22 @@ logger = logging.getLogger(__name__)
 
 
 # mypy: disable-error-code="operator, index"
-class LoqTransform(Transform):
+class SansTransform(Transform):
     """
-    LoqTransform applies modifications to LOQ instrument scripts based on reduction input parameters in a Job
+    SansTransform applies modifications to SANS instrument scripts based on reduction input parameters in a Job
     entity.
     """
 
     def apply(self, script: PreScript, job: Job) -> None:  # noqa: C901, PLR0912
-        logger.info("Beginning LOQ transform for job %s...", job.id)
+        logger.info("Beginning %s transform for job %s...", job.instrument, job.id)
         lines = script.value.splitlines()
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
         # If you get here in the future, try removing the type ignore and see if it passes with newer mypy
         for index, line in enumerate(lines):
-            if "/extras/loq/MaskFile.toml" in line and "user_file" in job.inputs:
-                lines[index] = line.replace("/extras/loq/MaskFile.toml", job.inputs["user_file"])
+            if f"/extras/{job.instrument.instrument_name.lower()}/MaskFile.toml" in line and "user_file" in job.inputs:
+                lines[index] = line.replace(
+                    f"/extras/{job.instrument.instrument_name.lower()}/MaskFile.toml", job.inputs["user_file"]
+                )
                 continue
             if "run_number" in job.inputs and self._replace_input(
                 line, lines, index, "sample_scatter", job.inputs["run_number"]
@@ -73,6 +75,10 @@ class LoqTransform(Transform):
                 continue
             if "slice_wavs" in job.inputs and self._replace_input(
                 line, lines, index, "slice_wavs", job.inputs["slice_wavs"]
+            ):
+                continue
+            if "phi_limits" in job.inputs and self._replace_input(
+                line, lines, index, "phi_limits_list", job.inputs["phi_limits"]
             ):
                 continue
         script.value = "\n".join(lines)

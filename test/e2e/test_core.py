@@ -1,13 +1,18 @@
 """end-to-end tests"""
 
+import datetime
 import os
 from http import HTTPStatus
 from unittest import mock
 from unittest.mock import patch
 
 import pytest
+
+from db.data_models import Instrument, Job, JobOwner, JobType, Run, Script, State
+
 from starlette.testclient import TestClient
 
+from fia_api.core.repositories import SESSION
 from fia_api.fia_api import app
 from test.utils import FIA_FAKER_PROVIDER
 
@@ -26,6 +31,54 @@ STAFF_TOKEN = (
     "eyJ1c2VybnVtYmVyIjoxMjM0LCJyb2xlIjoic3RhZmYiLCJ1c2VybmFtZSI6ImZvbyIsImV4cCI6NDg3MjQ2ODk4M30."
     "-ktYEwdUfg5_PmUocmrAonZ6lwPJdcMoklWnVME1wLE"
 )
+
+TEST_JOB_OWNER = JobOwner(experiment_number=18204970)
+TEST_INSTRUMENT = Instrument(instrument_name="NEWBIE", latest_run=1, specification={"foo": "bar"})
+TEST_SCRIPT = Script(script="print('Script 1')", sha="some_sha", script_hash="some_hash")
+TEST_JOB = Job(
+    start=datetime.datetime.now(datetime.UTC),
+    owner=TEST_JOB_OWNER,
+    state=State.NOT_STARTED,
+    inputs={"input": "value"},
+    script=TEST_SCRIPT,
+    instrument=TEST_INSTRUMENT,
+    job_type=JobType.AUTOREDUCTION,
+)
+TEST_RUN = Run(
+    filename="test_run",
+    owner=TEST_JOB_OWNER,
+    title="Test Run",
+    users="User1, User2",
+    run_start=datetime.datetime.now(datetime.UTC),
+    run_end=datetime.datetime.now(datetime.UTC),
+    good_frames=200,
+    raw_frames=200,
+    instrument=TEST_INSTRUMENT,
+)
+TEST_RUN.jobs.append(TEST_JOB)
+
+
+@pytest.fixture()
+def _user_owned_data_setup() -> None:
+    """
+    Set up the test database before module
+    :return: None
+    """
+    with SESSION() as session:
+        session.add(TEST_SCRIPT)
+        session.add(TEST_INSTRUMENT)
+        session.add(TEST_RUN)
+        session.add(TEST_JOB)
+        session.commit()
+        session.refresh(TEST_SCRIPT)
+        session.refresh(TEST_INSTRUMENT)
+        session.refresh(TEST_RUN)
+    yield
+    with SESSION() as session:
+        session.delete(TEST_RUN)
+        session.delete(TEST_SCRIPT)
+        session.delete(TEST_INSTRUMENT)
+        session.delete(TEST_JOB)
 
 
 def test_get_job_by_id_no_token_results_in_http_forbidden():
@@ -460,7 +513,7 @@ def test_jobs_count():
     """
     response = client.get("/jobs/count")
     assert response.status_code == HTTPStatus.OK
-    assert response.json()["count"] == 5001  # noqa: PLR2004
+    assert response.json()["count"] == 5002  # noqa: PLR2004
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -593,3 +646,90 @@ def test_get_mantid_runners_bad_jwt(mock_post):
     mock_post.return_value.status_code = HTTPStatus.FORBIDDEN
     response = client.get("/jobs/runners", headers={"Authorization": "foo"})
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_all_jobs_response_body_as_user_true_and_as_staff(mock_post, mock_get_experiment_numbers_for_user_number):
+    """Test that a single job is returned when a staff user gets all jobs with the as_user flag set to true"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+    response = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == [
+        {
+            "id": 5001,
+            "end": None,
+            "inputs": {
+                "ei": "'auto'",
+                "sam_mass": 0.0,
+                "sam_rmm": 0.0,
+                "monovan": 0,
+                "remove_bkg": True,
+                "sum_runs": False,
+                "runno": 25581,
+                "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
+                "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
+                "wbvan": 12345,
+            },
+            "outputs": None,
+            "start": None,
+            "state": "NOT_STARTED",
+            "status_message": None,
+            "script": None,
+            "stacktrace": None,
+            "runner_image": None,
+            "type": "JobType.AUTOREDUCTION",
+        }
+    ]
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_all_jobs_as_user_false_and_as_staff(mock_post, mock_get_experiment_numbers_for_user_number):
+    """Test that multiple jobs are returned when a staff user gets all jobs with the as_user flag set to false"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+    response = client.get("/jobs?limit=10&as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()) > 1
+
+
+@pytest.mark.usefixtures("_user_owned_data_setup")
+@patch("fia_api.core.specifications.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_mari_jobs_as_user_true_and_as_staff(mock_post, mock_get_experiment_numbers_for_user_number):
+    """Test that a single job is returned when a staff user gets jobs from MARI with the as_user flag set to true"""
+    mock_get_experiment_numbers_for_user_number.return_value = [18204970]
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get("/instrument/newbie/jobs?&as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()) == 1
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_mari_jobs_as_user_false_and_as_staff(mock_post):
+    """Test that multiple jobs are returned when a staff user gets jobs from MARI with the as_user flag set to false"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get(
+        "/instrument/mari/jobs?limit=10&as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"}
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()) > 1
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_multiple_get_job_requests_with_different_as_user_values(
+    mock_post, mock_get_experiment_numbers_for_user_number
+):
+    """Test get all jobs with as_user flag set to true and false for a staff
+    user yield responses of different lengths"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+
+    response_as_user_true = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+
+    response_as_user_false = client.get("/jobs?as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+
+    assert len(response_as_user_true.json()) != len(response_as_user_false.json())
