@@ -70,10 +70,17 @@ def test_get_jobs_with_filters(mock_post, endpoint):
         headers={"Authorization": f"Bearer {STAFF_TOKEN}"},
     )
     assert response.status_code == HTTPStatus.OK
-    data = response.json()
-
-    assert data["run"]["instrument"] == "MARI"
-    assert len(data) == 1
+    data = response.json()[0]
+    # assert data == 1
+    assert 115661 < data["run"]["experiment_number"] < 623367
+    assert data["run"]["instrument_name"] == "MARI"
+    assert data["state"] in ["ERROR", "UNSUCCESSFUL"]
+    assert "pro" in data["run"]["title"]
+    assert data["run"]["filename"].startswith("/archive/NDXMAR")
+    assert "2019-02-23T00:00:00.000Z" <= data["start"] <= "2023-02-05T00:00:00.000Z"
+    assert "2021-02-04T00:00:00.000Z" <= data["end"] <= "2022-03-23T00:00:00.000Z"
+    assert "2017-02-09T00:00:00.000Z" <= data["run"]["run_start"] <= "2022-02-17T00:00:00.000Z"
+    assert "2018-02-09T00:00:00.000Z" <= data["run"]["run_end"] <= "2022-02-04T00:00:00.000Z"
 
 
 @patch("fia_api.core.auth.tokens.requests.post")

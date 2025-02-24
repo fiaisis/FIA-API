@@ -90,7 +90,9 @@ class JobSpecification(Specification[Job]):
         :return: An instance of JobSpecification with the applied filters and ordering.
         """
         self.value = (
-            self.value.join(JobOwner).join(Run, Job.run).where(JobOwner.experiment_number.in_(experiment_numbers))
+            self.value.join(Run, onclause=Job.run)
+            .join(JobOwner, onclause=Run.owner)
+            .where(JobOwner.experiment_number.in_(experiment_numbers))
         )
 
         self._apply_ordering(order_by, order_direction)
@@ -120,9 +122,9 @@ class JobSpecification(Specification[Job]):
         if user_number:
             experiment_numbers = get_experiments_for_user_number(user_number)
             self.value = (
-                self.value.join(JobOwner)
-                .join(Run, Job.run)
-                .join(Instrument)
+                self.value.join(Run, onclause=Job.run)
+                .join(JobOwner, onclause=Run.owner)
+                .join(Instrument, onclause=Run.instrument)
                 .where(
                     and_(
                         Instrument.instrument_name.in_(instruments),
@@ -132,9 +134,9 @@ class JobSpecification(Specification[Job]):
             )
         else:
             self.value = (
-                self.value.join(JobOwner)
-                .join(Run, Job.run)
-                .join(Instrument)
+                self.value.join(Run, onclause=Job.run)
+                .join(JobOwner, onclause=Run.owner)
+                .join(Instrument, onclause=Run.instrument)
                 .where(Instrument.instrument_name.in_(instruments))
             )
 
@@ -159,7 +161,11 @@ class JobSpecification(Specification[Job]):
         :param order_direction: The direction to order the jobs, either 'asc' for ascending or 'desc' for descending.
         :return: An instance of JobSpecification with the applied filters and ordering.
         """
-        self.value = self.value.join(JobOwner, onclause=Job.owner).join(Run, onclause=Job.run).join(Instrument)
+        self.value = (
+            self.value.join(Run, onclause=Job.run)
+            .join(JobOwner, onclause=Run.owner)
+            .join(Instrument, onclause=Run.instrument)
+        )
         self._apply_ordering(order_by, order_direction)
 
         return self
