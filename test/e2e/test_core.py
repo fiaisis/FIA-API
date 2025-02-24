@@ -109,7 +109,7 @@ def test_get_jobs_with_filters(mock_post, endpoint):
         '"job_state_in":["ERROR","UNSUCCESSFUL"],'
         '"title":"pro",'
         '"experiment_number_after":115662,'
-        '"experiment_number_before":623367,'
+        '"experiment_number_before":923367,'
         '"filename":"MAR","job_start_before":"2023-02-05T00:00:00.000Z",'
         '"job_start_after":"2019-02-23T00:00:00.000Z",'
         '"job_end_before":"2022-03-23T00:00:00.000Z",'
