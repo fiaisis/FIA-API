@@ -122,7 +122,6 @@ def test_get_jobs_with_filters(mock_post, endpoint):
         '"job_state_in":["ERROR","SUCCESSFUL","UNSUCCESSFUL"],'
         '"title":"n",'
         '"experiment_number_after":115662,'
-        # '"experiment_number_in":[606272],'
         '"experiment_number_before":923367,'
         '"filename":"MAR","job_start_before":"2023-02-05T00:00:00.000Z",'
         '"job_start_after":"2019-02-23T00:00:00.000Z",'
@@ -136,7 +135,6 @@ def test_get_jobs_with_filters(mock_post, endpoint):
     )
     assert response.status_code == HTTPStatus.OK
     data = response.json()[0]
-    # assert data == 1
     assert 115661 < data["run"]["experiment_number"] < 923367  # noqa: PLR2004
     assert data["run"]["instrument_name"] == "MARI"
     assert data["state"] in ["ERROR", "SUCCESSFUL", "UNSUCCESSFUL"]

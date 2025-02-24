@@ -170,8 +170,6 @@ def get_filter(key: str, value: Any) -> Filter:  # noqa: C901, PLR0911, PLR0912
             return InstrumentInFilter(value)
         case "job_state_in":
             return JobStateFilter(value)
-        case "job_type":
-            return JobTypeFilter(value)
         case "experiment_number_in":
             return ExperimentNumberInFilter(value)
         case "title":
