@@ -12,12 +12,10 @@ from starlette.testclient import TestClient
 
 from fia_api.core.repositories import SESSION
 from fia_api.fia_api import app
-from test.utils import FIA_FAKER_PROVIDER
 
 client = TestClient(app)
 os.environ["FIA_API_API_KEY"] = str(mock.MagicMock())
 
-faker = FIA_FAKER_PROVIDER
 
 USER_TOKEN = (
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"  # noqa: S105
@@ -109,7 +107,7 @@ def test_get_jobs_with_filters(mock_post, endpoint):
         f"{endpoint}?include_run=true&limit=5&filters={{"
         '"instrument_in":["MARI"],'
         '"job_state_in":["ERROR","SUCCESSFUL","UNSUCCESSFUL"],'
-        '"title":"pro",'
+        '"title":"n",'
         '"experiment_number_after":115662,'
         '"experiment_number_before":923367,'
         '"filename":"MAR","job_start_before":"2023-02-05T00:00:00.000Z",'
@@ -127,7 +125,7 @@ def test_get_jobs_with_filters(mock_post, endpoint):
     assert 115661 < data["run"]["experiment_number"] < 923367  # noqa: PLR2004
     assert data["run"]["instrument_name"] == "MARI"
     assert data["state"] in ["ERROR", "SUCCESSFUL", "UNSUCCESSFUL"]
-    assert "pro" in data["run"]["title"].lower()
+    assert "n" in data["run"]["title"].lower()
     assert data["run"]["filename"].startswith("/archive/NDXMAR")
     assert "2019-02-23T00:00:00.000Z" <= data["start"] <= "2023-02-05T00:00:00.000Z"
     assert "2021-02-04T00:00:00.000Z" <= data["end"] <= "2022-03-23T00:00:00.000Z"
