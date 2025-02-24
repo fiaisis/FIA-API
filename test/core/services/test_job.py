@@ -203,7 +203,9 @@ def test_get_all_jobs_order_by_run_start_asc(mock_spec_class, mock_repo):
 @patch("fia_api.core.services.job._REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_default_order_by_start(mock_spec_class, mock_repo):
-    """Test get_all_jobs without specifying a different order_by, per the function signature it should order by 'start'."""
+    """
+    Test get_all_jobs without specifying a different order_by, per the function signature it should order by 'start'.
+    """
     spec = mock_spec_class.return_value
     get_all_jobs(limit=5, offset=0)
     spec.all.assert_called_once_with(limit=5, offset=0, order_by="start", order_direction="desc")

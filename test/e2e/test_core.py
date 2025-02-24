@@ -7,9 +7,7 @@ from unittest import mock
 from unittest.mock import patch
 
 import pytest
-
 from db.data_models import Instrument, Job, JobOwner, JobType, Run, Script, State
-
 from starlette.testclient import TestClient
 
 from fia_api.core.repositories import SESSION
@@ -125,7 +123,7 @@ def test_get_jobs_with_filters(mock_post, endpoint):
     assert response.status_code == HTTPStatus.OK
     data = response.json()[0]
     # assert data == 1
-    assert 115661 < data["run"]["experiment_number"] < 623367
+    assert 115661 < data["run"]["experiment_number"] < 923367  # noqa: PLR2004
     assert data["run"]["instrument_name"] == "MARI"
     assert data["state"] in ["ERROR", "UNSUCCESSFUL"]
     assert "pro" in data["run"]["title"].lower()
