@@ -14,7 +14,8 @@ def _setup(faker):
     Setup database pre-testing
     :return:
     """
-    global setup  # We require this horrible global setup as faker is a function scoped fixture and not a session scoped
+    # We require this horrible global setup as faker is a function scoped fixture and not a session scoped
+    global setup  # noqa: PLW0603
     if not setup:
         setup_database(faker)
         setup = True
