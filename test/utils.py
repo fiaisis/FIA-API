@@ -10,9 +10,8 @@ from faker.providers import BaseProvider
 
 from fia_api.core.repositories import ENGINE, SESSION
 
-random.seed(1)
-Faker.seed(1)
 faker = Faker()
+faker.seed_instance(1)
 
 
 class FIAProvider(BaseProvider):
