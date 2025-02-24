@@ -151,14 +151,6 @@ jobs:
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-      rabbit-mq:
-        image: "rabbitmq:3.12-management"
-        ports:
-          - "5672:5672"
-          - "15672:15672"
-        env:
-          RABBITMQ_USER: guest
-          RABBITMQ_PASSWORD: guest
 
     steps:
       - name: Check out repository
