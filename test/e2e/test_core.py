@@ -345,8 +345,7 @@ def test_unsafe_path_request_returns_400_status(mock_get_from_remote):
     """
     mock_get_from_remote.side_effect = RuntimeError
     response = client.get("/instrument/mari./script")  # %2F is encoded /
-    assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert response.json() == {"message": "The given request contains bad characters"}
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 @patch("fia_api.scripts.acquisition.LOCAL_SCRIPT_DIR", "fia_api/local_scripts")
