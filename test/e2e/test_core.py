@@ -332,7 +332,7 @@ def test_get_prescript_when_job_does_not_exist():
     Test return 404 when requesting pre script from non existant job
     :return:
     """
-    response = client.get("/instrument/mari/script?job_id=4324234")
+    response = client.get("/instrument/MARI/script?job_id=4324234")
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {"message": "Resource not found"}
 
