@@ -2,8 +2,9 @@
 
 import pytest
 
+from utils import setup_database
+
 # pylint: disable=wrong-import-order
-from test.utils import setup_database
 
 setup = False
 
