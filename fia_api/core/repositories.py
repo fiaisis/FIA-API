@@ -1,6 +1,4 @@
-"""
-Provides a generic repository class for performing database operations.
-"""
+"""Provides a generic repository class for performing database operations."""
 
 import logging
 import os
@@ -58,6 +56,7 @@ class Repo(Generic[T]):
         """
         with self._session() as session:
             query = spec.value
+            logger.info(spec.value)
             return session.execute(query).unique().scalars().all()
 
     def find_one(self, spec: Specification[T]) -> T | None:

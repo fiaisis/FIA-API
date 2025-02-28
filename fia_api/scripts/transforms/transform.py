@@ -16,9 +16,7 @@ from fia_api.scripts.pre_script import PreScript
 
 
 class Transform(ABC):
-    """
-    Transform applies a string manipulation on a given script depending on the implementation
-    """
+    """Transform applies a string manipulation on a given script depending on the implementation"""
 
     @abstractmethod
     def apply(self, script: PreScript, job: Job) -> None:

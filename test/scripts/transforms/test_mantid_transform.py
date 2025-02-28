@@ -1,6 +1,4 @@
-"""
-Test case for mantid transform
-"""
+"""Test case for mantid transform"""
 
 import os
 from unittest.mock import Mock

@@ -1,6 +1,4 @@
-"""
-end-to-end tests
-"""
+"""end-to-end tests"""
 
 import datetime
 import os
@@ -14,12 +12,10 @@ from starlette.testclient import TestClient
 
 from fia_api.core.repositories import SESSION
 from fia_api.fia_api import app
-from test.utils import FIA_FAKER_PROVIDER
 
 client = TestClient(app)
 os.environ["FIA_API_API_KEY"] = str(mock.MagicMock())
 
-faker = FIA_FAKER_PROVIDER
 
 USER_TOKEN = (
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"  # noqa: S105
@@ -79,6 +75,8 @@ def _user_owned_data_setup() -> None:
         session.delete(TEST_SCRIPT)
         session.delete(TEST_INSTRUMENT)
         session.delete(TEST_JOB)
+        session.commit()
+        session.flush()
 
 
 def test_get_job_by_id_no_token_results_in_http_forbidden():
@@ -98,6 +96,83 @@ def test_get_all_job_for_staff(mock_post):
     assert response.status_code == HTTPStatus.OK
     expected_number_of_jobs = 10
     assert len(response.json()) == expected_number_of_jobs
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_job_filtered_on_exact_experiment_number(mock_post):
+    expected_experiment_number = 882000
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get(
+        '/jobs?include_run=true&filters={"experiment_number_in": [882000]}',
+        headers={"Authorization": f"Bearer {STAFF_TOKEN}"},
+    )
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["run"]["experiment_number"] == expected_experiment_number
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_count_jobs_with_filters(mock_post):
+    """Test count with filter"""
+    expected_count = 4814
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get('/jobs/count?filters={"title":"n"}')
+    assert response.json()["count"] == expected_count
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_count_jobs_by_instrument_with_filter(mock_post):
+    """Test count by instrument with filter"""
+    expected_count = 119
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get('/instrument/MARI/jobs/count?filters={"title":"n"}')
+    assert response.json()["count"] == expected_count
+
+
+@pytest.mark.parametrize("endpoint", ["/jobs", "/instrument/mari/jobs"])
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_jobs_with_filters(mock_post, endpoint):
+    """Test get all jobs for staff with filters"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get(
+        f"{endpoint}?include_run=true&limit=5&filters={{"
+        '"instrument_in":["MARI"],'
+        '"job_state_in":["ERROR","SUCCESSFUL","UNSUCCESSFUL"],'
+        '"title":"n",'
+        '"experiment_number_after":115662,'
+        '"experiment_number_before":923367,'
+        '"filename":"MAR","job_start_before":"2023-02-05T00:00:00.000Z",'
+        '"job_start_after":"2019-02-23T00:00:00.000Z",'
+        '"job_end_before":"2022-03-23T00:00:00.000Z",'
+        '"job_end_after":"2021-02-04T00:00:00.000Z",'
+        '"run_start_before":"2022-02-17T00:00:00.000Z",'
+        '"run_start_after":"2017-02-09T00:00:00.000Z",'
+        '"run_end_before":"2022-02-04T00:00:00.000Z",'
+        '"run_end_after":"2018-02-09T00:00:00.000Z"}',
+        headers={"Authorization": f"Bearer {STAFF_TOKEN}"},
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()[0]
+    assert 115661 < data["run"]["experiment_number"] < 923367  # noqa: PLR2004
+    assert data["run"]["instrument_name"] == "MARI"
+    assert data["state"] in ["ERROR", "SUCCESSFUL", "UNSUCCESSFUL"]
+    assert "n" in data["run"]["title"].lower()
+    assert data["run"]["filename"].startswith("/archive/NDXMAR")
+    assert "2019-02-23T00:00:00.000Z" <= data["start"] <= "2023-02-05T00:00:00.000Z"
+    assert "2021-02-04T00:00:00.000Z" <= data["end"] <= "2022-03-23T00:00:00.000Z"
+    assert "2017-02-09T00:00:00.000Z" <= data["run"]["run_start"] <= "2022-02-17T00:00:00.000Z"
+    assert "2018-02-09T00:00:00.000Z" <= data["run"]["run_end"] <= "2022-02-04T00:00:00.000Z"
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_all_job_for_staff_with_bad_filter_returns_400(mock_post):
+    """Test get all jobs for staff with bad filter"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get(
+        '/jobs?limit=20&filters={"the game":["MARI"]}&include_run=True',
+        headers={"Authorization": f"Bearer {STAFF_TOKEN}"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_get_all_jobs_for_dev_mode():
@@ -466,7 +541,7 @@ def test_jobs_count():
     """
     response = client.get("/jobs/count")
     assert response.status_code == HTTPStatus.OK
-    assert response.json()["count"] == 5002  # noqa: PLR2004
+    assert response.json()["count"] == 5001  # noqa: PLR2004
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -479,9 +554,7 @@ def test_limit_jobs(mock_post):
 
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_offset_jobs(mock_post):
-    """
-    Test results are offset
-    """
+    """Test results are offset"""
     mock_post.return_value.status_code = HTTPStatus.OK
     response_one = client.get("/instrument/mari/jobs", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     response_two = client.get("/instrument/mari/jobs?offset=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
@@ -490,9 +563,7 @@ def test_offset_jobs(mock_post):
 
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_limit_offset_jobs(mock_post):
-    """
-    Test offset with limit
-    """
+    """Test offset with limit"""
     mock_post.return_value.status_code = HTTPStatus.OK
     response_one = client.get("/instrument/mari/jobs?limit=4", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     response_two = client.get(
@@ -504,9 +575,7 @@ def test_limit_offset_jobs(mock_post):
 
 
 def test_instrument_jobs_count():
-    """
-    Test instrument jobs count
-    """
+    """Test instrument jobs count"""
     response = client.get("/instrument/TEST/jobs/count")
     assert response.json()["count"] == 1
 
@@ -540,7 +609,18 @@ def test_get_instrument_specification(mock_post):
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get("/instrument/het/specification", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {"stop": False}
+    assert response.json() == {
+        "ask": 8893.939623321,
+        "attorney": 4274,
+        "become": 5873,
+        "begin": 54.6477170013272,
+        "decade": "dSKUxJgukcXlhktChZZh",
+        "do": False,
+        "purpose": False,
+        "so": -8539.92322065455,
+        "sure": 78316125067539.8,
+        "system": 7065,
+    }
 
 
 def test_get_instrument_specification_no_jwt_returns_403():
@@ -548,7 +628,6 @@ def test_get_instrument_specification_no_jwt_returns_403():
     Test correct spec for instrument returned
     :return:
     """
-
     response = client.get("/instrument/het/specification")
     assert response.status_code == HTTPStatus.FORBIDDEN
 

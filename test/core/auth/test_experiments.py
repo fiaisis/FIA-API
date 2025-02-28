@@ -1,6 +1,4 @@
-"""
-Test cases for experiments module
-"""
+"""Test cases for experiments module"""
 
 from http import HTTPStatus
 from unittest.mock import Mock, patch

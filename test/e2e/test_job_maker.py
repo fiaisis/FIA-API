@@ -64,7 +64,7 @@ def test_post_rerun_job(producer_channel):
     assert response.status_code == HTTPStatus.OK
     assert message == [
         {
-            "experiment_number": 667500,
+            "experiment_number": 882000,
             "job_id": 1,
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
             "script": 'print("Hello World!")',

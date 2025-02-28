@@ -1,6 +1,4 @@
-"""
-This module provides a factory function to get the appropriate transform for a given instrument.
-"""
+"""This module provides a factory function to get the appropriate transform for a given instrument."""
 
 import logging
 

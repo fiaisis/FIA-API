@@ -1,6 +1,4 @@
-"""
-Testing utils
-"""
+"""Testing utils"""
 
 import random
 from datetime import UTC, datetime, timedelta
@@ -12,15 +10,11 @@ from faker.providers import BaseProvider
 
 from fia_api.core.repositories import ENGINE, SESSION
 
-random.seed(1)
-Faker.seed(1)
-faker = Faker()
+random.seed(0)
 
 
 class FIAProvider(BaseProvider):
-    """
-    Custom fia faker provider
-    """
+    """Custom fia faker provider"""
 
     INSTRUMENTS: ClassVar[list[str]] = [
         "ALF",
@@ -63,7 +57,7 @@ class FIAProvider(BaseProvider):
     ]
 
     @staticmethod
-    def start_time() -> datetime:
+    def start_time(faker: Faker) -> datetime:
         """
         Generate a start time
         :return:
@@ -78,7 +72,7 @@ class FIAProvider(BaseProvider):
             tzinfo=UTC,
         )
 
-    def instrument(self) -> Instrument:
+    def instrument(self, faker: Faker) -> Instrument:
         """
         Generate a random instrument from the list
         :return:
@@ -90,14 +84,15 @@ class FIAProvider(BaseProvider):
         )
         return instrument
 
-    def run(self, instrument: Instrument) -> Run:
+    def run(self, instrument: Instrument, faker: Faker) -> Run:
         """
         Given an instrument generate a random run model
         :param instrument: The Instrument
+        :param faker: Faker provider to use
         :return: random run model
         """
         run = Run()
-        run_start = self.start_time()
+        run_start = self.start_time(faker)
         run_end = run_start + timedelta(minutes=faker.pyint(max_value=50))
         experiment_number = faker.unique.pyint(min_value=10000, max_value=999999)
         raw_frames = faker.pyint(min_value=1000)
@@ -119,7 +114,7 @@ class FIAProvider(BaseProvider):
 
         return run
 
-    def job(self, instrument: Instrument) -> Job:
+    def job(self, instrument: Instrument, faker: Faker) -> Job:
         """
         Generate a random job Model
         :return: The job model
@@ -127,7 +122,7 @@ class FIAProvider(BaseProvider):
         job = Job()
         state = faker.enum(State)
         if state != State.NOT_STARTED:
-            job.start = self.start_time()
+            job.start = self.start_time(faker)
             job.end = job.start + timedelta(minutes=faker.pyint(max_value=50))
             job.status_message = faker.sentence(nb_words=10)
             job.outputs = "What should this be?"
@@ -142,7 +137,7 @@ class FIAProvider(BaseProvider):
         job.job_type = faker.enum(JobType)
         return job
 
-    def script(self) -> Script:
+    def script(self, faker: Faker) -> Script:
         """
         Generate a random script model
         :return: The script model
@@ -153,20 +148,19 @@ class FIAProvider(BaseProvider):
         script.script = "import os\nprint('foo')\n"
         return script
 
-    def insertable_job(self, instrument: Instrument) -> Job:
+    def insertable_job(self, instrument: Instrument, faker: Faker) -> Job:
         """
         Given an instrument model, generate random; job, run, and script all related.
         :param instrument:The instrument
         :return: The job with relations
         """
-        job = self.job(instrument)
-        job.run = self.run(instrument)
-        job.script = self.script()
+        job = self.job(instrument, faker)
+        job.run = self.run(instrument, faker)
+        job.run.owner = job.owner
+        job.script = self.script(faker)
 
         return job
 
-
-FIA_FAKER_PROVIDER = FIAProvider(faker)
 
 TEST_INSTRUMENT = Instrument(instrument_name="TEST", specification={})
 TEST_JOB_OWNER = JobOwner(experiment_number=1820497)
@@ -202,19 +196,25 @@ TEST_RUN = Run(
 )
 
 
-def setup_database() -> None:
-    """Setup database for e2e tests"""
+def setup_database(faker: Faker) -> None:
+    """Set up database for e2e tests"""
+    fia_faker = FIAProvider(faker)
     Base.metadata.drop_all(ENGINE)
     Base.metadata.create_all(ENGINE)
     with SESSION() as session:
         instruments = []
-        for instrument in FIA_FAKER_PROVIDER.INSTRUMENTS:
+        for instrument in fia_faker.INSTRUMENTS:
             instrument_ = Instrument()
             instrument_.instrument_name = instrument
-            instrument_.specification = FIA_FAKER_PROVIDER.instrument().specification
+            instrument_.specification = fia_faker.instrument(faker).specification
             instruments.append(instrument_)
         for _ in range(5000):
-            session.add(FIA_FAKER_PROVIDER.insertable_job(random.choice(instruments)))  # noqa: S311
+            # The following looks like a hack. This is because we can't use the builtin random.choice as when the tests
+            # run in CI, pytest-random-order is used. This changes the random module seed value, but not the faker seed.
+            # Therefore, this is the only way to guarantee the same jobs per instrument is consistent.
+            session.add(
+                fia_faker.insertable_job(instruments[fia_faker.random_int(min=0, max=len(instruments) - 1)], faker)
+            )
         session.add(TEST_JOB)
         session.commit()
         session.refresh(TEST_JOB)

@@ -1,6 +1,4 @@
-"""
-Module for Tosca script transform
-"""
+"""Module for Tosca script transform"""
 
 import logging
 
@@ -13,9 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class ToscaTransform(Transform):
-    """
-    Tosca Transform applies modifications to tosca script based on the job inputs
-    """
+    """Tosca Transform applies modifications to tosca script based on the job inputs"""
 
     # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
     # If you get here in the future, try removing the type ignore and see if it passes with newer mypy.
