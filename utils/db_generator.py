@@ -9,7 +9,7 @@ from faker import Faker
 from sqlalchemy import NullPool, create_engine
 from sqlalchemy.orm import sessionmaker
 
-from test.utils import FIA_FAKER_PROVIDER, FIAProvider
+from test.utils import FIAProvider
 
 random.seed(1)
 Faker.seed(1)
@@ -30,7 +30,7 @@ SESSION = sessionmaker(ENGINE)
 
 def main():
     """Start DB Generator"""
-    fia_provider = FIA_FAKER_PROVIDER
+    fia_provider = FIAProvider(faker)
 
     if "localhost" not in ENGINE.url:
         # Someone already overwrote all of production with this. Proceed with caution.
@@ -42,12 +42,12 @@ def main():
     with SESSION() as session:
         instruments = []
         for instrument in FIAProvider.INSTRUMENTS:
-            instrument_ = FIAProvider(faker).instrument()
+            instrument_ = FIAProvider(faker).instrument(faker)
             instrument_.instrument_name = instrument
             instruments.append(instrument_)
 
         for _ in range(10000):
-            session.add(fia_provider.insertable_job(random.choice(instruments)))  # noqa: S311
+            session.add(fia_provider.insertable_job(random.choice(instruments), faker))  # noqa: S311
         session.commit()
 
 

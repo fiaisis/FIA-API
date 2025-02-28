@@ -111,6 +111,24 @@ def test_get_job_filtered_on_exact_experiment_number(mock_post):
     assert data[0]["run"]["experiment_number"] == expected_experiment_number
 
 
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_count_jobs_with_filters(mock_post):
+    """Test count with filter"""
+    expected_count = 4834
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get('/jobs/count?filters={"title":"n"}')
+    assert response.json()["count"] == expected_count
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_count_jobs_by_instrument_with_filter(mock_post):
+    """Test count by instrument with filter"""
+    expected_count = 142
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get('/instrument/MARI/jobs/count?fiters={"title":"n"}')
+    assert response.json()["count"] == expected_count
+
+
 @pytest.mark.parametrize("endpoint", ["/jobs", "/instrument/mari/jobs"])
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_get_jobs_with_filters(mock_post, endpoint):
