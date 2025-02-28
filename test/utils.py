@@ -156,6 +156,7 @@ class FIAProvider(BaseProvider):
         """
         job = self.job(instrument, faker)
         job.run = self.run(instrument, faker)
+        job.run.owner = job.owner
         job.script = self.script(faker)
 
         return job
@@ -208,7 +209,12 @@ def setup_database(faker: Faker) -> None:
             instrument_.specification = fia_faker.instrument(faker).specification
             instruments.append(instrument_)
         for _ in range(5000):
-            session.add(fia_faker.insertable_job(random.choice(instruments), faker))  # noqa: S311
+            # The following looks like a hack. This is because we can't use the builtin random.choice as when the tests
+            # run in CI, pytest-random-order is used. This changes the random module seed value, but not the faker seed.
+            # Therefore, this is the only way to guarantee the same jobs per instrument is consistent.
+            session.add(
+                fia_faker.insertable_job(instruments[fia_faker.random_int(min=0, max=len(instruments) - 1)], faker)
+            )
         session.add(TEST_JOB)
         session.commit()
         session.refresh(TEST_JOB)

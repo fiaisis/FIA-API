@@ -100,10 +100,10 @@ def test_get_all_job_for_staff(mock_post):
 
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_get_job_filtered_on_exact_experiment_number(mock_post):
-    expected_experiment_number = 606272
+    expected_experiment_number = 882000
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get(
-        '/jobs?include_run=true&filters={"experiment_number_in": [606272]}',
+        '/jobs?include_run=true&filters={"experiment_number_in": [882000]}',
         headers={"Authorization": f"Bearer {STAFF_TOKEN}"},
     )
     data = response.json()
@@ -114,7 +114,7 @@ def test_get_job_filtered_on_exact_experiment_number(mock_post):
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_count_jobs_with_filters(mock_post):
     """Test count with filter"""
-    expected_count = 4834
+    expected_count = 4814
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get('/jobs/count?filters={"title":"n"}')
     assert response.json()["count"] == expected_count
@@ -123,7 +123,7 @@ def test_count_jobs_with_filters(mock_post):
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_count_jobs_by_instrument_with_filter(mock_post):
     """Test count by instrument with filter"""
-    expected_count = 122
+    expected_count = 119
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get('/instrument/MARI/jobs/count?filters={"title":"n"}')
     assert response.json()["count"] == expected_count
