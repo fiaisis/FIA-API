@@ -51,9 +51,9 @@ def reduction_1():
     mock = Mock()
     mock.inputs = {
         "user_file": "/extras/loq/BestMaskFile.toml",
-        "run_number": 10,
-        "scatter_transmission": 9,
-        "scatter_direct": 3,
+        "scatter_number": 10,
+        "scatter_transmission_number": 9,
+        "scatter_direct_number": 3,
         "can_scatter": 5,
         "can_transmission": 4,
         "can_direct": 3,
@@ -77,7 +77,7 @@ def reduction_2():
     mock = Mock()
     mock.inputs = {
         "user_file": "/extras/loq/BestMaskFile.toml",
-        "run_number": 5,
+        "scatter_number": 5,
         "sample_thickness": 2.0,
         "sample_geometry": "Disc",
         "sample_height": 8.0,

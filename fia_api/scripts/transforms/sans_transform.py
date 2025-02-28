@@ -33,16 +33,16 @@ class SansTransform(Transform):
                     f"/extras/{job.instrument.instrument_name.lower()}/MaskFile.toml", job.inputs["user_file"]
                 )
                 continue
-            if "run_number" in job.inputs and self._replace_input(
-                line, lines, index, "sample_scatter", job.inputs["run_number"]
+            if "scatter_number" in job.inputs and self._replace_input(
+                line, lines, index, "sample_scatter", job.inputs["scatter_number"]
             ):
                 continue
-            if "scatter_transmission" in job.inputs and self._replace_input(
-                line, lines, index, "sample_transmission", job.inputs["scatter_transmission"]
+            if "scatter_transmission_number" in job.inputs and self._replace_input(
+                line, lines, index, "sample_transmission", job.inputs["scatter_transmission_number"]
             ):
                 continue
-            if "scatter_direct" in job.inputs and self._replace_input(
-                line, lines, index, "sample_direct", job.inputs["scatter_direct"]
+            if "scatter_direct_number" in job.inputs and self._replace_input(
+                line, lines, index, "sample_direct", job.inputs["scatter_direct_number"]
             ):
                 continue
             if "can_scatter" in job.inputs and self._replace_input(
