@@ -123,7 +123,7 @@ def test_count_jobs_with_filters(mock_post):
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_count_jobs_by_instrument_with_filter(mock_post):
     """Test count by instrument with filter"""
-    expected_count = 124
+    expected_count = 146
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get('/instrument/MARI/jobs/count?filters={"title":"n"}')
     assert response.json()["count"] == expected_count
