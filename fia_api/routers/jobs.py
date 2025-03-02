@@ -1,6 +1,7 @@
+import json
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
@@ -38,6 +39,7 @@ async def get_jobs(
     order_by: OrderField = "start",
     order_direction: Literal["asc", "desc"] = "desc",
     include_run: bool = False,
+    filters: Annotated[str | None, Query(description="json string of filters")] = None,
     as_user: bool = False,
 ) -> list[JobResponse] | list[JobWithRunResponse]:
     """
@@ -51,6 +53,7 @@ async def get_jobs(
     "experiment_title", "filename",]
     :param order_direction: Literal["asc", "desc"]
     :param include_run: bool
+    :param filters: json string of filters
     :param as_user: bool
     :return: List of JobResponse objects
     """
@@ -64,7 +67,12 @@ async def get_jobs(
         user_number = user.user_number
 
     jobs = get_all_jobs(
-        limit=limit, offset=offset, order_by=order_by, order_direction=order_direction, user_number=user_number
+        limit=limit,
+        offset=offset,
+        order_by=order_by,
+        order_direction=order_direction,
+        user_number=user_number,
+        filters=filters,
     )
 
     if include_run:
@@ -81,6 +89,7 @@ async def get_jobs_by_instrument(
     order_by: OrderField = "start",
     order_direction: Literal["asc", "desc"] = "desc",
     include_run: bool = False,
+    filters: Annotated[str | None, Query(description="json string of filters")] = None,
     as_user: bool = False,
 ) -> list[JobResponse] | list[JobWithRunResponse]:
     """
@@ -95,6 +104,8 @@ async def get_jobs_by_instrument(
     "experiment_title", "filename",]
     :param order_direction: Literal["asc", "desc"]
     :param include_run: bool
+    :param filters: json string of filters
+    :param as_user: bool
     :return: List of JobResponse objects
     """
     user = get_user_from_token(credentials.credentials)
@@ -115,6 +126,7 @@ async def get_jobs_by_instrument(
         order_by=order_by,
         order_direction=order_direction,
         user_number=user_number,
+        filters=filters,
     )
 
     if include_run:
@@ -125,15 +137,17 @@ async def get_jobs_by_instrument(
 @JobsRouter.get("/instrument/{instrument}/jobs/count", tags=["jobs"])
 async def count_jobs_for_instrument(
     instrument: str,
+    filters: Annotated[str | None, Query(description="json string of filters")] = None,
 ) -> CountResponse:
     """
     Count jobs for a given instrument.
     \f
     :param instrument: the name of the instrument
+    :param filters: json string of filters
     :return: CountResponse containing the count
     """
     instrument = instrument.upper()
-    return CountResponse(count=count_jobs_by_instrument(instrument))
+    return CountResponse(count=count_jobs_by_instrument(instrument, filters=json.loads(filters) if filters else None))
 
 
 @JobsRouter.get("/job/{job_id}", tags=["jobs"])
@@ -152,10 +166,13 @@ async def get_job(
 
 
 @JobsRouter.get("/jobs/count", tags=["jobs"])
-async def count_all_jobs() -> CountResponse:
+async def count_all_jobs(
+    filters: Annotated[str | None, Query(description="json string of filters")] = None,
+) -> CountResponse:
     """
     Count all jobs
     \f
+    :param filters: json string of filters
     :return: CountResponse containing the count
     """
-    return CountResponse(count=count_jobs())
+    return CountResponse(count=count_jobs(filters=json.loads(filters) if filters else None))
