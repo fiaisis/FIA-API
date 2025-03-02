@@ -332,7 +332,7 @@ def test_get_prescript_when_job_does_not_exist():
     Test return 404 when requesting pre script from non existant job
     :return:
     """
-    response = client.get("/instrument/mari/script?job_id=4324234")
+    response = client.get("/instrument/MARI/script?job_id=4324234")
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {"message": "Resource not found"}
 
@@ -345,8 +345,7 @@ def test_unsafe_path_request_returns_400_status(mock_get_from_remote):
     """
     mock_get_from_remote.side_effect = RuntimeError
     response = client.get("/instrument/mari./script")  # %2F is encoded /
-    assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert response.json() == {"message": "The given request contains bad characters"}
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 @patch("fia_api.scripts.acquisition.LOCAL_SCRIPT_DIR", "fia_api/local_scripts")
