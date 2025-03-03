@@ -19,10 +19,10 @@ from fia_api.exception_handlers import (
     unsafe_path_handler,
 )
 from fia_api.routers.extras import ExtrasRouter
+from fia_api.routers.health import k8s_router
 from fia_api.routers.instrument_specs import InstrumentSpecRouter
 from fia_api.routers.job_creation import JobCreationRouter
 from fia_api.routers.jobs import JobsRouter
-from fia_api.routers.k8s import k8s_router
 from fia_api.routers.scripts import ScriptRouter
 
 stdout_handler = logging.StreamHandler(stream=sys.stdout)
