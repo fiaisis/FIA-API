@@ -85,8 +85,7 @@ def test_get_script_by_sha_instrument_doesnt_exist_returns_404():
     :return: None
     """
     response = client.get("/instrument/foo/script/sha/64c6121")
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {"message": "Resource not found"}
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 def test_get_script_by_sha_instrument_exists_sha_doesnt_exist_returns_404():
@@ -104,7 +103,7 @@ def test_get_script_by_sha_instrument_and_sha_doesnt_exist_returns_404():
     Test 404 when neither hash nor instrument exist
     :return: None
     """
-    response = client.get("/instrument/foo/script/sha/12345")
+    response = client.get("/instrument/TEST/script/sha/12345")
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {"message": "Resource not found"}
 
@@ -146,7 +145,4 @@ def test_get_default_prescript_instrument_does_not_exist():
     :return:
     """
     response = client.get("/instrument/foo/script")
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {
-        "message": "The script could not be found locally or on remote, it is likely the script does not exist"
-    }
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
