@@ -1,7 +1,7 @@
 import os
 from http import HTTPStatus
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials
@@ -14,6 +14,45 @@ ExtrasRouter = APIRouter(prefix="/extras", tags=["files"])
 
 jwt_api_security = JWTAPIBearer()
 
+InstrumentString = Literal[
+    "alf",
+    "argus",
+    "chipir",
+    "chronus",
+    "crisp",
+    "emu",
+    "enginx",
+    "gem",
+    "hifi",
+    "hrpd",
+    "imat",
+    "ines",
+    "inter",
+    "iris",
+    "larmor",
+    "let",
+    "loq",
+    "maps",
+    "mari",
+    "merlin",
+    "musr",
+    "nimrod",
+    "offspec",
+    "osiris",
+    "pearl",
+    "polaris",
+    "polref",
+    "sandals",
+    "sans2d",
+    "surf",
+    "sxd",
+    "tosca",
+    "vesuvio",
+    "wish",
+    "zoom",
+    "test",
+    "test",
+]
 
 @ExtrasRouter.get("/", tags=["files"])
 async def get_extras_top_level_folders(
@@ -55,7 +94,7 @@ async def get_subfolder_files_list(
 
 @ExtrasRouter.post("/{instrument}/{filename}", tags=["files"])
 async def upload_file_to_instrument_folder(
-    instrument: str,
+    instrument: InstrumentString,
     filename: str,
     file: UploadFile,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
