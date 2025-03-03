@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import pytest
 from db.data_models import Instrument, Job, JobOwner, JobType, Run, Script, State
+from e2e.constants import STAFF_TOKEN, USER_TOKEN
 from starlette.testclient import TestClient
 
 from fia_api.core.repositories import SESSION
@@ -15,18 +16,6 @@ from fia_api.fia_api import app
 
 client = TestClient(app)
 os.environ["FIA_API_API_KEY"] = str(mock.MagicMock())
-
-
-USER_TOKEN = (
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"  # noqa: S105
-    ".eyJ1c2VybnVtYmVyIjoxMjM0LCJyb2xlIjoidXNlciIsInVzZXJuYW1lIjoiZm9vIiwiZXhwIjo0ODcyNDY4MjYzfQ."
-    "99rVB56Y6-_rJikqlZQia6koEJJcpY0T_QV-fZ43Mok"
-)
-STAFF_TOKEN = (
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."  # noqa: S105
-    "eyJ1c2VybnVtYmVyIjoxMjM0LCJyb2xlIjoic3RhZmYiLCJ1c2VybmFtZSI6ImZvbyIsImV4cCI6NDg3MjQ2ODk4M30."
-    "-ktYEwdUfg5_PmUocmrAonZ6lwPJdcMoklWnVME1wLE"
-)
 
 TEST_JOB_OWNER = JobOwner(experiment_number=18204970)
 TEST_INSTRUMENT = Instrument(instrument_name="NEWBIE", latest_run=1, specification={"foo": "bar"})
