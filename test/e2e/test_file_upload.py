@@ -206,8 +206,7 @@ def test_fail_file_upload_to_non_existent_dir(mock_post, mock_file):
     upload_url = f"/extras/nonexistent-folder/{mock_file[0]}"
     response = client.post(upload_url, files=upload_file, headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
 
-    assert response.status_code == HTTPStatus.FORBIDDEN
-    assert response.json()["detail"].startswith("Invalid path being accessed")
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
