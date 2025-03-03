@@ -8,11 +8,12 @@ from unittest.mock import patch
 
 import pytest
 from db.data_models import Instrument, Job, JobOwner, JobType, Run, Script, State
-from e2e.constants import STAFF_TOKEN, USER_TOKEN
 from starlette.testclient import TestClient
 
 from fia_api.core.repositories import SESSION
 from fia_api.fia_api import app
+
+from .constants import STAFF_TOKEN, USER_TOKEN
 
 client = TestClient(app)
 os.environ["FIA_API_API_KEY"] = str(mock.MagicMock())
