@@ -19,7 +19,7 @@ from fia_api.exception_handlers import (
     unsafe_path_handler,
 )
 from fia_api.routers.extras import ExtrasRouter
-from fia_api.routers.health import k8s_router
+from fia_api.routers.health import health_router
 from fia_api.routers.instrument_specs import InstrumentSpecRouter
 from fia_api.routers.job_creation import JobCreationRouter
 from fia_api.routers.jobs import JobsRouter
@@ -51,7 +51,7 @@ app.include_router(ExtrasRouter)
 app.include_router(InstrumentSpecRouter)
 app.include_router(JobCreationRouter)
 app.include_router(JobsRouter)
-app.include_router(k8s_router)
+app.include_router(health_router)
 app.include_router(ScriptRouter)
 
 app.add_exception_handler(MissingRecordError, missing_record_handler)
