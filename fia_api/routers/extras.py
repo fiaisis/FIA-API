@@ -1,4 +1,3 @@
-import functools
 import os
 from http import HTTPStatus
 from pathlib import Path
@@ -14,18 +13,6 @@ from fia_api.core.utility import safe_check_filepath
 ExtrasRouter = APIRouter(prefix="/extras", tags=["files"])
 
 jwt_api_security = JWTAPIBearer()
-
-
-def require_staff(func):
-    @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
-        credentials = kwargs.get("credentials")
-        user = get_user_from_token(credentials.credentials)
-        if user.role != "staff":
-            raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
-        return func(*args, **kwargs)
-
-    return wrapper
 
 
 @ExtrasRouter.get("/", tags=["files"])
