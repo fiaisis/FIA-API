@@ -14,7 +14,7 @@ from fia_api.scripts.transforms.vesuvio_transform import VesuvioTransform
 logger = logging.getLogger(__name__)
 
 
-def get_transform_for_instrument(instrument: str) -> Transform:
+def get_transform_for_instrument(instrument: str) -> Transform:  # noqa: PLR0911
     """
     Get the appropriate transform for the given instrument and run file
     :param instrument: str - the instrument

@@ -1,6 +1,6 @@
 """
-Module provides the VesuvioTransform class, an implementation of the Transform abstract base class for VESUVIO instrument
-scripts.
+Module provides the VesuvioTransform class, an implementation of the Transform abstract base class for VESUVIO
+instrument scripts.
 """
 
 import logging
