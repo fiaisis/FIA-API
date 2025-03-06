@@ -23,7 +23,7 @@ from fia_api.scripts.transforms.vesuvio_transform import VesuvioTransform
         ("iris", IrisTransform),
         ("loq", SansTransform),
         ("sans2d", SansTransform),
-        ("vesuvio", VesuvioTransform)
+        ("vesuvio", VesuvioTransform),
     ],
 )
 def test_transform_factory(name, expected_transform):

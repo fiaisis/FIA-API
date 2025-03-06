@@ -8,7 +8,7 @@ from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.vesuvio_transform import VesuvioTransform
 
 
-@pytest.fixture
+@pytest.fixture()
 def script():
     """
     VesuvioTransform  PreScript fixture
@@ -30,21 +30,18 @@ crop_max = 400
 back_scattering_spectra = "3-134"
 forward_scattering_spectra = "135-182"
 cache_location="/extras/vesuvio/cached_files/"
-""")
+"""
+    )
 
 
-@pytest.fixture
+@pytest.fixture()
 def reduction():
     """
     Reduction fixture
     :return:
     """
     mock = Mock()
-    mock.inputs = {
-        "runno": "12345",
-        "empty_runs": "12345-12355",
-        "ip_file": "IP0001.par"
-    }
+    mock.inputs = {"runno": "12345", "empty_runs": "12345-12355", "ip_file": "IP0001.par"}
     return mock
 
 
