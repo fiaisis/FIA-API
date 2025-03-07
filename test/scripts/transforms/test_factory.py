@@ -10,6 +10,7 @@ from fia_api.scripts.transforms.sans_transform import SansTransform
 from fia_api.scripts.transforms.test_transforms import TestTransform
 from fia_api.scripts.transforms.tosca_transform import ToscaTransform
 from fia_api.scripts.transforms.transform import MissingTransformError
+from fia_api.scripts.transforms.vesuvio_transform import VesuvioTransform
 
 
 @pytest.mark.parametrize(
@@ -22,6 +23,7 @@ from fia_api.scripts.transforms.transform import MissingTransformError
         ("iris", IrisTransform),
         ("loq", SansTransform),
         ("sans2d", SansTransform),
+        ("vesuvio", VesuvioTransform),
     ],
 )
 def test_transform_factory(name, expected_transform):
