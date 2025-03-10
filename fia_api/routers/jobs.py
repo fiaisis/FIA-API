@@ -1,7 +1,8 @@
 import json
+from http import HTTPStatus
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
@@ -12,6 +13,7 @@ from fia_api.core.services.job import (
     get_all_jobs,
     get_job_by_id,
     get_job_by_instrument,
+    update_job_by_id,
 )
 
 JobsRouter = APIRouter(tags=["jobs"])
@@ -165,6 +167,16 @@ async def get_job(
     user = get_user_from_token(credentials.credentials)
     job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
     return JobWithRunResponse.from_job(job)
+
+
+@JobsRouter.patch("/job/{job_id}", tags=["jobs"])
+async def update_job(
+    job_id: int, job: JobResponse, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)]
+) -> JobResponse:
+    user = get_user_from_token(credentials.credentials)
+    if user.role != "staff":
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
+    return JobResponse.from_job(update_job_by_id(job_id, job))
 
 
 @JobsRouter.get("/jobs/count", tags=["jobs"])
