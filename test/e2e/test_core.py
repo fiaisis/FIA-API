@@ -2,21 +2,23 @@
 
 import datetime
 import os
+from copy import deepcopy
 from http import HTTPStatus
-from unittest import mock
 from unittest.mock import patch
 
 import pytest
 from db.data_models import Instrument, Job, JobOwner, JobType, Run, Script, State
+from sqlalchemy.orm import make_transient
 from starlette.testclient import TestClient
 
 from fia_api.core.repositories import SESSION
+from fia_api.core.responses import JobResponse
 from fia_api.fia_api import app
 
-from .constants import STAFF_TOKEN, USER_TOKEN
+from .constants import API_KEY_HEADER, STAFF_HEADER, USER_HEADER
 
 client = TestClient(app)
-os.environ["FIA_API_API_KEY"] = str(mock.MagicMock())
+os.environ["FIA_API_API_KEY"] = "shh"
 
 TEST_JOB_OWNER = JobOwner(experiment_number=18204970)
 TEST_INSTRUMENT = Instrument(instrument_name="NEWBIE", latest_run=1, specification={"foo": "bar"})
@@ -67,6 +69,10 @@ def _user_owned_data_setup() -> None:
         session.delete(TEST_JOB)
         session.commit()
         session.flush()
+        make_transient(TEST_RUN)
+        make_transient(TEST_SCRIPT)
+        make_transient(TEST_INSTRUMENT)
+        make_transient(TEST_JOB)
 
 
 def test_get_job_by_id_no_token_results_in_http_forbidden():
@@ -82,7 +88,7 @@ def test_get_job_by_id_no_token_results_in_http_forbidden():
 def test_get_all_job_for_staff(mock_post):
     """Test get all jobs for staff"""
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/jobs?limit=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/jobs?limit=10", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     expected_number_of_jobs = 10
     assert len(response.json()) == expected_number_of_jobs
@@ -94,7 +100,7 @@ def test_get_job_filtered_on_exact_experiment_number(mock_post):
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get(
         '/jobs?include_run=true&filters={"experiment_number_in": [882000]}',
-        headers={"Authorization": f"Bearer {STAFF_TOKEN}"},
+        headers=STAFF_HEADER,
     )
     data = response.json()
     assert len(data) == 1
@@ -139,7 +145,7 @@ def test_get_jobs_with_filters(mock_post, endpoint):
         '"run_start_after":"2017-02-09T00:00:00.000Z",'
         '"run_end_before":"2022-02-04T00:00:00.000Z",'
         '"run_end_after":"2018-02-09T00:00:00.000Z"}',
-        headers={"Authorization": f"Bearer {STAFF_TOKEN}"},
+        headers=STAFF_HEADER,
     )
     assert response.status_code == HTTPStatus.OK
     data = response.json()[0]
@@ -160,7 +166,7 @@ def test_get_all_job_for_staff_with_bad_filter_returns_400(mock_post):
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get(
         '/jobs?limit=20&filters={"the game":["MARI"]}&include_run=True',
-        headers={"Authorization": f"Bearer {STAFF_TOKEN}"},
+        headers=STAFF_HEADER,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
@@ -180,7 +186,7 @@ def test_get_all_job_for_user(mock_post, mock_get_experiment_numbers_for_user_nu
     """Test get all jobs for staff"""
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
-    response = client.get("/jobs", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    response = client.get("/jobs", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.OK
     expected_number_of_jobs = 1
     assert len(response.json()) == expected_number_of_jobs
@@ -217,7 +223,7 @@ def test_get_all_job_for_user_include_run(mock_post, mock_get_experiment_numbers
     """Test get all jobs for staff"""
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
-    response = client.get("/jobs?include_run=true", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    response = client.get("/jobs?include_run=true", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.OK
     expected_number_of_jobs = 1
     assert len(response.json()) == expected_number_of_jobs
@@ -266,7 +272,7 @@ def test_get_job_by_id_job_exists_for_staff(mock_post):
     :return:
     """
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/job/5001", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/job/5001", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
         "id": 5001,
@@ -312,7 +318,7 @@ def test_get_job_by_id_job_exists_for_user_no_perms(mock_post):
     :return:
     """
     mock_post.return_value.status_code = HTTPStatus.FORBIDDEN
-    response = client.get("/job/5001", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    response = client.get("/job/5001", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
@@ -385,7 +391,7 @@ def test_get_jobs_for_instrument_jobs_exist_for_dev_mode():
     :return: None
     """
     with patch("fia_api.core.auth.tokens.DEV_MODE", True):
-        response = client.get("/instrument/test/jobs", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+        response = client.get("/instrument/test/jobs", headers=STAFF_HEADER)
         assert response.status_code == HTTPStatus.OK
         assert response.json() == [
             {
@@ -422,7 +428,7 @@ def test_get_jobs_for_instrument_jobs_exist_for_staff(mock_post):
     :return: None
     """
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/instrument/test/jobs", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/instrument/test/jobs", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert response.json() == [
         {
@@ -462,7 +468,7 @@ def test_get_jobs_for_instrument_jobs_dont_exist_for_user(mock_get, mock_post):
     mock_get.return_value.status_code = HTTPStatus.OK
     mock_get.return_value.json.return_value = []
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/instrument/test/jobs", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    response = client.get("/instrument/test/jobs", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert response.json() == []
 
@@ -471,7 +477,7 @@ def test_get_jobs_for_instrument_jobs_dont_exist_for_user(mock_get, mock_post):
 def test_get_jobs_for_instrument_runs_included_for_staff(mock_post):
     """Test runs are included when requested for given instrument when instrument and jobs exist"""
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/instrument/test/jobs?include_run=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/instrument/test/jobs?include_run=true", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert response.json() == [
         {
@@ -518,7 +524,7 @@ def test_jobs_by_instrument_no_jobs(mock_post):
     :return:
     """
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/instrument/foo/jobs", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/instrument/foo/jobs", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert response.json() == []
 
@@ -537,7 +543,7 @@ def test_jobs_count():
 def test_limit_jobs(mock_post):
     """Test jobs can be limited"""
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/instrument/mari/jobs?limit=4", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/instrument/mari/jobs?limit=4", headers=STAFF_HEADER)
     assert len(response.json()) == 4  # noqa: PLR2004
 
 
@@ -545,8 +551,8 @@ def test_limit_jobs(mock_post):
 def test_offset_jobs(mock_post):
     """Test results are offset"""
     mock_post.return_value.status_code = HTTPStatus.OK
-    response_one = client.get("/instrument/mari/jobs", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
-    response_two = client.get("/instrument/mari/jobs?offset=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response_one = client.get("/instrument/mari/jobs", headers=STAFF_HEADER)
+    response_two = client.get("/instrument/mari/jobs?offset=10", headers=STAFF_HEADER)
     assert response_one.json()[0] != response_two.json()[0]
 
 
@@ -554,10 +560,8 @@ def test_offset_jobs(mock_post):
 def test_limit_offset_jobs(mock_post):
     """Test offset with limit"""
     mock_post.return_value.status_code = HTTPStatus.OK
-    response_one = client.get("/instrument/mari/jobs?limit=4", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
-    response_two = client.get(
-        "/instrument/mari/jobs?limit=4&offset=10", headers={"Authorization": f"Bearer {STAFF_TOKEN}"}
-    )
+    response_one = client.get("/instrument/mari/jobs?limit=4", headers=STAFF_HEADER)
+    response_two = client.get("/instrument/mari/jobs?limit=4&offset=10", headers=STAFF_HEADER)
 
     assert len(response_two.json()) == 4  # noqa: PLR2004
     assert response_one.json() != response_two.json()
@@ -596,7 +600,7 @@ def test_get_instrument_specification(mock_post):
     :return:
     """
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/instrument/het/specification", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/instrument/het/specification", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
         "ask": 8893.939623321,
@@ -634,10 +638,8 @@ def test_get_instrument_specification_bad_jwt():
 def test_put_instrument_specification(mock_post):
     """Test instrument put is updated"""
     mock_post.return_value.status_code = HTTPStatus.OK
-    client.put(
-        "/instrument/tosca/specification", json={"foo": "bar"}, headers={"Authorization": f"Bearer {STAFF_TOKEN}"}
-    )
-    response = client.get("/instrument/tosca/specification", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    client.put("/instrument/tosca/specification", json={"foo": "bar"}, headers=STAFF_HEADER)
+    response = client.get("/instrument/tosca/specification", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"foo": "bar"}
 
@@ -654,7 +656,7 @@ def test_get_mantid_runners(mock_post):
     """Test endpoint contains all the Mantid runners."""
     mock_post.return_value.status_code = HTTPStatus.OK
     expected_runners = ["6.8.0", "6.9.0", "6.9.1", "6.10.0", "6.11.0"]
-    response = client.get("/jobs/runners", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    response = client.get("/jobs/runners", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.OK
     for runner in expected_runners:
         assert runner in response.json()
@@ -682,7 +684,7 @@ def test_get_all_jobs_response_body_as_user_true_and_as_staff(mock_post, mock_ge
     """Test that a single job is returned when a staff user gets all jobs with the as_user flag set to true"""
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
-    response = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/jobs?as_user=true", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert response.json() == [
         {
@@ -718,7 +720,7 @@ def test_get_all_jobs_as_user_false_and_as_staff(mock_post, mock_get_experiment_
     """Test that multiple jobs are returned when a staff user gets all jobs with the as_user flag set to false"""
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
-    response = client.get("/jobs?limit=10&as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/jobs?limit=10&as_user=false", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()) > 1
 
@@ -730,7 +732,7 @@ def test_get_mari_jobs_as_user_true_and_as_staff(mock_post, mock_get_experiment_
     """Test that a single job is returned when a staff user gets jobs from MARI with the as_user flag set to true"""
     mock_get_experiment_numbers_for_user_number.return_value = [18204970]
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get("/instrument/newbie/jobs?&as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/instrument/newbie/jobs?&as_user=true", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()) == 1
 
@@ -739,25 +741,69 @@ def test_get_mari_jobs_as_user_true_and_as_staff(mock_post, mock_get_experiment_
 def test_get_mari_jobs_as_user_false_and_as_staff(mock_post):
     """Test that multiple jobs are returned when a staff user gets jobs from MARI with the as_user flag set to false"""
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get(
-        "/instrument/mari/jobs?limit=10&as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"}
-    )
+    response = client.get("/instrument/mari/jobs?limit=10&as_user=false", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()) > 1
 
 
-@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@pytest.mark.usefixtures("_user_owned_data_setup")
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_multiple_get_job_requests_with_different_as_user_values(
-    mock_post, mock_get_experiment_numbers_for_user_number
-):
-    """Test get all jobs with as_user flag set to true and false for a staff
-    user yield responses of different lengths"""
+def test_update_job_with_api_key(mock_post):
+    job = JobResponse.from_job(TEST_JOB)
+    job.status_message = "hello"
+    job.state = "SUCCESSFUL"
+    response = client.patch("/job/5002", json=job.model_dump(mode="json"), headers=API_KEY_HEADER)
+    assert response.status_code == HTTPStatus.OK
+
+    updated_response = response.json()
+    assert updated_response["status_message"] == job.status_message
+    assert updated_response["state"] == job.state
+    assert updated_response["end"] == TEST_JOB.end
+    assert updated_response["inputs"] == TEST_JOB.inputs
+    assert updated_response["outputs"] == TEST_JOB.outputs
+    assert updated_response["start"].replace("T", " ") == str(TEST_JOB.start)
+    assert updated_response["runner_image"] == TEST_JOB.runner_image
+    assert updated_response["type"] == str(TEST_JOB.job_type)
+
+
+@pytest.mark.usefixtures("_user_owned_data_setup")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_update_job_as_staff(mock_post):
     mock_post.return_value.status_code = HTTPStatus.OK
-    mock_get_experiment_numbers_for_user_number.return_value = [1820497]
+    job = JobResponse.from_job(TEST_JOB)
+    job.status_message = "hello"
+    job.state = "SUCCESSFUL"
+    response = client.patch("/job/5002", json=job.model_dump(mode="json"), headers=STAFF_HEADER)
+    assert response.status_code == HTTPStatus.OK
 
-    response_as_user_true = client.get("/jobs?as_user=true", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    updated_response = response.json()
+    assert updated_response["status_message"] == job.status_message
+    assert updated_response["state"] == job.state
+    assert updated_response["end"] == TEST_JOB.end
+    assert updated_response["inputs"] == TEST_JOB.inputs
+    assert updated_response["outputs"] == TEST_JOB.outputs
+    assert updated_response["start"].replace("T", " ") == str(TEST_JOB.start)
+    assert updated_response["runner_image"] == TEST_JOB.runner_image
+    assert updated_response["type"] == str(TEST_JOB.job_type)
 
-    response_as_user_false = client.get("/jobs?as_user=false", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
 
-    assert len(response_as_user_true.json()) != len(response_as_user_false.json())
+@pytest.mark.usefixtures("_user_owned_data_setup")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_update_job_fails_for_user(mock_post):
+    response = client.patch("/job/1", json={"foo": "bar"}, headers=USER_HEADER)
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@pytest.mark.usefixtures("_user_owned_data_setup")
+def test_update_job_fails_with_no_auth():
+    response = client.patch("/job/1", json={"foo": "bar"})
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@pytest.mark.usefixtures("_user_owned_data_setup")
+def test_update_job_returns_404_when_id_doesn_t_exist():
+    job = deepcopy(TEST_JOB)
+    new_job = JobResponse.from_job(job)
+    new_job.state = "SUCCESSFUL"
+    response = client.patch("/job/-42069", headers=API_KEY_HEADER, json=new_job.model_dump(mode="json"))
+    assert response.status_code == HTTPStatus.NOT_FOUND
