@@ -1,7 +1,6 @@
 """end-to-end tests"""
 
 import datetime
-import os
 from http import HTTPStatus
 from unittest.mock import patch
 
@@ -747,7 +746,6 @@ def test_get_mari_jobs_as_user_false_and_as_staff(mock_post):
 
 @pytest.mark.usefixtures("_user_owned_data_setup")
 def test_update_job_with_api_key():
-    assert os.environ["FIA_API_API_KEY"] == "foo"
     job = JobResponse.from_job(TEST_JOB)
     job.status_message = "hello"
     job.state = "SUCCESSFUL"
