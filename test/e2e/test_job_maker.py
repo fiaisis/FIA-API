@@ -83,6 +83,6 @@ def test_post_simple_job(producer_channel):
         {
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
             "script": 'print("Hello World!")',
-            "user_number": 123,
+            "user_number": -1,  # when auth with api key, the app assumes the psuedo user with user number -1
         }
     ]
