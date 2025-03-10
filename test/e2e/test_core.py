@@ -1,7 +1,6 @@
 """end-to-end tests"""
 
 import datetime
-import os
 from copy import deepcopy
 from http import HTTPStatus
 from unittest.mock import patch
@@ -18,7 +17,7 @@ from fia_api.fia_api import app
 from .constants import API_KEY_HEADER, STAFF_HEADER, USER_HEADER
 
 client = TestClient(app)
-os.environ["FIA_API_API_KEY"] = "shh"
+
 
 TEST_JOB_OWNER = JobOwner(experiment_number=18204970)
 TEST_INSTRUMENT = Instrument(instrument_name="NEWBIE", latest_run=1, specification={"foo": "bar"})
