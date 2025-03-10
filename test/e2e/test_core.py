@@ -745,8 +745,7 @@ def test_get_mari_jobs_as_user_false_and_as_staff(mock_post):
 
 
 @pytest.mark.usefixtures("_user_owned_data_setup")
-@patch("fia_api.core.auth.tokens.requests.post")
-def test_update_job_with_api_key(mock_post):
+def test_update_job_with_api_key():
     job = JobResponse.from_job(TEST_JOB)
     job.status_message = "hello"
     job.state = "SUCCESSFUL"
