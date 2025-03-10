@@ -8,7 +8,14 @@ from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.file_ops import read_dir, write_file_from_remote
-from fia_api.core.utility import safe_check_filepath
+from fia_api.core.utility import (
+    CEPH_DIR,
+    find_file_experiment_number,
+    find_file_instrument,
+    find_file_user_number,
+    request_path_check,
+    safe_check_filepath,
+)
 
 ExtrasRouter = APIRouter(prefix="/extras", tags=["files"])
 
@@ -121,3 +128,48 @@ async def upload_file_to_instrument_folder(
     await write_file_from_remote(file, file_directory)
 
     return f"Successfully uploaded {filename}"
+
+
+@ExtrasRouter.get("/find_file/instrument/{instrument}/experiment_number/{experiment_number}", tags=["find_files"])
+async def find_file_get_instrument(instrument: str, experiment_number: int, filename: str) -> str:
+    """
+    Return the relative path to the env var CEPH_DIR that leads to the requested file if one exists.
+    :param instrument: Instrument the file belongs to.
+    :param experiment_number: Experiment number the file belongs to.
+    :param filename: Filename to find.
+    :return: The relative path to the file in the CEPH_DIR env var.
+    """
+    path = find_file_instrument(
+        ceph_dir=CEPH_DIR, instrument=instrument, experiment_number=experiment_number, filename=filename
+    )
+    if path is None:
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST)
+    return str(request_path_check(path=path, base_dir=CEPH_DIR))
+
+
+@ExtrasRouter.get("/find_file/generic/experiment_number/{experiment_number}", tags=["find_files"])
+async def find_file_generic_experiment_number(experiment_number: int, filename: str) -> str:
+    """
+    Return the relative path to the env var CEPH_DIR that leads to the requested file if one exists.
+    :param experiment_number: Experiment number the file belongs to.
+    :param filename: Filename to find
+    :return: The relative path to the file in the CEPH_DIR env var.
+    """
+    path = find_file_experiment_number(ceph_dir=CEPH_DIR, experiment_number=experiment_number, filename=filename)
+    if path is None:
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST)
+    return str(request_path_check(path=path, base_dir=CEPH_DIR))
+
+
+@ExtrasRouter.get("/find_file/generic/user_number/{user_number}", tags=["find_files"])
+async def find_file_generic_user_number(user_number: int, filename: str) -> str:
+    """
+    Return the relative path to the env var CEPH_DIR that leads to the requested file if one exists.
+    :param user_number: Experiment number the file belongs to.
+    :param filename: Filename to find
+    :return: The relative path to the file in the CEPH_DIR env var.
+    """
+    path = find_file_user_number(ceph_dir=CEPH_DIR, user_number=user_number, filename=filename)
+    if path is None:
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST)
+    return str(request_path_check(path, base_dir=CEPH_DIR))
