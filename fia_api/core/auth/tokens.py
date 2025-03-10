@@ -60,14 +60,15 @@ class JWTAPIBearer(HTTPBearer):
         except RuntimeError as exc:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token") from exc
 
-        if not self._is_api_key_valid(token) and not self._is_jwt_access_token_valid(token):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token, expired token or invalid API key"
-            )
+        if self._is_api_key_valid(token) or self._is_jwt_access_token_valid(token):
+            return credentials
 
-        return credentials
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token, expired token or invalid API key"
+        )
 
-    def _is_jwt_access_token_valid(self, access_token: str) -> bool:
+    @staticmethod
+    def _is_jwt_access_token_valid(access_token: str) -> bool:
         """
         Check if the JWT access token is valid.
 
@@ -87,7 +88,8 @@ class JWTAPIBearer(HTTPBearer):
             logger.exception("Error decoding JWT access token")
             return False
 
-    def _is_api_key_valid(self, api_key: str) -> bool:
+    @staticmethod
+    def _is_api_key_valid(api_key: str) -> bool:
         """
         Check if the API key is valid.
 

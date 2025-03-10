@@ -1,7 +1,6 @@
 """end-to-end tests"""
 
 import datetime
-from copy import deepcopy
 from http import HTTPStatus
 from unittest.mock import patch
 
@@ -801,8 +800,7 @@ def test_update_job_fails_with_no_auth():
 
 @pytest.mark.usefixtures("_user_owned_data_setup")
 def test_update_job_returns_404_when_id_doesn_t_exist():
-    job = deepcopy(TEST_JOB)
-    new_job = JobResponse.from_job(job)
+    new_job = JobResponse.from_job(TEST_JOB)
     new_job.state = "SUCCESSFUL"
     response = client.patch("/job/-42069", headers=API_KEY_HEADER, json=new_job.model_dump(mode="json"))
     assert response.status_code == HTTPStatus.NOT_FOUND
