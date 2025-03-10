@@ -2,7 +2,6 @@ import os
 import random
 from http import HTTPStatus
 from pathlib import Path
-from unittest import mock
 from unittest.mock import patch
 
 import pytest
@@ -13,7 +12,6 @@ from fia_api.fia_api import app
 from .constants import STAFF_HEADER, USER_HEADER
 
 client = TestClient(app)
-os.environ["FIA_API_API_KEY"] = str(mock.MagicMock())
 
 
 @pytest.fixture()
