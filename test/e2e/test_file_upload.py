@@ -2,7 +2,6 @@ import os
 import random
 from http import HTTPStatus
 from pathlib import Path
-from unittest import mock
 from unittest.mock import patch
 
 import pytest
@@ -10,10 +9,9 @@ from starlette.testclient import TestClient
 
 from fia_api.fia_api import app
 
-from .constants import STAFF_TOKEN, USER_TOKEN
+from .constants import STAFF_HEADER, USER_HEADER
 
 client = TestClient(app)
-os.environ["FIA_API_API_KEY"] = str(mock.MagicMock())
 
 
 @pytest.fixture()
@@ -83,7 +81,7 @@ def test_read_extras_populated(mock_post, tmp_path):
     """Tests the root folders is populated (instrument folders exist)"""
     mock_post.return_value.status_code = HTTPStatus.OK
 
-    response = client.get("/extras", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/extras", headers=STAFF_HEADER)
 
     assert response.status_code == HTTPStatus.OK
     assert sorted(response.json()) == instrument_folders
@@ -94,7 +92,7 @@ def test_read_extras_empty(mock_post):
     """Tests the root folder is empty"""
     mock_post.return_value.status_code = HTTPStatus.OK
 
-    response = client.get("/extras", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get("/extras", headers=STAFF_HEADER)
     folders = response.json()
     assert folders == []
     assert response.status_code == HTTPStatus.OK
@@ -112,7 +110,7 @@ def test_read_extras_no_jwt_returns_forbidden(mock_post):
 def test_read_extras_user_jwt_returns_forbidden(mock_post):
     mock_post.return_value.status_code = HTTPStatus.OK
 
-    response = client.get("/extras", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    response = client.get("/extras", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
@@ -122,7 +120,7 @@ def test_read_instrument_empty(mock_post):
     mock_post.return_value.status_code = HTTPStatus.OK
 
     """Tests that a randomly selected instrument folder is empty"""
-    response = client.get(f"/extras/{instrument_folders[0]}", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get(f"/extras/{instrument_folders[0]}", headers=STAFF_HEADER)
     instrument_files = response.json()
     assert instrument_files == []
     assert response.status_code == HTTPStatus.OK
@@ -140,7 +138,7 @@ def test_read_instrument_populated(mock_post):
     Path.touch(file_directory)
     Path.touch(file_directory2)
     # check contents of the instrument folder
-    response = client.get(f"/extras/{instrument_folders[2]}", headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.get(f"/extras/{instrument_folders[2]}", headers=STAFF_HEADER)
 
     assert response.status_code == HTTPStatus.OK
     assert sorted(response.json()) == sorted([str(file_directory.stem), str(file_directory2.stem)])
@@ -157,7 +155,7 @@ def test_read_instrument_fails_no_jwt(mock_post):
 def test_read_instrument_fails_user_jwt(mock_post):
     mock_post.return_value.status_code = HTTPStatus.OK
 
-    response = client.get(f"/extras/{instrument_folders[2]}", headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    response = client.get(f"/extras/{instrument_folders[2]}", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
@@ -169,7 +167,7 @@ def test_success_file_upload(mock_post, mock_file):
 
     upload_file = {"file": mock_file}
     upload_url = f"/extras/{instrument_folders[3]}/{mock_file[0]}"
-    response = client.post(upload_url, files=upload_file, headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.post(upload_url, files=upload_file, headers=STAFF_HEADER)
 
     assert response.json() == f"Successfully uploaded {mock_file[0]}"
     assert response.status_code == HTTPStatus.OK
@@ -192,7 +190,7 @@ def test_file_upload_fails_with_forbidden_user_jwt(mock_post, mock_file):
 
     upload_file = {"file": mock_file}
     upload_url = f"/extras/{instrument_folders[3]}/{mock_file[0]}"
-    response = client.post(upload_url, files=upload_file, headers={"Authorization": f"Bearer {USER_TOKEN}"})
+    response = client.post(upload_url, files=upload_file, headers=USER_HEADER)
 
     assert response.status_code == HTTPStatus.FORBIDDEN
 
@@ -204,7 +202,7 @@ def test_fail_file_upload_to_non_existent_dir(mock_post, mock_file):
 
     upload_file = {"file": mock_file}
     upload_url = f"/extras/nonexistent-folder/{mock_file[0]}"
-    response = client.post(upload_url, files=upload_file, headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.post(upload_url, files=upload_file, headers=STAFF_HEADER)
 
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
@@ -216,6 +214,6 @@ def test_fail_file_upload_to_non_extras(mock_post, mock_file):
 
     upload_file = {"file": mock_file}
     upload_url = f"/anUnexpectedFolder/{instrument_folders[6]}/{mock_file[0]}"
-    response = client.post(upload_url, files=upload_file, headers={"Authorization": f"Bearer {STAFF_TOKEN}"})
+    response = client.post(upload_url, files=upload_file, headers=STAFF_HEADER)
 
     assert response.status_code == HTTPStatus.NOT_FOUND

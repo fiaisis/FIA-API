@@ -11,6 +11,7 @@ from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.exceptions import AuthenticationError, MissingRecordError
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.repositories import Repo
+from fia_api.core.responses import JobResponse
 from fia_api.core.specifications.filters import apply_filters_to_spec
 from fia_api.core.specifications.job import JobSpecification
 
@@ -179,3 +180,24 @@ def get_experiment_number_for_job_id(job_id: int) -> int:
             return owner.experiment_number
         raise ValueError("Job has no owner or owner does not have an experiment number in the DB")
     raise ValueError("No job found with ID in the DB")
+
+
+def update_job_by_id(id_: int, job: JobResponse) -> Job:
+    """
+    Update the given job in the database. This is a safe update as it will only update fields that should be updated,
+    and not update those that shouldn't. I.E no retroactive changing of IDs, start times etc.
+    :param id_: (int) The id of the job to update
+    :param job: The job to update with
+    :return: The updated job
+    """
+    original_job = _REPO.find_one(JobSpecification().by_id(id_))
+    if original_job is None:
+        raise MissingRecordError(f"No job found with id {id_}")
+    # We only update the fields that should change, not those that should never e.g. start, script, inputs.
+    original_job.state = job.state
+    original_job.end = job.end
+    original_job.status_message = job.status_message
+    original_job.outputs = job.outputs
+    original_job.stacktrace = job.stacktrace
+
+    return _REPO.update_one(original_job)

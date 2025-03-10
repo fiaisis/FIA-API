@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 
 import faker.generator
 import pytest
+from db.data_models import State
 
 from fia_api.core.exceptions import AuthenticationError, MissingRecordError
 from fia_api.core.services.job import (
@@ -13,6 +14,7 @@ from fia_api.core.services.job import (
     get_experiment_number_for_job_id,
     get_job_by_id,
     get_job_by_instrument,
+    update_job_by_id,
 )
 
 
@@ -220,3 +222,79 @@ def test_get_all_jobs_with_pagination(mock_spec_class, mock_repo):
     get_all_jobs(limit=15, offset=30)
     spec.all.assert_called_once_with(limit=15, offset=30, order_by="start", order_direction="desc")
     mock_repo.find.assert_called_once_with(spec.all())
+
+
+@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job.JobSpecification")
+def test_update_job_by_id(mock_spec_class, mock_repo):
+    """Test update_job_by_id with valid job data."""
+    job_id = 1
+    job_data = Mock()  # This represents the JobResponse object
+    job_data.state = State.SUCCESSFUL
+    job_data.end = "2023-10-10T10:00:00"
+    job_data.status_message = "Job completed successfully"
+    job_data.outputs = {"output_key": "output_value"}
+    job_data.stacktrace = None
+
+    original_job = Mock()
+    mock_repo.find_one.return_value = original_job
+
+    update_job_by_id(job_id, job_data)
+
+    mock_spec_class.assert_called_once_with()
+    mock_spec_class.return_value.by_id.assert_called_once_with(job_id)
+    mock_repo.find_one.assert_called_once_with(mock_spec_class.return_value.by_id())
+    assert original_job.state == State.SUCCESSFUL
+    assert original_job.end == "2023-10-10T10:00:00"
+    assert original_job.status_message == "Job completed successfully"
+    assert original_job.outputs == {"output_key": "output_value"}
+    assert original_job.stacktrace is None
+    mock_repo.update_one.assert_called_once_with(original_job)
+
+
+@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job.JobSpecification")
+def test_update_job_by_id_invalid_job_id(mock_spec_class, mock_repo):
+    """Test update_job_by_id when the job ID does not exist."""
+    job_id = 999
+    job_data = Mock()
+    mock_repo.find_one.return_value = None  # Simulate job not found
+
+    with pytest.raises(MissingRecordError):
+        update_job_by_id(job_id, job_data)
+
+    mock_spec_class.assert_called_once_with()
+    mock_spec_class.return_value.by_id.assert_called_once_with(job_id)
+    mock_repo.find_one.assert_called_once_with(mock_spec_class.return_value.by_id())
+    mock_repo.update_one.assert_not_called()
+
+
+@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job.JobSpecification")
+def test_update_job_by_id_never_updates_certain_fields(mock_spec_class, mock_repo):
+    """Test update_job_by_id ensuring certain fields are never updated"""
+    job_id = 2
+    job_data = Mock()
+    job_data.state = State.NOT_STARTED
+    job_data.start = None  # Start should never be updated
+    job_data.status_message = "Job is running"
+    job_data.input = None  # input should never be updated
+    job_data.stacktrace = "Some stacktrace info"
+
+    original_job = Mock()
+    original_job.start = "2023-10-09T12:00:00"
+    original_job.input = {"output_key": "previous_output"}
+
+    mock_repo.find_one.return_value = original_job
+
+    update_job_by_id(job_id, job_data)
+
+    mock_spec_class.assert_called_once_with()
+    mock_spec_class.return_value.by_id.assert_called_once_with(job_id)
+    mock_repo.find_one.assert_called_once_with(mock_spec_class.return_value.by_id())
+    assert original_job.state == State.NOT_STARTED
+    assert original_job.start == "2023-10-09T12:00:00"  # Ensure this remains unchanged
+    assert original_job.status_message == "Job is running"
+    assert original_job.input == {"output_key": "previous_output"}  # Ensure this remains unchanged
+    assert original_job.stacktrace == "Some stacktrace info"
+    mock_repo.update_one.assert_called_once_with(original_job)

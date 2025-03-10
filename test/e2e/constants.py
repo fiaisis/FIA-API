@@ -12,3 +12,7 @@ STAFF_TOKEN = (
     "eyJ1c2VybnVtYmVyIjoxMjM0LCJyb2xlIjoic3RhZmYiLCJ1c2VybmFtZSI6ImZvbyIsImV4cCI6NDg3MjQ2ODk4M30."
     "-ktYEwdUfg5_PmUocmrAonZ6lwPJdcMoklWnVME1wLE"
 )
+
+STAFF_HEADER = {"Authorization": f"Bearer {STAFF_TOKEN}"}
+USER_HEADER = {"Authorization": f"Bearer {USER_TOKEN}"}
+API_KEY_HEADER = {"Authorization": "Bearer shh"}

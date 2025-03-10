@@ -1,10 +1,14 @@
 """Global fixture for e2e tests"""
 
+import os
+
 import pytest
 
 from test.utils import setup_database
 
 setup = False
+
+os.environ["FIA_API_API_KEY"] = "shh"
 
 
 @pytest.fixture(autouse=True)
