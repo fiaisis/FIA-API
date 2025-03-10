@@ -173,6 +173,15 @@ async def get_job(
 async def update_job(
     job_id: int, job: JobResponse, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)]
 ) -> JobResponse:
+    """
+    Safely update the job of the given id with the new details provided. The update is safe as it prevents
+    retroactive changes of values that should never change
+    \f
+    :param job_id: the unique identifier of the job
+    :param job: the job to update with
+    :param credentials: Dependency injected HTTPAuthorizationCredentials
+    :return: JobResponse
+    """
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
