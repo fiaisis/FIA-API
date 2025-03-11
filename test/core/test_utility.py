@@ -24,7 +24,6 @@ from fia_api.core.utility import (
     safe_check_filepath_plotting,
 )
 
-
 CEPH_DIR = Path(TemporaryDirectory().name)
 
 
