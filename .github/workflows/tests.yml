@@ -129,8 +129,6 @@ jobs:
 
 
       - name: Run test job maker
-        env:
-          DEV_MODE: True
         run: |
           pytest test/e2e/test_job_maker.py --random-order --random-order-bucket=global --cov --cov-report=xml
 
