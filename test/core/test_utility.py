@@ -1,6 +1,7 @@
 """Tests for utility functions"""
 
 import shutil
+from collections.abc import Callable
 from http import HTTPStatus
 from pathlib import Path
 from tempfile import TemporaryDirectory
