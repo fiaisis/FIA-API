@@ -5,6 +5,7 @@ from collections.abc import Callable
 from http import HTTPStatus
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any
 from unittest.mock import patch
 
 import pytest
