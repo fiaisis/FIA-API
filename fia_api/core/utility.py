@@ -16,7 +16,6 @@ from fia_api.core.exceptions import UnsafePathError
 FuncT = TypeVar("FuncT", bound=Callable[[str], Any])
 
 GITHUB_PACKAGE_TOKEN = os.environ.get("GITHUB_PACKAGE_TOKEN", "shh")
-CEPH_DIR = os.environ.get("CEPH_DIR", "../../test/test_ceph")
 
 
 def forbid_path_characters(func: FuncT) -> FuncT:
@@ -173,7 +172,7 @@ def request_path_check(path: Path, base_dir: str) -> Path:
     """
     if path is None:
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST)
-    # Remove CEPH_DIR
+    # Remove the base_dir
     if path.is_relative_to(base_dir):
         path = path.relative_to(base_dir)
     return path
