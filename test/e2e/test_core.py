@@ -46,7 +46,7 @@ TEST_RUN = Run(
 TEST_RUN.jobs.append(TEST_JOB)
 
 
-@pytest.fixture
+@pytest.fixture()
 def _user_owned_data_setup() -> None:
     """
     Set up the test database before module
@@ -812,7 +812,9 @@ def test_find_file_get_instrument(mock_post):
     os.environ["CEPH_DIR"] = str(Path("./test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
 
-    response = client.get("/find_file/instrument/MARI/experiment_number/20024?filename=MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+    response = client.get(
+        "/find_file/instrument/MARI/experiment_number/20024?filename=MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER
+    )
 
     assert response.status_code == HTTPStatus.OK
     assert response.text == '"MARI/RBNumber/RB20024/autoreduced/MAR29531_10.5meV_sa.nxspe"'
@@ -823,7 +825,9 @@ def test_find_file_get_instrument_file_not_found(mock_post):
     os.environ["CEPH_DIR"] = str(Path("./test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
 
-    response = client.get("/find_file/instrument/MARI/experiment_number/20024?filename=MAR12345.nxspe", headers=STAFF_HEADER)
+    response = client.get(
+        "/find_file/instrument/MARI/experiment_number/20024?filename=MAR12345.nxspe", headers=STAFF_HEADER
+    )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
@@ -843,7 +847,9 @@ def test_find_file_generic_experiment_number(mock_post):
     os.environ["CEPH_DIR"] = str(Path("./test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
 
-    response = client.get("/find_file/generic/experiment_number/20024?filename=MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+    response = client.get(
+        "/find_file/generic/experiment_number/20024?filename=MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER
+    )
 
     assert response.status_code == HTTPStatus.OK
     assert response.text == '"GENERIC/autoreduce/ExperimentNumbers/20024/MAR29531_10.5meV_sa.nxspe"'
@@ -854,7 +860,9 @@ def test_find_file_generic_experiment_number_not_found(mock_post):
     os.environ["CEPH_DIR"] = str(Path("./test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
 
-    response = client.get("/find_file/generic/experiment_number/20024?filename=MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+    response = client.get(
+        "/find_file/generic/experiment_number/20024?filename=MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER
+    )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
@@ -874,7 +882,9 @@ def test_find_file_generic_user_number(mock_post):
     os.environ["CEPH_DIR"] = str(Path("./test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
 
-    response = client.get("/find_file/generic/user_number/20024?filename=MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+    response = client.get(
+        "/find_file/generic/user_number/20024?filename=MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER
+    )
 
     assert response.status_code == HTTPStatus.OK
     assert response.text == '"GENERIC/autoreduce/UserNumbers/20024/MAR29531_10.5meV_sa.nxspe"'

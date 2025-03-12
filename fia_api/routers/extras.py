@@ -121,5 +121,3 @@ async def upload_file_to_instrument_folder(
     await write_file_from_remote(file, file_directory)
 
     return f"Successfully uploaded {filename}"
-
-

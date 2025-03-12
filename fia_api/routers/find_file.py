@@ -20,7 +20,12 @@ jwt_api_security = JWTAPIBearer()
 
 
 @FindFileRouter.get("/instrument/{instrument}/experiment_number/{experiment_number}", tags=["find_files"])
-async def find_file_get_instrument(instrument: str, experiment_number: int, filename: str, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)]) -> str:
+async def find_file_get_instrument(
+    instrument: str,
+    experiment_number: int,
+    filename: str,
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+) -> str:
     """
     Return the relative path to the env var CEPH_DIR that leads to the requested file if one exists.
     :param instrument: Instrument the file belongs to.
@@ -44,7 +49,11 @@ async def find_file_get_instrument(instrument: str, experiment_number: int, file
 
 
 @FindFileRouter.get("/generic/experiment_number/{experiment_number}", tags=["find_files"])
-async def find_file_generic_experiment_number(experiment_number: int, filename: str, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)]) -> str:
+async def find_file_generic_experiment_number(
+    experiment_number: int,
+    filename: str,
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+) -> str:
     """
     Return the relative path to the env var CEPH_DIR that leads to the requested file if one exists.
     :param experiment_number: Experiment number the file belongs to.
@@ -65,7 +74,9 @@ async def find_file_generic_experiment_number(experiment_number: int, filename: 
 
 
 @FindFileRouter.get("/generic/user_number/{user_number}", tags=["find_files"])
-async def find_file_generic_user_number(user_number: int, filename: str, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)]) -> str:
+async def find_file_generic_user_number(
+    user_number: int, filename: str, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)]
+) -> str:
     """
     Return the relative path to the env var CEPH_DIR that leads to the requested file if one exists.
     :param user_number: Experiment number the file belongs to.
