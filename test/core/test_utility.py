@@ -334,11 +334,11 @@ def test_find_file_method_when_failed(find_file_method: Callable, method_inputs:
 @pytest.mark.parametrize(
     ("find_file_method", "method_inputs"),
     [
-        (find_file_instrument, {CEPH_DIR, "~/.ssh", "id_rsa", "MAR1912991240_asa_dasd_123.nxspe"}),
-        (find_file_experiment_number, {CEPH_DIR, "~/.ssh", "id_rsa"}),
-        (find_file_user_number, {CEPH_DIR, "~/.ssh", "id_rsa"}),
+        (find_file_instrument, {"ceph_dir": CEPH_DIR, "instrument": "~/.ssh", "experiment_number": "id_rsa", "filename": "MAR1912991240_asa_dasd_123.nxspe"}),
+        (find_file_experiment_number, {"ceph_dir": CEPH_DIR, "experiment_number": "~/.ssh", "filename": "id_rsa"}),
+        (find_file_user_number, {"ceph_dir": CEPH_DIR, "user_number": "~/.ssh", "filename": "id_rsa"}),
     ],
 )
 def test_find_file_methods_does_not_allow_path_injection(find_file_method: Callable, method_inputs: dict[str, Any]):
     with pytest.raises(HTTPException):
-        find_file_method(*method_inputs)
+        find_file_method(**method_inputs)
