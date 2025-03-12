@@ -46,7 +46,7 @@ TEST_RUN = Run(
 TEST_RUN.jobs.append(TEST_JOB)
 
 
-@pytest.fixture
+@pytest.fixture()
 def _user_owned_data_setup() -> None:
     """
     Set up the test database before module
@@ -860,9 +860,7 @@ def test_find_file_generic_experiment_number_not_found(mock_post):
     os.environ["CEPH_DIR"] = str(Path("./test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
 
-    response = client.get(
-        "/find_file/generic/experiment_number/20024?filename=MAR12345.nxspe", headers=STAFF_HEADER
-    )
+    response = client.get("/find_file/generic/experiment_number/20024?filename=MAR12345.nxspe", headers=STAFF_HEADER)
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
