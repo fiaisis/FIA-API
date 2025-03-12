@@ -334,7 +334,15 @@ def test_find_file_method_when_failed(find_file_method: Callable, method_inputs:
 @pytest.mark.parametrize(
     ("find_file_method", "method_inputs"),
     [
-        (find_file_instrument, {"ceph_dir": CEPH_DIR, "instrument": "~/.ssh", "experiment_number": "id_rsa", "filename": "MAR1912991240_asa_dasd_123.nxspe"}),
+        (
+            find_file_instrument,
+            {
+                "ceph_dir": CEPH_DIR,
+                "instrument": "~/.ssh",
+                "experiment_number": "id_rsa",
+                "filename": "MAR1912991240_asa_dasd_123.nxspe",
+            },
+        ),
         (find_file_experiment_number, {"ceph_dir": CEPH_DIR, "experiment_number": "~/.ssh", "filename": "id_rsa"}),
         (find_file_user_number, {"ceph_dir": CEPH_DIR, "user_number": "~/.ssh", "filename": "id_rsa"}),
     ],
