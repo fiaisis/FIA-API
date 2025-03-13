@@ -79,7 +79,7 @@ async def get_subfolder_files_list(
 ) -> list[str]:
     """
     Returns a list of files within a sub_folder. Directs users to use the /extras endpoint if folder not found
-
+    \f
     :param subdir: The subdir to return the contents of
     :return: List of files within a subdir
     """

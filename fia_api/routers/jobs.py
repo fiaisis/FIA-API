@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
+from fia_api.core.request_models import PartialJobUpdateRequest
 from fia_api.core.responses import CountResponse, JobResponse, JobWithRunResponse
 from fia_api.core.services.job import (
     count_jobs,
@@ -171,7 +172,9 @@ async def get_job(
 
 @JobsRouter.patch("/job/{job_id}", tags=["jobs"])
 async def update_job(
-    job_id: int, job: JobResponse, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)]
+    job_id: int,
+    job: PartialJobUpdateRequest,
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
 ) -> JobResponse:
     """
     Safely update the job of the given id with the new details provided. The update is safe as it prevents
