@@ -237,6 +237,8 @@ def test_update_job_by_id(mock_spec_class, mock_repo):
     job_data.stacktrace = None
 
     original_job = Mock()
+    # the mocking library will create a new mock if we don't do this.
+    original_job.stacktrace = None
     mock_repo.find_one.return_value = original_job
 
     update_job_by_id(job_id, job_data)
