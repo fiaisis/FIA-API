@@ -88,16 +88,16 @@ class JobResponse(BaseModel):
     """
 
     id: int
-    start: datetime | None
-    end: datetime | None
-    state: State
-    status_message: str | None
-    inputs: Any
-    outputs: str | None
-    stacktrace: str | None
-    script: ScriptResponse | None
-    runner_image: str | None
-    type: str | None
+    start: datetime | None = None
+    end: datetime | None = None
+    state: State | None = None
+    status_message: str | None = None
+    inputs: Any = None
+    outputs: str | None = None
+    stacktrace: str | None = None
+    script: ScriptResponse | None = None
+    runner_image: str | None = None
+    type: str | None = None
 
     @staticmethod
     def from_job(job: Job) -> JobResponse:

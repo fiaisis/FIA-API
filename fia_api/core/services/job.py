@@ -194,12 +194,10 @@ def update_job_by_id(id_: int, job: JobResponse) -> Job:
     if original_job is None:
         raise MissingRecordError(f"No job found with id {id_}")
     # We only update the fields that should change, not those that should never e.g. script, inputs.
-    original_job.state = job.state
-    original_job.end = job.end
     # The start is included because it is recorded based from the pod start, end time post job run
-    original_job.start = job.start
-    original_job.status_message = job.status_message
-    original_job.outputs = job.outputs
-    original_job.stacktrace = job.stacktrace
+    for attr in ["state", "end", "start", "status_message", "outputs", "stacktrace"]:
+        value = getattr(job, attr)
+        if value is not None:
+            setattr(original_job, attr, value)
 
     return _REPO.update_one(original_job)
