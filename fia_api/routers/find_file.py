@@ -28,6 +28,7 @@ async def find_file_get_instrument(
 ) -> str:
     """
     Return the relative path to the env var CEPH_DIR that leads to the requested file if one exists.
+    \f
     :param instrument: Instrument the file belongs to.
     :param experiment_number: Experiment number the file belongs to.
     :param filename: Filename to find.
@@ -56,6 +57,7 @@ async def find_file_generic_experiment_number(
 ) -> str:
     """
     Return the relative path to the env var CEPH_DIR that leads to the requested file if one exists.
+    \f
     :param experiment_number: Experiment number the file belongs to.
     :param filename: Filename to find
     :return: The relative path to the file in the CEPH_DIR env var.
@@ -79,6 +81,7 @@ async def find_file_generic_user_number(
 ) -> str:
     """
     Return the relative path to the env var CEPH_DIR that leads to the requested file if one exists.
+    \f
     :param user_number: Experiment number the file belongs to.
     :param filename: Filename to find
     :return: The relative path to the file in the CEPH_DIR env var.
