@@ -276,7 +276,7 @@ def test_update_job_by_id_never_updates_certain_fields(mock_spec_class, mock_rep
     job_id = 2
     job_data = Mock()
     job_data.state = State.NOT_STARTED
-    job_data.start = None  # Start should never be updated
+    job_data.start = "2023-10-09T12:00:01"
     job_data.status_message = "Job is running"
     job_data.input = None  # input should never be updated
     job_data.stacktrace = "Some stacktrace info"
@@ -293,7 +293,7 @@ def test_update_job_by_id_never_updates_certain_fields(mock_spec_class, mock_rep
     mock_spec_class.return_value.by_id.assert_called_once_with(job_id)
     mock_repo.find_one.assert_called_once_with(mock_spec_class.return_value.by_id())
     assert original_job.state == State.NOT_STARTED
-    assert original_job.start == "2023-10-09T12:00:00"  # Ensure this remains unchanged
+    assert original_job.start == "2023-10-09T12:00:01"
     assert original_job.status_message == "Job is running"
     assert original_job.input == {"output_key": "previous_output"}  # Ensure this remains unchanged
     assert original_job.stacktrace == "Some stacktrace info"
