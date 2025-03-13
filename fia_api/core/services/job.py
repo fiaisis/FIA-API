@@ -11,7 +11,7 @@ from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.exceptions import AuthenticationError, MissingRecordError
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.repositories import Repo
-from fia_api.core.responses import JobResponse
+from fia_api.core.request_models import PartialJobUpdateRequest
 from fia_api.core.specifications.filters import apply_filters_to_spec
 from fia_api.core.specifications.job import JobSpecification
 
@@ -182,7 +182,7 @@ def get_experiment_number_for_job_id(job_id: int) -> int:
     raise ValueError("No job found with ID in the DB")
 
 
-def update_job_by_id(id_: int, job: JobResponse) -> Job:
+def update_job_by_id(id_: int, job: PartialJobUpdateRequest) -> Job:
     """
     Update the given job in the database. This is a safe update as it will only update fields that should be updated,
     and not update those that shouldn't. I.E no retroactive changing of IDs etc.
