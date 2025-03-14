@@ -14,7 +14,7 @@ from fia_api.core.utility import (
     request_path_check,
 )
 
-FindFileRouter = APIRouter(prefix="/find_file", tags=["files"])
+FindFileRouter = APIRouter(prefix="/find_file", tags=["find_files"])
 
 jwt_api_security = JWTAPIBearer()
 
