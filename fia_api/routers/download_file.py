@@ -11,7 +11,7 @@ download_file_router = APIRouter(prefix=ceph_dir, tags=["download_files"])
 jwt_api_security = JWTAPIBearer()
 
 
-@download_file_router.get("/{filepath}", tags=["download_files"])
+@download_file_router.get("find_file/{filepath}", tags=["download_files"])
 async def find_file_get_instrument(
     filepath: str,
 ) -> FileResponse:
