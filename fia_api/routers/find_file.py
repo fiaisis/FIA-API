@@ -1,8 +1,10 @@
 import os
 from http import HTTPStatus
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
@@ -44,9 +46,17 @@ async def find_file_get_instrument(
     path = find_file_instrument(
         ceph_dir=ceph_dir, instrument=instrument, experiment_number=experiment_number, filename=filename
     )
+
     if path is None:
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST)
-    return str(request_path_check(path=path, base_dir=ceph_dir))
+
+    full_file_path = Path(ceph_dir) / path
+
+    return FileResponse(
+        path=full_file_path,
+        filename=Path.name(full_file_path),
+        media_type="application/octet-stream",
+    )
 
 
 @FindFileRouter.get("/generic/experiment_number/{experiment_number}", tags=["find_files"])
