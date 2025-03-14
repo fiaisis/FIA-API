@@ -236,19 +236,19 @@ async def find_file_get_instrument(
         filepath = find_file_instrument(
             ceph_dir=ceph_dir,
             instrument=job.instrument,
-            experiment_number=job.job_owner.experiment_number,
+            experiment_number=job.owner.experiment_number,
             filename=filename,
         )
     elif job.job_owner.experiment_number is not None:
         filepath = find_file_experiment_number(
             ceph_dir=ceph_dir,
-            experiment_number=job.job_owner.experiment_number,
+            experiment_number=job.owner.experiment_number,
             filename=filename,
         )
     else:
         filepath = find_file_user_number(
             ceph_dir=ceph_dir,
-            user_number=job.job_owner.user_number,
+            user_number=job.owner.user_number,
             filename=filename,
         )
 
