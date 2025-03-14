@@ -1,6 +1,7 @@
 import json
 import os
 from http import HTTPStatus
+from pathlib import Path
 from typing import Annotated, Literal
 
 from db.data_models import JobType
@@ -229,31 +230,43 @@ async def find_file_get_instrument(
     """
     user = get_user_from_token(credentials.credentials)
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
-
     job = get_job_by_id(job_id, user_number=user.user_number)
 
+    if job.job_owner is None:
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Job has no owner.")
+
     if job.job_type != JobType.SIMPLE:
+        if job.owner.experiment_number is None:
+            raise HTTPException(
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                detail="Exeriment number not found in scenario where it should be expected.",
+            )
         filepath = find_file_instrument(
             ceph_dir=ceph_dir,
-            instrument=job.instrument,
-            experiment_number=job.owner.experiment_number,
+            instrument=job.instrument.instrument_name,
+            experiment_number=int(job.owner.experiment_number),
             filename=filename,
         )
     elif job.job_owner.experiment_number is not None:
         filepath = find_file_experiment_number(
             ceph_dir=ceph_dir,
-            experiment_number=job.owner.experiment_number,
+            experiment_number=int(job.owner.experiment_number),
             filename=filename,
         )
     else:
+        if job.owner.user_number is None:
+            raise HTTPException(
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                detail="User number not found in scenario where it should be expected.",
+            )
         filepath = find_file_user_number(
             ceph_dir=ceph_dir,
-            user_number=job.owner.user_number,
+            user_number=int(job.owner.user_number),
             filename=filename,
         )
 
     return FileResponse(
-        path=filepath,
+        path=Path(filepath),
         filename=filename,
         media_type="application/octet-stream",
     )
