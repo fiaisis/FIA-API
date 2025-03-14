@@ -27,7 +27,7 @@ async def find_file_get_instrument(
     experiment_number: int,
     filename: str,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-) -> str:
+) -> FileResponse:
     """
     Return the relative path to the env var CEPH_DIR that leads to the requested file if one exists.
     \f
