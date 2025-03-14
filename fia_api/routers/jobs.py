@@ -1,7 +1,6 @@
 import json
 import os
 from http import HTTPStatus
-from pathlib import Path
 from typing import Annotated, Literal
 
 from db.data_models import JobType
@@ -232,7 +231,7 @@ async def find_file_get_instrument(
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
     job = get_job_by_id(job_id, user_number=user.user_number)
 
-    if job.job_owner is None:
+    if job.owner is None:
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Job has no owner.")
 
     if job.job_type != JobType.SIMPLE:
@@ -247,7 +246,7 @@ async def find_file_get_instrument(
             experiment_number=int(job.owner.experiment_number),
             filename=filename,
         )
-    elif job.job_owner.experiment_number is not None:
+    elif job.owner.experiment_number is not None:
         filepath = find_file_experiment_number(
             ceph_dir=ceph_dir,
             experiment_number=int(job.owner.experiment_number),
@@ -265,8 +264,11 @@ async def find_file_get_instrument(
             filename=filename,
         )
 
+    if filepath is None:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="File not found.")
+
     return FileResponse(
-        path=Path(filepath),
+        path=filepath,
         filename=filename,
         media_type="application/octet-stream",
     )
