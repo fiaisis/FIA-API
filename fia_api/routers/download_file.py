@@ -20,9 +20,8 @@ async def find_file_get_instrument(
     :param filepath: Location of file to find.
     :return: The file response.
     """
-    full_filepath = Path(ceph_dir) / filepath
     return FileResponse(
-        path=full_filepath,
-        filename=Path.name(full_filepath),
+        path=filepath,
+        filename=Path.name(filepath),
         media_type="application/octet-stream",
     )
