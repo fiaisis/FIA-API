@@ -6,9 +6,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPAuthorizationCredentials
-from fia_api.core.utility import request_path_check
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
+from fia_api.core.utility import request_path_check
 
 ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
 download_file_router = APIRouter(prefix="find_file", tags=["download_files"])
