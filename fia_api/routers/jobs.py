@@ -1,8 +1,11 @@
 import json
+import os
 from http import HTTPStatus
 from typing import Annotated, Literal
 
+from db.data_models import JobType
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
@@ -16,9 +19,15 @@ from fia_api.core.services.job import (
     get_job_by_instrument,
     update_job_by_id,
 )
+from fia_api.core.utility import (
+    find_file_experiment_number,
+    find_file_instrument,
+    find_file_user_number,
+)
 
 JobsRouter = APIRouter(tags=["jobs"])
 jwt_api_security = JWTAPIBearer()
+
 
 OrderField = Literal[
     "start",
@@ -202,3 +211,49 @@ async def count_all_jobs(
     :return: CountResponse containing the count
     """
     return CountResponse(count=count_jobs(filters=json.loads(filters) if filters else None))
+
+
+@JobsRouter.get("/job/{job_id}/filename/{filename}", tags=["jobs"])
+async def find_file_get_instrument(
+    job_id: int,
+    filename: str,
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+) -> FileResponse:
+    """
+    Find a file in the CEPH_DIR and return it as a FileResponse.
+    \f
+    :param job_id: the unique identifier of the job.
+    :param filename: the name of the file to find.
+    :param credentials: Dependency injected HTTPAuthorizationCredentials.
+    :return: FileResponse containing the file.
+    """
+    user = get_user_from_token(credentials.credentials)
+    ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
+
+    job = get_job_by_id(job_id, user_number=user.user_number)
+
+    if job.job_type != JobType.SIMPLE:
+        filepath = find_file_instrument(
+            ceph_dir=ceph_dir,
+            instrument=job.instrument,
+            experiment_number=job.job_owner.experiment_number,
+            filename=filename,
+        )
+    elif job.job_owner.experiment_number is not None:
+        filepath = find_file_experiment_number(
+            ceph_dir=ceph_dir,
+            experiment_number=job.job_owner.experiment_number,
+            filename=filename,
+        )
+    else:
+        filepath = find_file_user_number(
+            ceph_dir=ceph_dir,
+            user_number=job.job_owner.user_number,
+            filename=filename,
+        )
+
+    return FileResponse(
+        path=filepath,
+        filename=filename,
+        media_type="application/octet-stream",
+    )
