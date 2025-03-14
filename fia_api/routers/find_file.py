@@ -14,7 +14,7 @@ from fia_api.core.utility import (
     request_path_check,
 )
 
-FindFileRouter = APIRouter(prefix="/find_file", tags=["files"])
+FindFileRouter = APIRouter(prefix="/find_file", tags=["find_files"])
 
 jwt_api_security = JWTAPIBearer()
 
@@ -28,7 +28,6 @@ async def find_file_get_instrument(
 ) -> str:
     """
     Return the relative path to the env var CEPH_DIR that leads to the requested file if one exists.
-    \f
     :param instrument: Instrument the file belongs to.
     :param experiment_number: Experiment number the file belongs to.
     :param filename: Filename to find.
