@@ -1,10 +1,8 @@
 import os
 from http import HTTPStatus
-from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
@@ -16,7 +14,7 @@ from fia_api.core.utility import (
     request_path_check,
 )
 
-FindFileRouter = APIRouter(prefix="/find_file", tags=["files"])
+FindFileRouter = APIRouter(prefix="/find_file", tags=["find_files"])
 
 jwt_api_security = JWTAPIBearer()
 
@@ -27,10 +25,9 @@ async def find_file_get_instrument(
     experiment_number: int,
     filename: str,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-) -> FileResponse:
+) -> str:
     """
     Return the relative path to the env var CEPH_DIR that leads to the requested file if one exists.
-    \f
     :param instrument: Instrument the file belongs to.
     :param experiment_number: Experiment number the file belongs to.
     :param filename: Filename to find.
@@ -46,17 +43,9 @@ async def find_file_get_instrument(
     path = find_file_instrument(
         ceph_dir=ceph_dir, instrument=instrument, experiment_number=experiment_number, filename=filename
     )
-
     if path is None:
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST)
-
-    full_file_path = Path(ceph_dir) / path
-
-    return FileResponse(
-        path=full_file_path,
-        filename=Path.name(full_file_path),
-        media_type="application/octet-stream",
-    )
+    return str(request_path_check(path=path, base_dir=ceph_dir))
 
 
 @FindFileRouter.get("/generic/experiment_number/{experiment_number}", tags=["find_files"])
