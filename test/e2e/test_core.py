@@ -913,6 +913,7 @@ TEST_JOB_ID = 5001
 TEST_FILENAME = "output.txt"
 
 
+@patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.utility.find_file_instrument")
 @patch("fia_api.core.services.job.get_job_by_id")
 def test_find_file_success(mock_get_job, mock_find_file):
@@ -931,6 +932,7 @@ def test_find_file_success(mock_get_job, mock_find_file):
     assert response.headers["content-type"] == "application/octet-stream"
 
 
+@patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.utility.find_file_instrument")
 @patch("fia_api.core.services.job.get_job_by_id")
 def test_find_file_not_found(mock_get_job, mock_find_file):
@@ -955,6 +957,7 @@ def test_find_file_unauthorized():
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
+@patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.services.job.get_job_by_id")
 def test_find_file_invalid_job(mock_get_job):
     """Test that a 404 is returned for an invalid job ID"""
@@ -965,6 +968,7 @@ def test_find_file_invalid_job(mock_get_job):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
+@patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.services.job.get_job_by_id")
 def test_find_file_no_owner(mock_get_job):
     """Test that an error is returned when job has no owner"""
@@ -976,6 +980,7 @@ def test_find_file_no_owner(mock_get_job):
     assert "Job has no owner." in response.text
 
 
+@patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.services.job.get_job_by_id")
 def test_find_file_experiment_number_missing(mock_get_job):
     """Test error when experiment number is missing but expected"""
@@ -992,9 +997,11 @@ def test_find_file_experiment_number_missing(mock_get_job):
     assert "Experiment number not found" in response.text
 
 
+@patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.services.job.get_job_by_id")
 def test_find_file_user_number_missing(mock_get_job):
     """Test error when user number is missing for SIMPLE jobs"""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_get_job.return_value = {
         "id": TEST_JOB_ID,
         "owner": {"experiment_number": None, "user_number": None},
