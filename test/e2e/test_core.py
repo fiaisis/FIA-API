@@ -920,12 +920,12 @@ def test_find_file_success(mock_post, mock_get_job, mock_find_file, mock_get_exp
     mock_get_job.return_value = {
         "id": 5001,
         "owner": {"experiment_number": 12345},
-        "instrument": "TEST",
+        "instrument": "MARI",
         "job_type": "JobType.AUTOREDUCTION",
     }
-    mock_find_file.return_value = "TEST/RBNumber/5001/autoreduced/output.txt"
+    mock_find_file.return_value = "MARI/RBNumber/RB20024/autoreduced/MAR29531_10.5meV_sa.nxspe"
 
-    response = client.get("/job/5001/filename/output.txt", headers=STAFF_HEADER)
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert response.headers["content-type"] == "application/octet-stream"
 
