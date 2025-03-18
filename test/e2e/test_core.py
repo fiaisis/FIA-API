@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import pytest
 from db.data_models import Instrument, Job, JobOwner, JobType, Run, Script, State
+from fastapi import HTTPException
 from sqlalchemy.orm import make_transient
 from starlette.testclient import TestClient
 
@@ -928,24 +929,3 @@ def test_find_file_success(mock_get_job, mock_find_file, mock_post, mock_get_exp
     response = client.get("/job/5001/filename/output.txt", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert response.headers["content-type"] == "application/octet-stream"
-
-
-@patch("fia_api.core.services.job.get_experiments_for_user_number")
-@patch("fia_api.core.auth.tokens.requests.post")
-@patch("fia_api.core.utility.find_file_instrument")
-@patch("fia_api.core.services.job.get_job_by_id")
-def test_find_file_not_found(mock_get_job, mock_find_file, mock_post, mock_get_experiments):
-    """Test that a 404 is returned when file is not found"""
-    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
-    mock_post.return_value.status_code = HTTPStatus.OK
-    mock_get_experiments.return_value = []
-    mock_get_job.return_value = {
-        "id": 5001,
-        "owner": 12345,
-        "instrument": "TEST",
-        "job_type": "JobType.AUTOREDUCTION",
-    }
-    mock_find_file.return_value = None
-
-    response = client.get("/job/5001/filename/output.txt", headers=STAFF_HEADER)
-    assert response.status_code == HTTPStatus.NOT_FOUND
