@@ -916,7 +916,7 @@ def test_find_file_success(mock_get_job, mock_find_file, mock_post, mock_get_exp
     """Test that a valid request returns a file"""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
-    mock_get_experiments.return_value = []
+    mock_get_experiments.return_value = [12345]
     mock_get_job.return_value = {
         "id": 5001,
         "owner": {"experiment_number": 12345},
