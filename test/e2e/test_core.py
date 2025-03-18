@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import pytest
 from db.data_models import Instrument, Job, JobOwner, JobType, Run, Script, State
+from fastapi import HTTPException
 from sqlalchemy.orm import make_transient
 from starlette.testclient import TestClient
 
@@ -239,7 +240,7 @@ def test_get_all_job_for_user_include_run(mock_post, mock_get_experiment_numbers
                 "raw_frames": 8067,
                 "run_end": "2019-03-22T10:18:26",
                 "run_start": "2019-03-22T10:15:44",
-                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT " "on not on all LAB",
+                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT on not on all LAB",
                 "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
             },
             "inputs": {
@@ -506,7 +507,7 @@ def test_get_jobs_for_instrument_runs_included_for_staff(mock_post):
                 "raw_frames": 8067,
                 "run_end": "2019-03-22T10:18:26",
                 "run_start": "2019-03-22T10:15:44",
-                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT " "on not on all LAB",
+                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT on not on all LAB",
                 "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
             },
             "script": None,
@@ -906,3 +907,101 @@ def test_find_file_generic_user_number_no_perms(mock_post):
     response = client.get("/find_file/generic/user_number/20024?filename=MAR29531_10.5meV_sa.nxspe")
 
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+TEST_JOB_ID = 5001
+TEST_FILENAME = "output.txt"
+
+
+@patch("fia_api.core.utility.find_file_instrument")
+@patch("fia_api.core.services.job.get_job_by_id")
+def test_find_file_success(mock_get_job, mock_find_file):
+    """Test that a valid request returns a file"""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_get_job.return_value = {
+        "id": TEST_JOB_ID,
+        "owner": {"experiment_number": 12345},
+        "instrument": {"instrument_name": "TEST"},
+        "job_type": JobType.AUTOREDUCTION,
+    }
+    mock_find_file.return_value = f"MARI/RBNumber/RB20024/autoreduced/{TEST_FILENAME}"
+
+    response = client.get(f"/job/{TEST_JOB_ID}/filename/{TEST_FILENAME}", headers=STAFF_HEADER)
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers["content-type"] == "application/octet-stream"
+
+
+@patch("fia_api.core.utility.find_file_instrument")
+@patch("fia_api.core.services.job.get_job_by_id")
+def test_find_file_not_found(mock_get_job, mock_find_file):
+    """Test that a 404 is returned when file is not found"""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_get_job.return_value = {
+        "id": TEST_JOB_ID,
+        "owner": {"experiment_number": 12345},
+        "instrument": {"instrument_name": "TEST"},
+        "job_type": JobType.AUTOREDUCTION,
+    }
+    mock_find_file.return_value = None
+
+    response = client.get(f"/job/{TEST_JOB_ID}/filename/{TEST_FILENAME}", headers=STAFF_HEADER)
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_find_file_unauthorized():
+    """Test that a request without authentication returns 403"""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    response = client.get(f"/job/{TEST_JOB_ID}/filename/{TEST_FILENAME}")
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@patch("fia_api.core.services.job.get_job_by_id")
+def test_find_file_invalid_job(mock_get_job):
+    """Test that a 404 is returned for an invalid job ID"""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_get_job.side_effect = HTTPException(status_code=HTTPStatus.NOT_FOUND)
+
+    response = client.get(f"/job/99999/filename/{TEST_FILENAME}", headers=STAFF_HEADER)
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@patch("fia_api.core.services.job.get_job_by_id")
+def test_find_file_no_owner(mock_get_job):
+    """Test that an error is returned when job has no owner"""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_get_job.return_value = {"id": TEST_JOB_ID, "owner": None}
+
+    response = client.get(f"/job/{TEST_JOB_ID}/filename/{TEST_FILENAME}", headers=STAFF_HEADER)
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "Job has no owner." in response.text
+
+
+@patch("fia_api.core.services.job.get_job_by_id")
+def test_find_file_experiment_number_missing(mock_get_job):
+    """Test error when experiment number is missing but expected"""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_get_job.return_value = {
+        "id": TEST_JOB_ID,
+        "owner": {"experiment_number": None},
+        "instrument": {"instrument_name": "TEST"},
+        "job_type": JobType.AUTOREDUCTION,
+    }
+
+    response = client.get(f"/job/{TEST_JOB_ID}/filename/{TEST_FILENAME}", headers=STAFF_HEADER)
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "Experiment number not found" in response.text
+
+
+@patch("fia_api.core.services.job.get_job_by_id")
+def test_find_file_user_number_missing(mock_get_job):
+    """Test error when user number is missing for SIMPLE jobs"""
+    mock_get_job.return_value = {
+        "id": TEST_JOB_ID,
+        "owner": {"experiment_number": None, "user_number": None},
+        "instrument": {"instrument_name": "TEST"},
+        "job_type": JobType.SIMPLE,
+    }
+
+    response = client.get(f"/job/{TEST_JOB_ID}/filename/{TEST_FILENAME}", headers=STAFF_HEADER)
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "User number not found" in response.text
