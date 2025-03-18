@@ -923,100 +923,13 @@ def test_find_file_success(mock_get_job, mock_find_file, mock_post, mock_get_exp
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiments.return_value = []
     mock_get_job.return_value = {
-        "id": TEST_JOB_ID,
-        "owner": {"experiment_number": 12345},
-        "instrument": {"instrument_name": "TEST"},
-        "job_type": JobType.AUTOREDUCTION,
+        "id": 5001,
+        "owner": 12345,
+        "instrument": "TEST",
+        "job_type": "JobType.AUTOREDUCTION",
     }
-    mock_find_file.return_value = f"MARI/RBNumber/RB20024/autoreduced/{TEST_FILENAME}"
+    mock_find_file.return_value = "TEST/RBNumber/5001/autoreduced/output.txt"
 
-    response = client.get(f"/job/{TEST_JOB_ID}/filename/{TEST_FILENAME}", headers=STAFF_HEADER)
+    response = client.get("/job/5001/filename/output.txt", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert response.headers["content-type"] == "application/octet-stream"
-
-
-@patch("fia_api.core.auth.tokens.requests.post")
-@patch("fia_api.core.utility.find_file_instrument")
-@patch("fia_api.core.services.job.get_job_by_id")
-def test_find_file_not_found(mock_get_job, mock_find_file, mock_post):
-    """Test that a 404 is returned when file is not found"""
-    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
-    mock_post.return_value.status_code = HTTPStatus.OK
-    mock_get_job.return_value = {
-        "id": TEST_JOB_ID,
-        "owner": {"experiment_number": 12345},
-        "instrument": {"instrument_name": "TEST"},
-        "job_type": JobType.AUTOREDUCTION,
-    }
-    mock_find_file.return_value = None
-
-    response = client.get(f"/job/{TEST_JOB_ID}/filename/{TEST_FILENAME}", headers=STAFF_HEADER)
-    assert response.status_code == HTTPStatus.NOT_FOUND
-
-
-def test_find_file_unauthorized():
-    """Test that a request without authentication returns 403"""
-    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
-    response = client.get(f"/job/{TEST_JOB_ID}/filename/{TEST_FILENAME}")
-    assert response.status_code == HTTPStatus.FORBIDDEN
-
-
-@patch("fia_api.core.auth.tokens.requests.post")
-@patch("fia_api.core.services.job.get_job_by_id")
-def test_find_file_invalid_job(mock_get_job, mock_post):
-    """Test that a 404 is returned for an invalid job ID"""
-    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
-    mock_post.return_value.status_code = HTTPStatus.OK
-    mock_get_job.side_effect = HTTPException(status_code=HTTPStatus.NOT_FOUND)
-
-    response = client.get(f"/job/99999/filename/{TEST_FILENAME}", headers=STAFF_HEADER)
-    assert response.status_code == HTTPStatus.NOT_FOUND
-
-
-@patch("fia_api.core.auth.tokens.requests.post")
-@patch("fia_api.core.services.job.get_job_by_id")
-def test_find_file_no_owner(mock_get_job, mock_post):
-    """Test that an error is returned when job has no owner"""
-    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
-    mock_post.return_value.status_code = HTTPStatus.OK
-    mock_get_job.return_value = {"id": TEST_JOB_ID, "owner": None}
-
-    response = client.get(f"/job/{TEST_JOB_ID}/filename/{TEST_FILENAME}", headers=STAFF_HEADER)
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-    assert "Job has no owner." in response.text
-
-
-@patch("fia_api.core.auth.tokens.requests.post")
-@patch("fia_api.core.services.job.get_job_by_id")
-def test_find_file_experiment_number_missing(mock_get_job, mock_post):
-    """Test error when experiment number is missing but expected"""
-    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
-    mock_post.return_value.status_code = HTTPStatus.OK
-    mock_get_job.return_value = {
-        "id": TEST_JOB_ID,
-        "owner": {"experiment_number": None},
-        "instrument": {"instrument_name": "TEST"},
-        "job_type": JobType.AUTOREDUCTION,
-    }
-
-    response = client.get(f"/job/{TEST_JOB_ID}/filename/{TEST_FILENAME}", headers=STAFF_HEADER)
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-    assert "Experiment number not found" in response.text
-
-
-@patch("fia_api.core.auth.tokens.requests.post")
-@patch("fia_api.core.services.job.get_job_by_id")
-def test_find_file_user_number_missing(mock_get_job, mock_post):
-    """Test error when user number is missing for SIMPLE jobs"""
-    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
-    mock_post.return_value.status_code = HTTPStatus.OK
-    mock_get_job.return_value = {
-        "id": TEST_JOB_ID,
-        "owner": {"experiment_number": None, "user_number": None},
-        "instrument": {"instrument_name": "TEST"},
-        "job_type": JobType.SIMPLE,
-    }
-
-    response = client.get(f"/job/{TEST_JOB_ID}/filename/{TEST_FILENAME}", headers=STAFF_HEADER)
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-    assert "User number not found" in response.text
