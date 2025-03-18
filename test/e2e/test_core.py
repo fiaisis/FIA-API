@@ -919,7 +919,7 @@ def test_find_file_success(mock_post, mock_get_job, mock_find_file, mock_get_exp
     mock_get_experiments.return_value = [12345]
     mock_get_job.return_value = {
         "id": 5001,
-        "owner": {"experiment_number": 12345},
+        "owner": {"experiment_number": 12345, "user_number": 20024},
         "instrument": "MARI",
         "job_type": "JobType.AUTOREDUCTION",
     }
