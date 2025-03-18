@@ -238,7 +238,7 @@ async def download_file(
         if job.owner.experiment_number is None:
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                detail="Exeriment number not found in scenario where it should be expected.",
+                detail="Experiment number not found in scenario where it should be expected.",
             )
         filepath = find_file_instrument(
             ceph_dir=ceph_dir,
