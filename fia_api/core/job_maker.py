@@ -39,7 +39,7 @@ class JobMaker:
         # Assuming channel is set in _connect_to_broker()
         self.channel.basic_publish(exchange=self.queue_name, routing_key="", body=message)  # type: ignore
 
-    def rerun_job(
+    def create_rerun_job(
         self,
         job_id: int,
         runner_image: str,
@@ -66,7 +66,7 @@ class JobMaker:
             raise ValueError("Something needs to own the job, either experiment_number or user_number.")
         self._send_message(json.dumps(json_dict))
 
-    def simple_job(
+    def create_simple_job(
         self, runner_image: str, script: str, experiment_number: int | None = None, user_number: int | None = None
     ) -> None:
         """

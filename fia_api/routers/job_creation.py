@@ -28,7 +28,7 @@ async def make_rerun_job(
         if experiment_number not in experiment_numbers:
             # If not staff this is not allowed
             raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
-    job_maker.rerun_job(
+    job_maker.create_rerun_job(
         job_id=rerun_job.job_id,
         runner_image=rerun_job.runner_image,
         script=rerun_job.script,
@@ -46,7 +46,9 @@ async def make_simple_job(
     if user.role != "staff":
         # If not staff this is not allowed
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
-    job_maker.simple_job(runner_image=simple_job.runner_image, script=simple_job.script, user_number=user.user_number)
+    job_maker.create_simple_job(
+        runner_image=simple_job.runner_image, script=simple_job.script, user_number=user.user_number
+    )
 
 
 @JobCreationRouter.get("/jobs/runners", tags=["job creation"])
