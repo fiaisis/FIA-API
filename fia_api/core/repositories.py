@@ -88,10 +88,8 @@ class Repo(Generic[T]):
         :return: The count of entities of type T that match the specification.
         """
         with self._session() as session:
-            # pylint: disable = not-callable
             # mypy does not like these, but they are valid.
             result = session.execute(select(func.count()).select_from(spec.value))  # type: ignore
-            # pylint: enable = not-callable
             return result.scalar() if result else 0  # type: ignore
 
     def update_one(self, entity: T) -> T:

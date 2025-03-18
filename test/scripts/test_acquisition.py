@@ -21,7 +21,6 @@ from fia_api.scripts.acquisition import (
 )
 from fia_api.scripts.pre_script import PreScript
 
-# pylint: disable = redefined-outer-name
 INSTRUMENT = "instrument_1"
 
 
@@ -33,7 +32,7 @@ def _working_directory_fix():
         os.chdir(current_working_directory / ".." / "..")
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_response():
     """
     Response pytest fixture
