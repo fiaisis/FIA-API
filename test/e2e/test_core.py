@@ -8,7 +8,6 @@ from unittest.mock import patch
 
 import pytest
 from db.data_models import Instrument, Job, JobOwner, JobType, Run, Script, State
-from fastapi import HTTPException
 from sqlalchemy.orm import make_transient
 from starlette.testclient import TestClient
 
