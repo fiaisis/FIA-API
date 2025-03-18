@@ -909,10 +909,9 @@ def test_find_file_generic_user_number_no_perms(mock_post):
 
 
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
-@patch("fia_api.core.utility.find_file_instrument")
 @patch("fia_api.core.services.job.get_job_by_id")
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_find_file_success(mock_post, mock_get_job, mock_find_file, mock_get_experiments):
+def test_download_file_success(mock_post, mock_get_job, mock_get_experiments):
     """Test that a valid request returns a file"""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
@@ -923,7 +922,6 @@ def test_find_file_success(mock_post, mock_get_job, mock_find_file, mock_get_exp
         "instrument": "MARI",
         "job_type": "JobType.AUTOREDUCTION",
     }
-    mock_find_file.return_value = "MARI/RBNumber/RB20024/autoreduced/MAR29531_10.5meV_sa.nxspe"
 
     response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
@@ -934,7 +932,7 @@ def test_find_file_success(mock_post, mock_get_job, mock_find_file, mock_get_exp
 @patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.utility.find_file_instrument")
 @patch("fia_api.core.services.job.get_job_by_id")
-def test_find_file_not_found(mock_get_job, mock_find_file, mock_post, mock_get_experiments):
+def test_download_file_not_found(mock_get_job, mock_find_file, mock_post, mock_get_experiments):
     """Test that a 404 is returned when file is not found"""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK

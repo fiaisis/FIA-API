@@ -214,7 +214,7 @@ async def count_all_jobs(
 
 
 @JobsRouter.get("/job/{job_id}/filename/{filename}", tags=["jobs"])
-async def find_file_get_instrument(
+async def download_file(
     job_id: int,
     filename: str,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
