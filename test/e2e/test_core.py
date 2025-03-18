@@ -916,7 +916,7 @@ TEST_FILENAME = "output.txt"
 @patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.utility.find_file_instrument")
 @patch("fia_api.core.services.job.get_job_by_id")
-def test_find_file_success(mock_post, mock_get_job, mock_find_file):
+def test_find_file_success(mock_get_job, mock_find_file, mock_post):
     """Test that a valid request returns a file"""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
@@ -936,7 +936,7 @@ def test_find_file_success(mock_post, mock_get_job, mock_find_file):
 @patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.utility.find_file_instrument")
 @patch("fia_api.core.services.job.get_job_by_id")
-def test_find_file_not_found(mock_post, mock_get_job, mock_find_file):
+def test_find_file_not_found(mock_get_job, mock_find_file, mock_post):
     """Test that a 404 is returned when file is not found"""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
@@ -961,7 +961,7 @@ def test_find_file_unauthorized():
 
 @patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.services.job.get_job_by_id")
-def test_find_file_invalid_job(mock_post, mock_get_job):
+def test_find_file_invalid_job(mock_get_job, mock_post):
     """Test that a 404 is returned for an invalid job ID"""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
@@ -973,7 +973,7 @@ def test_find_file_invalid_job(mock_post, mock_get_job):
 
 @patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.services.job.get_job_by_id")
-def test_find_file_no_owner(mock_post, mock_get_job):
+def test_find_file_no_owner(mock_get_job, mock_post):
     """Test that an error is returned when job has no owner"""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
@@ -986,7 +986,7 @@ def test_find_file_no_owner(mock_post, mock_get_job):
 
 @patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.services.job.get_job_by_id")
-def test_find_file_experiment_number_missing(mock_post, mock_get_job):
+def test_find_file_experiment_number_missing(mock_get_job, mock_post):
     """Test error when experiment number is missing but expected"""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
@@ -1004,7 +1004,7 @@ def test_find_file_experiment_number_missing(mock_post, mock_get_job):
 
 @patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.services.job.get_job_by_id")
-def test_find_file_user_number_missing(mock_post, mock_get_job):
+def test_find_file_user_number_missing(mock_get_job, mock_post):
     """Test error when user number is missing for SIMPLE jobs"""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
