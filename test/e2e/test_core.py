@@ -908,6 +908,12 @@ def test_find_file_generic_user_number_no_perms(mock_post):
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
+@pytest.fixture(autouse=True)
+def reset_ceph_dir():
+    """Ensure CEPH_DIR is reset before each test."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+
+
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.utility.find_file_instrument")
