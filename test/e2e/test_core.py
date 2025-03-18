@@ -909,10 +909,10 @@ def test_find_file_generic_user_number_no_perms(mock_post):
 
 
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
-@patch("fia_api.core.auth.tokens.requests.post")
 @patch("fia_api.core.utility.find_file_instrument")
 @patch("fia_api.core.services.job.get_job_by_id")
-def test_find_file_success(mock_get_job, mock_find_file, mock_post, mock_get_experiments):
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_find_file_success(mock_post, mock_get_job, mock_find_file, mock_get_experiments):
     """Test that a valid request returns a file"""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
