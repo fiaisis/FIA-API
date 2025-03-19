@@ -46,33 +46,33 @@ client = TestClient(app)
 # TEST_RUN.jobs.append(TEST_JOB)
 
 
-@pytest.fixture()
-def _user_owned_data_setup() -> None:
-    """
-    Set up the test database before module
-    :return: None
-    """
-    with SESSION() as session:
-        session.add(TEST_SCRIPT)
-        session.add(TEST_INSTRUMENT)
-        session.add(TEST_RUN)
-        session.add(TEST_JOB)
-        session.commit()
-        session.refresh(TEST_SCRIPT)
-        session.refresh(TEST_INSTRUMENT)
-        session.refresh(TEST_RUN)
-    yield
-    with SESSION() as session:
-        session.delete(TEST_RUN)
-        session.delete(TEST_SCRIPT)
-        session.delete(TEST_INSTRUMENT)
-        session.delete(TEST_JOB)
-        session.commit()
-        session.flush()
-        make_transient(TEST_RUN)
-        make_transient(TEST_SCRIPT)
-        make_transient(TEST_INSTRUMENT)
-        make_transient(TEST_JOB)
+# @pytest.fixture()
+# def _user_owned_data_setup() -> None:
+#     """
+#     Set up the test database before module
+#     :return: None
+#     """
+#     with SESSION() as session:
+#         session.add(TEST_SCRIPT)
+#         session.add(TEST_INSTRUMENT)
+#         session.add(TEST_RUN)
+#         session.add(TEST_JOB)
+#         session.commit()
+#         session.refresh(TEST_SCRIPT)
+#         session.refresh(TEST_INSTRUMENT)
+#         session.refresh(TEST_RUN)
+#     yield
+#     with SESSION() as session:
+#         session.delete(TEST_RUN)
+#         session.delete(TEST_SCRIPT)
+#         session.delete(TEST_INSTRUMENT)
+#         session.delete(TEST_JOB)
+#         session.commit()
+#         session.flush()
+#         make_transient(TEST_RUN)
+#         make_transient(TEST_SCRIPT)
+#         make_transient(TEST_INSTRUMENT)
+#         make_transient(TEST_JOB)
 
 
 def test_get_job_by_id_no_token_results_in_http_forbidden():
