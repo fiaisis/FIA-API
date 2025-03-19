@@ -20,8 +20,8 @@ from .constants import API_KEY_HEADER, STAFF_HEADER, USER_HEADER
 client = TestClient(app)
 
 
-TEST_JOB_OWNER = JobOwner(experiment_number=18204970)
-TEST_INSTRUMENT = Instrument(instrument_name="NEWBIE", latest_run=1, specification={"foo": "bar"})
+TEST_JOB_OWNER = JobOwner(experiment_number=1820497)
+TEST_INSTRUMENT = Instrument(instrument_name="TEST", latest_run=1, specification={"foo": "bar"})
 TEST_SCRIPT = Script(script="print('Script 1')", sha="some_sha", script_hash="some_hash")
 TEST_JOB = Job(
     start=datetime.datetime.now(datetime.UTC),
