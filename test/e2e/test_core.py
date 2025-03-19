@@ -20,59 +20,59 @@ from .constants import API_KEY_HEADER, STAFF_HEADER, USER_HEADER
 client = TestClient(app)
 
 
-# TEST_JOB_OWNER = JobOwner(experiment_number=1820497)
-# TEST_INSTRUMENT = Instrument(instrument_name="TEST", latest_run=1, specification={"foo": "bar"})
-# TEST_SCRIPT = Script(script="print('Script 1')", sha="some_sha", script_hash="some_hash")
-# TEST_JOB = Job(
-#     start=datetime.datetime.now(datetime.UTC),
-#     owner=TEST_JOB_OWNER,
-#     state=State.NOT_STARTED,
-#     inputs={"input": "value"},
-#     script=TEST_SCRIPT,
-#     instrument=TEST_INSTRUMENT,
-#     job_type=JobType.AUTOREDUCTION,
-# )
-# TEST_RUN = Run(
-#     filename="test_run",
-#     owner=TEST_JOB_OWNER,
-#     title="Test Run",
-#     users="User1, User2",
-#     run_start=datetime.datetime.now(datetime.UTC),
-#     run_end=datetime.datetime.now(datetime.UTC),
-#     good_frames=200,
-#     raw_frames=200,
-#     instrument=TEST_INSTRUMENT,
-# )
-# TEST_RUN.jobs.append(TEST_JOB)
+TEST_JOB_OWNER = JobOwner(experiment_number=18204970)
+TEST_INSTRUMENT = Instrument(instrument_name="NEWBIE", latest_run=1, specification={"foo": "bar"})
+TEST_SCRIPT = Script(script="print('Script 1')", sha="some_sha", script_hash="some_hash")
+TEST_JOB = Job(
+    start=datetime.datetime.now(datetime.UTC),
+    owner=TEST_JOB_OWNER,
+    state=State.NOT_STARTED,
+    inputs={"input": "value"},
+    script=TEST_SCRIPT,
+    instrument=TEST_INSTRUMENT,
+    job_type=JobType.AUTOREDUCTION,
+)
+TEST_RUN = Run(
+    filename="test_run",
+    owner=TEST_JOB_OWNER,
+    title="Test Run",
+    users="User1, User2",
+    run_start=datetime.datetime.now(datetime.UTC),
+    run_end=datetime.datetime.now(datetime.UTC),
+    good_frames=200,
+    raw_frames=200,
+    instrument=TEST_INSTRUMENT,
+)
+TEST_RUN.jobs.append(TEST_JOB)
 
 
-# @pytest.fixture()
-# def _user_owned_data_setup() -> None:
-#     """
-#     Set up the test database before module
-#     :return: None
-#     """
-#     with SESSION() as session:
-#         session.add(TEST_SCRIPT)
-#         session.add(TEST_INSTRUMENT)
-#         session.add(TEST_RUN)
-#         session.add(TEST_JOB)
-#         session.commit()
-#         session.refresh(TEST_SCRIPT)
-#         session.refresh(TEST_INSTRUMENT)
-#         session.refresh(TEST_RUN)
-#     yield
-#     with SESSION() as session:
-#         session.delete(TEST_RUN)
-#         session.delete(TEST_SCRIPT)
-#         session.delete(TEST_INSTRUMENT)
-#         session.delete(TEST_JOB)
-#         session.commit()
-#         session.flush()
-#         make_transient(TEST_RUN)
-#         make_transient(TEST_SCRIPT)
-#         make_transient(TEST_INSTRUMENT)
-#         make_transient(TEST_JOB)
+@pytest.fixture()
+def _user_owned_data_setup() -> None:
+    """
+    Set up the test database before module
+    :return: None
+    """
+    with SESSION() as session:
+        session.add(TEST_SCRIPT)
+        session.add(TEST_INSTRUMENT)
+        session.add(TEST_RUN)
+        session.add(TEST_JOB)
+        session.commit()
+        session.refresh(TEST_SCRIPT)
+        session.refresh(TEST_INSTRUMENT)
+        session.refresh(TEST_RUN)
+    yield
+    with SESSION() as session:
+        session.delete(TEST_RUN)
+        session.delete(TEST_SCRIPT)
+        session.delete(TEST_INSTRUMENT)
+        session.delete(TEST_JOB)
+        session.commit()
+        session.flush()
+        make_transient(TEST_RUN)
+        make_transient(TEST_SCRIPT)
+        make_transient(TEST_INSTRUMENT)
+        make_transient(TEST_JOB)
 
 
 def test_get_job_by_id_no_token_results_in_http_forbidden():
