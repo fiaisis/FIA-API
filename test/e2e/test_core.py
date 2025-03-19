@@ -20,30 +20,30 @@ from .constants import API_KEY_HEADER, STAFF_HEADER, USER_HEADER
 client = TestClient(app)
 
 
-TEST_JOB_OWNER = JobOwner(experiment_number=1820497)
-TEST_INSTRUMENT = Instrument(instrument_name="TEST", latest_run=1, specification={"foo": "bar"})
-TEST_SCRIPT = Script(script="print('Script 1')", sha="some_sha", script_hash="some_hash")
-TEST_JOB = Job(
-    start=datetime.datetime.now(datetime.UTC),
-    owner=TEST_JOB_OWNER,
-    state=State.NOT_STARTED,
-    inputs={"input": "value"},
-    script=TEST_SCRIPT,
-    instrument=TEST_INSTRUMENT,
-    job_type=JobType.AUTOREDUCTION,
-)
-TEST_RUN = Run(
-    filename="test_run",
-    owner=TEST_JOB_OWNER,
-    title="Test Run",
-    users="User1, User2",
-    run_start=datetime.datetime.now(datetime.UTC),
-    run_end=datetime.datetime.now(datetime.UTC),
-    good_frames=200,
-    raw_frames=200,
-    instrument=TEST_INSTRUMENT,
-)
-TEST_RUN.jobs.append(TEST_JOB)
+# TEST_JOB_OWNER = JobOwner(experiment_number=1820497)
+# TEST_INSTRUMENT = Instrument(instrument_name="TEST", latest_run=1, specification={"foo": "bar"})
+# TEST_SCRIPT = Script(script="print('Script 1')", sha="some_sha", script_hash="some_hash")
+# TEST_JOB = Job(
+#     start=datetime.datetime.now(datetime.UTC),
+#     owner=TEST_JOB_OWNER,
+#     state=State.NOT_STARTED,
+#     inputs={"input": "value"},
+#     script=TEST_SCRIPT,
+#     instrument=TEST_INSTRUMENT,
+#     job_type=JobType.AUTOREDUCTION,
+# )
+# TEST_RUN = Run(
+#     filename="test_run",
+#     owner=TEST_JOB_OWNER,
+#     title="Test Run",
+#     users="User1, User2",
+#     run_start=datetime.datetime.now(datetime.UTC),
+#     run_end=datetime.datetime.now(datetime.UTC),
+#     good_frames=200,
+#     raw_frames=200,
+#     instrument=TEST_INSTRUMENT,
+# )
+# TEST_RUN.jobs.append(TEST_JOB)
 
 
 @pytest.fixture()
