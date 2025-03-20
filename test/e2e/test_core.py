@@ -917,26 +917,127 @@ def test_download_file_success(mock_post, mock_get_experiments):
     mock_get_experiments.return_value = [1820497]
 
     response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+
     assert response.status_code == HTTPStatus.OK
     assert response.headers["content-type"] == "application/octet-stream"
 
 
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
-@patch("fia_api.core.utility.find_file_instrument")
-@patch("fia_api.core.services.job.get_job_by_id")
-def test_download_file_not_found(mock_get_job, mock_find_file, mock_post, mock_get_experiments):
+def test_download_file_invalid_file(mock_post, mock_get_experiments):
     """Test that a 404 is returned when file is not found"""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
-    mock_get_experiments.return_value = []
-    mock_get_job.return_value = {
-        "id": 5001,
-        "owner": 12345,
-        "instrument": "TEST",
-        "job_type": "JobType.AUTOREDUCTION",
-    }
-    mock_find_file.return_value = None
+    mock_get_experiments.return_value = [1820497]
+    response = client.get("/job/5001/filename/invalid_filename.nxspe", headers=STAFF_HEADER)
 
-    response = client.get("/job/5001/filename/output.txt", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_unauthorized(mock_post, mock_get_experiments):
+    """Test that a request without authentication returns 403"""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe")
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_invalid_job(mock_post):
+    """Test that a 404 is returned for an invalid job ID"""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get(f"/job/99999/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_no_owner(mock_post, mock_get_experiments, mock_get_job):
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    mock_get_job.return_value.owner = None
+    response = client.get("/job/5001/filename/test.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "Job has no owner" in response.text
+
+@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_experiment_number_missing(mock_post, mock_get_experiments, mock_get_job):
+    """Test error when experiment number is missing but expected"""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    mock_get_job.return_value.owner.experiment_number = None
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "Experiment number not found" in response.text
+
+
+@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_simple(mock_post, mock_get_experiments, mock_get_job):
+    """Test error when user number is missing for SIMPLE jobs"""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    mock_get_job.return_value.job_type = JobType.SIMPLE
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers["content-type"] == "application/octet-stream"
+
+@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_simple_and_experiment_number_missing(mock_post, mock_get_experiments, mock_get_job):
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    mock_get_job.return_value.owner.user_number = 1234
+    mock_get_job.return_value.owner.experiment_number = None
+    mock_get_job.return_value.job_type = JobType.SIMPLE
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers["content-type"] == "application/octet-stream"
+
+@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_simple_and_experiment_and_user_number_missing(mock_post, mock_get_experiments, mock_get_job):
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    mock_get_job.return_value.owner.user_number = None
+    mock_get_job.return_value.owner.experiment_number = None
+    mock_get_job.return_value.job_type = JobType.SIMPLE
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "User number not found" in response.text
+
+@patch("fia_api.routers.jobs.find_file_user_number")
+@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_missing_filepath(mock_post, mock_get_experiments, mock_get_job, mock_find_file):
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    mock_get_job.return_value.owner.user_number = 1234
+    mock_get_job.return_value.owner.experiment_number = None
+    mock_get_job.return_value.job_type = JobType.SIMPLE
+    mock_find_file.return_value = None
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert "File not found" in response.text
