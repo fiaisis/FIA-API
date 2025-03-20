@@ -996,7 +996,7 @@ def test_download_file_simple(mock_post, mock_get_experiments, mock_get_job):
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiments.return_value = [1820497]
     mock_get_job.return_value.job_type = JobType.SIMPLE
-    mock_get_job.return_value.owner.experiment_number = 1820497
+    mock_get_job.return_value.owner.experiment_number = 20024
     response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
 
     assert response.status_code == HTTPStatus.OK
@@ -1011,7 +1011,7 @@ def test_download_file_simple_and_experiment_number_missing(mock_post, mock_get_
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiments.return_value = [1820497]
-    mock_get_job.return_value.owner.user_number = 1234
+    mock_get_job.return_value.owner.user_number = 20024
     mock_get_job.return_value.owner.experiment_number = None
     mock_get_job.return_value.job_type = JobType.SIMPLE
     response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
