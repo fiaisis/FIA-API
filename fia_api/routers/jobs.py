@@ -5,8 +5,8 @@ from typing import Annotated, Literal
 
 from db.data_models import JobType
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.security import HTTPAuthorizationCredentials
 from fastapi.responses import FileResponse
+from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.request_models import PartialJobUpdateRequest
