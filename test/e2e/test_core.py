@@ -239,7 +239,7 @@ def test_get_all_job_for_user_include_run(mock_post, mock_get_experiment_numbers
                 "raw_frames": 8067,
                 "run_end": "2019-03-22T10:18:26",
                 "run_start": "2019-03-22T10:15:44",
-                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT " "on not on all LAB",
+                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT on not on all LAB",
                 "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
             },
             "inputs": {
@@ -506,7 +506,7 @@ def test_get_jobs_for_instrument_runs_included_for_staff(mock_post):
                 "raw_frames": 8067,
                 "run_end": "2019-03-22T10:18:26",
                 "run_start": "2019-03-22T10:15:44",
-                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT " "on not on all LAB",
+                "title": "Whitebeam - vanadium - detector tests - vacuum bad - HT on not on all LAB",
                 "users": "Wood,Guidi,Benedek,Mansson,Juranyi,Nocerino,Forslund,Matsubara",
             },
             "script": None,
@@ -1022,7 +1022,7 @@ def test_download_file_simple_and_experiment_number_missing(mock_post, mock_get_
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_file_simple_and_experiment_and_user_number_missing(mock_post, mock_get_experiments, mock_get_job):
-    """Test that an internal server error is returned when the job type is 'SIMPLE' and there is no experiment number and user number. """
+    """Test that an internal server error is returned when the job type is 'SIMPLE' and there is no experiment number and user number."""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiments.return_value = [1820497]
