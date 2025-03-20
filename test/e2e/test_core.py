@@ -974,7 +974,8 @@ def test_download_file_no_owner(mock_post, mock_get_experiments, mock_get_job):
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_file_experiment_number_missing(mock_post, mock_get_experiments, mock_get_job):
-    """Test that an internal server error is returned with when a job has the type 'AUTOREDUCED' and the experiment number is missing."""
+    """Test that an internal server error is returned with when a job has the type 'AUTOREDUCED' and the experiment
+    number is missing."""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiments.return_value = [1820497]
@@ -1022,7 +1023,8 @@ def test_download_file_simple_and_experiment_number_missing(mock_post, mock_get_
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_file_simple_and_experiment_and_user_number_missing(mock_post, mock_get_experiments, mock_get_job):
-    """Test that an internal server error is returned when the job type is 'SIMPLE' and there is no experiment number and user number."""
+    """Test that an internal server error is returned when the job type is 'SIMPLE' and there is no experiment number
+    and user number."""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiments.return_value = [1820497]
