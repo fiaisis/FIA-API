@@ -994,6 +994,7 @@ def test_download_file_simple(mock_post, mock_get_experiments, mock_get_job):
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiments.return_value = [1820497]
     mock_get_job.return_value.job_type = JobType.SIMPLE
+    mock_get_job.return_value.owner.experiment_number = 1820497
     response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
 
     assert response.status_code == HTTPStatus.OK
