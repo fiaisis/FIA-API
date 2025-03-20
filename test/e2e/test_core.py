@@ -906,3 +906,149 @@ def test_find_file_generic_user_number_no_perms(mock_post):
     response = client.get("/find_file/generic/user_number/20024?filename=MAR29531_10.5meV_sa.nxspe")
 
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_success(mock_post, mock_get_experiments):
+    """Test that a valid request with a job of type 'AUTOREDUCTION' returns a file."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers["content-type"] == "application/octet-stream"
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_invalid_file(mock_post, mock_get_experiments):
+    """Test that a 404 is returned when an invalid file name is supplied."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    response = client.get("/job/5001/filename/invalid_filename.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_unauthorized(mock_post, mock_get_experiments):
+    """Test that a request without authentication returns 403."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe")
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_invalid_job(mock_post):
+    """Test that a 404 is returned for an invalid job ID."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get("/job/99999/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_no_owner(mock_post, mock_get_experiments, mock_get_job):
+    """Test that an internal server error is returned with when a job has the type 'AUTOREDUCED' and the owner is missing."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    mock_get_job.return_value.owner = None
+    response = client.get("/job/5001/filename/test.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "Job has no owner" in response.text
+
+
+@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_experiment_number_missing(mock_post, mock_get_experiments, mock_get_job):
+    """Test that an internal server error is returned with when a job has the type 'AUTOREDUCED' and the experiment number is missing."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    mock_get_job.return_value.owner.experiment_number = None
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "Experiment number not found" in response.text
+
+
+@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_simple(mock_post, mock_get_experiments, mock_get_job):
+    """Test that a valid request with a job of type 'SIMPLE' returns a file."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    mock_get_job.return_value.job_type = JobType.SIMPLE
+    mock_get_job.return_value.owner.experiment_number = 1820497
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers["content-type"] == "application/octet-stream"
+
+
+@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_simple_and_experiment_number_missing(mock_post, mock_get_experiments, mock_get_job):
+    """Test that a valid request with a job of type 'SIMPLE' and no experiment number returns a file."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    mock_get_job.return_value.owner.user_number = 1234
+    mock_get_job.return_value.owner.experiment_number = None
+    mock_get_job.return_value.job_type = JobType.SIMPLE
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers["content-type"] == "application/octet-stream"
+
+
+@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_simple_and_experiment_and_user_number_missing(mock_post, mock_get_experiments, mock_get_job):
+    """Test that an internal server error is returned when the job type is 'SIMPLE' and there is no experiment number and user number. """
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    mock_get_job.return_value.owner.user_number = None
+    mock_get_job.return_value.owner.experiment_number = None
+    mock_get_job.return_value.job_type = JobType.SIMPLE
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "User number not found" in response.text
+
+
+@patch("fia_api.routers.jobs.find_file_user_number")
+@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_file_missing_filepath(mock_post, mock_get_experiments, mock_get_job, mock_find_file):
+    """Test that a file not found error is returned in the event the filepath is None."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    mock_get_job.return_value.owner.user_number = 1234
+    mock_get_job.return_value.owner.experiment_number = None
+    mock_get_job.return_value.job_type = JobType.SIMPLE
+    mock_find_file.return_value = None
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert "File not found" in response.text
