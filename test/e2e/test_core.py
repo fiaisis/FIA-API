@@ -933,6 +933,7 @@ def test_download_file_invalid_file(mock_post, mock_get_experiments):
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 
+
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_file_unauthorized(mock_post, mock_get_experiments):
@@ -944,14 +945,16 @@ def test_download_file_unauthorized(mock_post, mock_get_experiments):
 
     assert response.status_code == HTTPStatus.FORBIDDEN
 
+
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_file_invalid_job(mock_post):
     """Test that a 404 is returned for an invalid job ID"""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
-    response = client.get(f"/job/99999/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+    response = client.get("/job/99999/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
 
     assert response.status_code == HTTPStatus.NOT_FOUND
+
 
 @patch("fia_api.routers.jobs.get_job_by_id")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
@@ -965,6 +968,7 @@ def test_download_file_no_owner(mock_post, mock_get_experiments, mock_get_job):
 
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     assert "Job has no owner" in response.text
+
 
 @patch("fia_api.routers.jobs.get_job_by_id")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
@@ -995,6 +999,7 @@ def test_download_file_simple(mock_post, mock_get_experiments, mock_get_job):
     assert response.status_code == HTTPStatus.OK
     assert response.headers["content-type"] == "application/octet-stream"
 
+
 @patch("fia_api.routers.jobs.get_job_by_id")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -1010,6 +1015,7 @@ def test_download_file_simple_and_experiment_number_missing(mock_post, mock_get_
     assert response.status_code == HTTPStatus.OK
     assert response.headers["content-type"] == "application/octet-stream"
 
+
 @patch("fia_api.routers.jobs.get_job_by_id")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -1024,6 +1030,7 @@ def test_download_file_simple_and_experiment_and_user_number_missing(mock_post, 
 
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     assert "User number not found" in response.text
+
 
 @patch("fia_api.routers.jobs.find_file_user_number")
 @patch("fia_api.routers.jobs.get_job_by_id")
