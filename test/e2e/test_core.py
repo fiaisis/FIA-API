@@ -959,7 +959,8 @@ def test_download_file_invalid_job(mock_post):
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_file_no_owner(mock_post, mock_get_experiments, mock_get_job):
-    """Test that an internal server error is returned with when a job has the type 'AUTOREDUCED' and the owner is missing."""
+    """Test that an internal server error is returned with when a job has the type 'AUTOREDUCED' and the owner is
+    missing."""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiments.return_value = [1820497]
