@@ -134,7 +134,7 @@ class JobMaker:
         filename = None
         if rerun_job.run:
             filename = rerun_job.run.filename
-            instrument = rerun_job.run.instrument
+            instrument = rerun_job.run.instrument.instrument_name
             if rerun_job.run.owner and rerun_job.run.owner.experiment_number:
                 rb_number = rerun_job.run.owner.experiment_number
 
