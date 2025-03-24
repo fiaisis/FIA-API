@@ -118,7 +118,7 @@ class JobMaker:
             script_object = Script(script=script, script_hash=hash_script(script))
 
         rerun_job = Job(
-            owner=job_owner,
+            owner_id=job_owner.id,
             job_type=JobType.RERUN,
             runner_image=runner_image,
             script=script_object,
