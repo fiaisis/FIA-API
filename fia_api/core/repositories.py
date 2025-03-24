@@ -98,6 +98,17 @@ class Repo(Generic[T]):
         :param entity: The entity to be updated
         :return: The updated Entity
         """
+        return self._store_entity(entity)
+
+    def add_one(self, entity: T) -> T:
+        """
+        Given an entity, persist the entity into the database.
+        :param entity: The entity to be added
+        :return: The stored entity
+        """
+        return self._store_entity(entity)
+
+    def _store_entity(self, entity: T) -> T:
         with self._session() as session:
             session.add(entity)
             session.commit()
