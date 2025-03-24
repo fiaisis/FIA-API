@@ -11,6 +11,7 @@ from unittest.mock import Mock
 
 import pytest
 from db.data_models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
+from sqlalchemy import select
 
 from fia_api.core.repositories import ENGINE, SESSION, Repo, test_connection
 from fia_api.core.specifications.job import JobSpecification
@@ -129,6 +130,15 @@ def run_repo() -> Repo[Run]:
     return Repo()
 
 
+@pytest.fixture()
+def owner_repo() -> Repo[JobOwner]:
+    """
+    JobOwnerRepo fixture.
+    :return: JobOwnerRepo
+    """
+    return Repo()
+
+
 @pytest.mark.parametrize(
     ("order_field", "expected_ascending"),
     [
@@ -174,3 +184,17 @@ def test_test_connection_raises_httpexception(mock_select, mock_session):
 
     test_connection()
     mock_session_object.execute.assert_called_once_with(mock_select.return_value)
+
+
+def test_add_one(owner_repo):
+    """Test adding an entity"""
+    experiment_number = -420
+    owner_repo.add_one(JobOwner(experiment_number=experiment_number))
+    with SESSION() as session:
+        job_owner = (
+            session.execute(select(JobOwner).where(JobOwner.experiment_number == experiment_number))
+            .unique()
+            .scalars()
+            .one()
+        )
+        assert job_owner.experiment_number == experiment_number

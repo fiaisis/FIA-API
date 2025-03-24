@@ -3,11 +3,12 @@ from http import HTTPStatus
 from typing import Any
 
 import pytest
-from e2e.constants import API_KEY_HEADER
 from pika.adapters.blocking_connection import BlockingChannel, BlockingConnection
 from starlette.testclient import TestClient
 
 from fia_api.fia_api import app
+
+from .constants import API_KEY_HEADER
 
 client = TestClient(app)
 
