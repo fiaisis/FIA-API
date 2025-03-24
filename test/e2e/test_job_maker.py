@@ -83,6 +83,8 @@ def test_post_simple_job(producer_channel):
     assert response.status_code == HTTPStatus.OK
     assert message == [
         {
+            "experiment_number": None,
+            "job_id": 5002,
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
             "script": 'print("Hello World!")',
             "user_number": -1,  # when auth with api key, the app assumes the pseudo user with user number -1
