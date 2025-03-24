@@ -17,6 +17,19 @@ async def missing_record_handler(_: Request, __: Exception) -> JSONResponse:
     )
 
 
+async def bad_job_request_handler(_: Request, __: Exception) -> JSONResponse:
+    """
+    Automatically return a 400 when a BadJobRequest is raised
+    :param _:
+    :param __:
+    :return: JSONResponse with 400
+    """
+    return JSONResponse(
+        status_code=400,
+        content={"message": "The job request was malformed and could not be processed"},
+    )
+
+
 async def missing_script_handler(_: Request, __: Exception) -> JSONResponse:
     """
     Automatically return a 404 when the script could not be found locally or remote
