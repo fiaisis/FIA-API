@@ -23,3 +23,7 @@ class MissingScriptError(Exception):
 
 class UnsafePathError(Exception):
     """A path was given that is potentially unsafe and could lead to directory traversal"""
+
+
+class JobRequestError(ValueError):
+    """The job request was malformed"""
