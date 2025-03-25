@@ -5,6 +5,7 @@ import hashlib
 import json
 import logging
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from db.data_models import Job, JobOwner, JobType, Script, State
@@ -139,7 +140,7 @@ class JobMaker:
                 rb_number = rerun_job.run.owner.experiment_number
 
         json_dict: dict[str, Any] = {
-            "filename": filename,
+            "filename": Path(filename).stem,
             "instrument": instrument,
             "rb_number": rb_number,
             "job_id": rerun_job.id,
