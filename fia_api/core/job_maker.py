@@ -107,16 +107,9 @@ class JobMaker:
         if original_job is None:
             raise JobRequestError("Cannot rerun job that does not exist.")
 
-        job_owner = self._owner_repo.find_one(
-            JobOwnerSpecification().by_values(experiment_number=experiment_number, user_number=user_number)
-        )
-        if job_owner is None:
-            job_owner = JobOwner(experiment_number=experiment_number, user_number=user_number)
+        job_owner = self._get_or_create_job_owner(experiment_number, user_number)
 
-        script_hash = hash_script(script)
-        script_object = self._script_repo.find_one(ScriptSpecification().by_script_hash(script_hash))
-        if script_object is None:
-            script_object = Script(script=script, script_hash=hash_script(script))
+        script_object = self._get_or_create_script(script)
 
         rerun_job = Job(
             owner_id=job_owner.id,
@@ -155,6 +148,14 @@ class JobMaker:
         self._send_message(json.dumps(json_dict))
         return rerun_job.id
 
+    def _get_or_create_job_owner(self, experiment_number: int | None, user_number: int | None) -> JobOwner:
+        job_owner = self._owner_repo.find_one(
+            JobOwnerSpecification().by_values(experiment_number=experiment_number, user_number=user_number)
+        )
+        if job_owner is None:
+            job_owner = JobOwner(experiment_number=experiment_number, user_number=user_number)
+        return job_owner
+
     @require_owner
     def create_simple_job(
         self, runner_image: str, script: str, experiment_number: int | None = None, user_number: int | None = None
@@ -169,16 +170,9 @@ class JobMaker:
         :return: created job id
         """
 
-        job_owner = self._owner_repo.find_one(
-            JobOwnerSpecification().by_values(experiment_number=experiment_number, user_number=user_number)
-        )
-        if job_owner is None:
-            job_owner = JobOwner(experiment_number=experiment_number, user_number=user_number)
+        job_owner = self._get_or_create_job_owner(experiment_number, user_number)
 
-        script_hash = hash_script(script)
-        script_object = self._script_repo.find_one(ScriptSpecification().by_script_hash(script_hash))
-        if script_object is None:
-            script_object = Script(script=script, script_hash=hash_script(script))
+        script_object = self._get_or_create_script(script)
 
         job = Job(
             owner=job_owner,
@@ -200,3 +194,10 @@ class JobMaker:
         }
         self._send_message(json.dumps(message_dict))
         return job.id
+
+    def _get_or_create_script(self, script: str) -> Script:
+        script_hash = hash_script(script)
+        script_object = self._script_repo.find_one(ScriptSpecification().by_script_hash(script_hash))
+        if script_object is None:
+            script_object = Script(script=script, script_hash=hash_script(script))
+        return script_object
