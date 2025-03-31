@@ -145,6 +145,7 @@ class JobMaker:
 
         json_dict: dict[str, Any] = {
             "filename": Path(filename).stem,
+            "job_type": "rerun",
             "instrument": instrument,
             "rb_number": rb_number,
             "job_id": rerun_job.id,
@@ -186,6 +187,7 @@ class JobMaker:
         message_dict: dict[str, Any] = {
             "runner_image": runner_image,
             "script": script,
+            "job_type": "simple",
             "experiment_number": experiment_number,
             "user_number": user_number,
             "job_id": job.id,
