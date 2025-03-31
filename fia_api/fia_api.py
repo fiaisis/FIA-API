@@ -1,6 +1,7 @@
 """Main module contains the uvicorn entrypoint"""
 
 import logging
+import os
 import sys
 
 from fastapi import FastAPI
@@ -36,8 +37,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+DEV_MODE = bool(os.environ.get("DEV_MODE", False))
 
-app = FastAPI()
+app = FastAPI(title="FIA API", root_path="/" if DEV_MODE else "/api")
 
 # This must be updated before exposing outside the vpn
 ALLOWED_ORIGINS = ["*"]
