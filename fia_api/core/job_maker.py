@@ -174,11 +174,16 @@ class JobMaker:
         if job_owner is None:
             job_owner = JobOwner(experiment_number=experiment_number, user_number=user_number)
 
+        script_hash = hash_script(script)
+        script_object = self._script_repo.find_one(ScriptSpecification().by_script_hash(script_hash))
+        if script_object is None:
+            script_object = Script(script=script, script_hash=hash_script(script))
+
         job = Job(
             owner=job_owner,
             job_type=JobType.SIMPLE,
             runner_image=runner_image,
-            script=Script(script=script, script_hash=hash_script(script)),
+            script_id=script_object.id,
             state=State.NOT_STARTED,
             inputs={},
         )
