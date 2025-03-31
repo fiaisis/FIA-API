@@ -124,6 +124,7 @@ class JobMaker:
             runner_image=runner_image,
             script=script_object,
             state=State.NOT_STARTED,
+            instrument_id=original_job.instrument_id,
             inputs={},
             run=original_job.run,
         )
@@ -138,6 +139,9 @@ class JobMaker:
             instrument = rerun_job.run.instrument.instrument_name
             if rerun_job.run.owner and rerun_job.run.owner.experiment_number:
                 rb_number = rerun_job.run.owner.experiment_number
+
+        if instrument is None or filename is None:
+            raise JobRequestError("Cannot create rerun job with missing run information.")
 
         json_dict: dict[str, Any] = {
             "filename": Path(filename).stem,
