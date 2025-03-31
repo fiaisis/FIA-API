@@ -92,7 +92,7 @@ class JobMaker:
         script: str,
         experiment_number: int | None = None,
         user_number: int | None = None,
-    ) -> None:
+    ) -> int:
         """
         Submit a rerun job to the scheduled job queue in the message broker. Default to using experiment_number over
         user_number.
@@ -101,7 +101,7 @@ class JobMaker:
         :param script: The script to be used in the runner
         :param experiment_number: the experiment number of the owner
         :param user_number: the user number of the owner
-        :return: None
+        :return: created job id
         """
         original_job = self._job_repo.find_one(JobSpecification().by_id(job_id))
         if original_job is None:
@@ -153,11 +153,12 @@ class JobMaker:
             "script": script,
         }
         self._send_message(json.dumps(json_dict))
+        return rerun_job.id
 
     @require_owner
     def create_simple_job(
         self, runner_image: str, script: str, experiment_number: int | None = None, user_number: int | None = None
-    ) -> None:
+    ) -> int:
         """
         Submit a job to the scheduled job queue in the message broker. Default to using experiment_number over
         user_number.
@@ -165,7 +166,7 @@ class JobMaker:
         :param script: The script to be used in the runner
         :param experiment_number: the experiment number of the owner
         :param user_number: the user number of the owner
-        :return: None
+        :return: created job id
         """
 
         job_owner = self._owner_repo.find_one(
@@ -198,3 +199,4 @@ class JobMaker:
             "job_id": job.id,
         }
         self._send_message(json.dumps(message_dict))
+        return job.id
