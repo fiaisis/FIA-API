@@ -1,6 +1,7 @@
 """Main module contains the uvicorn entrypoint"""
 
 import logging
+import os
 import sys
 
 from fastapi import FastAPI
@@ -8,12 +9,14 @@ from starlette.middleware.cors import CORSMiddleware
 
 from fia_api.core.exceptions import (
     AuthenticationError,
+    JobRequestError,
     MissingRecordError,
     MissingScriptError,
     UnsafePathError,
 )
 from fia_api.exception_handlers import (
     authentication_error_handler,
+    bad_job_request_handler,
     missing_record_handler,
     missing_script_handler,
     unsafe_path_handler,
@@ -34,8 +37,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+DEV_MODE = bool(os.environ.get("DEV_MODE", False))
 
-app = FastAPI()
+app = FastAPI(title="FIA API", root_path="/" if DEV_MODE else "/api")
 
 # This must be updated before exposing outside the vpn
 ALLOWED_ORIGINS = ["*"]
@@ -60,3 +64,4 @@ app.add_exception_handler(MissingRecordError, missing_record_handler)
 app.add_exception_handler(MissingScriptError, missing_script_handler)
 app.add_exception_handler(UnsafePathError, unsafe_path_handler)
 app.add_exception_handler(AuthenticationError, authentication_error_handler)
+app.add_exception_handler(JobRequestError, bad_job_request_handler)

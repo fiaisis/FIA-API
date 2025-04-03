@@ -84,7 +84,7 @@ class JWTAPIBearer(HTTPBearer):
                 logger.info("JWT was valid")
                 return True
             return False
-        except RuntimeError:  # pylint: disable=broad-exception-caught)
+        except RuntimeError:
             logger.exception("Error decoding JWT access token")
             return False
 

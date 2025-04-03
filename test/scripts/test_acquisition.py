@@ -21,7 +21,6 @@ from fia_api.scripts.acquisition import (
 )
 from fia_api.scripts.pre_script import PreScript
 
-# pylint: disable = redefined-outer-name
 INSTRUMENT = "instrument_1"
 
 

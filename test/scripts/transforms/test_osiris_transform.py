@@ -1,6 +1,5 @@
 """Test Case for osiris transforms"""
 
-# pylint: disable = line-too-long
 from unittest.mock import Mock
 
 from fia_api.scripts.pre_script import PreScript

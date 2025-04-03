@@ -8,6 +8,8 @@ from starlette.testclient import TestClient
 
 from fia_api.fia_api import app
 
+from .constants import API_KEY_HEADER
+
 client = TestClient(app)
 
 
@@ -58,7 +60,7 @@ def test_post_rerun_job(producer_channel):
         "script": 'print("Hello World!")',
     }
 
-    response = client.post("/job/rerun", json=rerun_body, headers={"Authorization": "Bearer shh"})
+    response = client.post("/job/rerun", json=rerun_body, headers=API_KEY_HEADER)
 
     message = consume_all_messages(producer_channel)
     assert response.status_code == HTTPStatus.OK
@@ -75,14 +77,16 @@ def test_post_rerun_job(producer_channel):
 def test_post_simple_job(producer_channel):
     simple_body = {"runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234", "script": 'print("Hello World!")'}
 
-    response = client.post("/job/simple", json=simple_body, headers={"Authorization": "Bearer shh"})
+    response = client.post("/job/simple", json=simple_body, headers=API_KEY_HEADER)
 
     message = consume_all_messages(producer_channel)
     assert response.status_code == HTTPStatus.OK
     assert message == [
         {
+            "experiment_number": None,
+            "job_id": 5002,
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
             "script": 'print("Hello World!")',
-            "user_number": -1,  # when auth with api key, the app assumes the psuedo user with user number -1
+            "user_number": -1,  # when auth with api key, the app assumes the pseudo user with user number -1
         }
     ]
