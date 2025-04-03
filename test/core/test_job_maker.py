@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from unittest import mock
 
 import pytest  # type: ignore
@@ -40,23 +41,13 @@ def test_create_rerun_job_no_run(mock_connect, faker):
     script = "print('hello')"
     experiment_number = faker.random.randint(1, 1000000)
 
-    job_maker.create_rerun_job(
-        job_id=job_id,
-        runner_image=runner_image,
-        script=script,
-        experiment_number=experiment_number,
-    )
-
-    expected_dict = {
-        "filename": None,
-        "instrument": None,
-        "rb_number": 0,
-        "job_id": rerun_job.id,
-        "runner_image": runner_image,
-        "script": script,
-    }
-    sent_message = job_maker._send_message.call_args[0][0]
-    assert json.loads(sent_message) == expected_dict
+    with pytest.raises(JobRequestError):
+        job_maker.create_rerun_job(
+            job_id=job_id,
+            runner_image=runner_image,
+            script=script,
+            experiment_number=experiment_number,
+        )
 
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
@@ -65,7 +56,7 @@ def test_create_rerun_job_with_run(mock_connect, faker):
     job_maker._send_message = mock.MagicMock()
     dummy_run = mock.MagicMock()
     dummy_run.filename = "run_file.txt"
-    dummy_run.instrument = "inst1"
+    dummy_run.instrument.instrument_name = "inst1"
     dummy_owner = mock.MagicMock()
     dummy_owner.experiment_number = faker.random.randint(1, 1000000)
     dummy_run.owner = dummy_owner
@@ -95,12 +86,13 @@ def test_create_rerun_job_with_run(mock_connect, faker):
     )
 
     expected_dict = {
-        "filename": dummy_run.filename,
-        "instrument": dummy_run.instrument,
+        "filename": Path(dummy_run.filename).stem,
+        "instrument": dummy_run.instrument.instrument_name,
         "rb_number": dummy_run.owner.experiment_number,
         "job_id": rerun_job.id,
         "runner_image": runner_image,
         "script": script,
+        "job_type": "rerun",
     }
     sent_message = job_maker._send_message.call_args[0][0]
     assert json.loads(sent_message) == expected_dict
@@ -170,6 +162,7 @@ def test_create_simple_job_success(mock_connect, faker):
         "experiment_number": experiment_number,
         "user_number": user_number,
         "job_id": simple_job.id,
+        "job_type": "simple",
     }
     sent_message = job_maker._send_message.call_args[0][0]
     assert json.loads(sent_message) == expected_dict
