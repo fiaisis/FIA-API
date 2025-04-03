@@ -140,6 +140,7 @@ def test_create_simple_job_success(mock_connect, faker):
     job_maker = JobMaker("", "", "", "test_queue")
     job_maker._send_message = mock.MagicMock()
     job_maker._owner_repo.find_one = mock.MagicMock(return_value=None)
+    job_maker._script_repo.find_one = mock.MagicMock(return_value=None)
     simple_job = mock.MagicMock()
     simple_job.id = faker.random.randint(1000, 2000)
     job_maker._job_repo.add_one = mock.MagicMock(return_value=simple_job)
