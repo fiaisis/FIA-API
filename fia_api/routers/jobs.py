@@ -234,7 +234,7 @@ async def download_file(
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Job has no owner.")
 
     if job.job_type != JobType.SIMPLE:
-        if job.owner.experiment_number is None:
+        if job.owner.experiment_number is None or job.owner.role != "staff":
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail="Experiment number not found in scenario where it should be expected.",
@@ -245,14 +245,14 @@ async def download_file(
             experiment_number=int(job.owner.experiment_number),
             filename=filename,
         )
-    elif job.owner.experiment_number is not None:
+    elif job.owner.experiment_number is not None or job.owner.role == "staff":
         filepath = find_file_experiment_number(
             ceph_dir=ceph_dir,
             experiment_number=int(job.owner.experiment_number),
             filename=filename,
         )
     else:
-        if job.owner.user_number is None:
+        if job.owner.user_number is None or job.owner.role != "staff":
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail="User number not found in scenario where it should be expected.",
