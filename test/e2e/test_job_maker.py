@@ -75,6 +75,8 @@ def test_post_rerun_job(producer_channel):
             "job_type": "rerun",
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
             "script": 'print("Hello World!")',
+            "filename": "WISH593155",
+            "instrument": "WISH",
         }
     ]
 
