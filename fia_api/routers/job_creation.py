@@ -36,7 +36,7 @@ async def make_rerun_job(
         if experiment_number not in experiment_numbers:
             # If not staff this is not allowed
             raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
-    return job_maker.create_rerun_job(
+    return job_maker.create_rerun_job(  # type: ignore # Despite returning int, mypy believes this returns any
         job_id=rerun_job.job_id,
         runner_image=rerun_job.runner_image,
         script=rerun_job.script,
@@ -62,7 +62,7 @@ async def make_simple_job(
     if user.role != "staff":
         # If not staff this is not allowed
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
-    return job_maker.create_simple_job(
+    return job_maker.create_simple_job(  # type: ignore # Despite returning int, mypy believes this returns any
         runner_image=simple_job.runner_image, script=simple_job.script, user_number=user.user_number
     )
 

@@ -3,10 +3,13 @@ from http import HTTPStatus
 from typing import Any
 
 import pytest
+from db.data_models import Job
 from pika.adapters.blocking_connection import BlockingChannel, BlockingConnection
+from sqlalchemy import func, select
 from starlette.testclient import TestClient
 
 from fia_api.fia_api import app
+from utils.db_generator import SESSION
 
 from .constants import API_KEY_HEADER
 
@@ -59,7 +62,8 @@ def test_post_rerun_job(producer_channel):
         "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
         "script": 'print("Hello World!")',
     }
-
+    with SESSION() as session:
+        expected_id = session.execute(select(func.count()).select_from(Job)).scalar() + 1
     response = client.post("/job/rerun", json=rerun_body, headers=API_KEY_HEADER)
 
     message = consume_all_messages(producer_channel)
@@ -67,7 +71,7 @@ def test_post_rerun_job(producer_channel):
     assert message == [
         {
             "experiment_number": 882000,
-            "job_id": 1,
+            "job_id": expected_id,
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
             "script": 'print("Hello World!")',
         }
@@ -76,7 +80,8 @@ def test_post_rerun_job(producer_channel):
 
 def test_post_simple_job(producer_channel):
     simple_body = {"runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234", "script": 'print("Hello World!")'}
-
+    with SESSION() as session:
+        expected_id = session.execute(select(func.count()).select_from(Job)).scalar() + 1
     response = client.post("/job/simple", json=simple_body, headers=API_KEY_HEADER)
 
     message = consume_all_messages(producer_channel)
@@ -84,7 +89,7 @@ def test_post_simple_job(producer_channel):
     assert message == [
         {
             "experiment_number": None,
-            "job_id": 5002,
+            "job_id": expected_id,
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
             "script": 'print("Hello World!")',
             "user_number": -1,  # when auth with api key, the app assumes the pseudo user with user number -1
