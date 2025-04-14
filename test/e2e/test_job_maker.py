@@ -70,8 +70,9 @@ def test_post_rerun_job(producer_channel):
     assert response.status_code == HTTPStatus.OK
     assert message == [
         {
-            "experiment_number": 882000,
+            "rb_number": 882000,
             "job_id": expected_id,
+            "job_type": "rerun",
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
             "script": 'print("Hello World!")',
         }
@@ -89,6 +90,7 @@ def test_post_simple_job(producer_channel):
     assert message == [
         {
             "experiment_number": None,
+            "job_type": "simple",
             "job_id": expected_id,
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
             "script": 'print("Hello World!")',
