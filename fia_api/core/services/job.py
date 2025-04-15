@@ -195,7 +195,7 @@ def update_job_by_id(id_: int, job: PartialJobUpdateRequest) -> Job:
         raise MissingRecordError(f"No job found with id {id_}")
     # We only update the fields that should change, not those that should never e.g. script, inputs.
     # The start is included because it is recorded based from the pod start, end time post job run
-    for attr in ["state", "end", "start", "status_message", "output_files", "stacktrace"]:
+    for attr in ["state", "end", "start", "status_message", "outputs", "stacktrace"]:
         value = getattr(job, attr)
         if value is not None:
             setattr(original_job, attr, value)
