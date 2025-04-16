@@ -56,7 +56,6 @@ class Repo(Generic[T]):
         """
         with self._session() as session:
             query = spec.value
-            logger.info(spec.value)
             return session.execute(query).unique().scalars().all()
 
     def find_one(self, spec: Specification[T]) -> T | None:
@@ -88,10 +87,8 @@ class Repo(Generic[T]):
         :return: The count of entities of type T that match the specification.
         """
         with self._session() as session:
-            # pylint: disable = not-callable
             # mypy does not like these, but they are valid.
             result = session.execute(select(func.count()).select_from(spec.value))  # type: ignore
-            # pylint: enable = not-callable
             return result.scalar() if result else 0  # type: ignore
 
     def update_one(self, entity: T) -> T:
@@ -100,6 +97,17 @@ class Repo(Generic[T]):
         :param entity: The entity to be updated
         :return: The updated Entity
         """
+        return self._store_entity(entity)
+
+    def add_one(self, entity: T) -> T:
+        """
+        Given an entity, persist the entity into the database.
+        :param entity: The entity to be added
+        :return: The stored entity
+        """
+        return self._store_entity(entity)
+
+    def _store_entity(self, entity: T) -> T:
         with self._session() as session:
             session.add(entity)
             session.commit()
