@@ -1065,3 +1065,15 @@ def test_download_invalid_user_perms(mock_post):
     response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=USER_HEADER)
 
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_valid_user_perms(mock_post, mock_get_job):
+    """Test that a user trying to download a file that does match their credentials returns a 200 status code."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_job.return_value.owner.experiment_number = 20024
+    mock_get_job.return_value.instrument.instrument_name = "MARI"
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=USER_HEADER)
+
+    assert response.status_code == HTTPStatus.OK
