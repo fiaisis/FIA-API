@@ -1055,3 +1055,14 @@ def test_download_file_missing_filepath(mock_post, mock_get_experiments, mock_ge
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert "File not found" in response.text
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_invalid_user_perms(mock_post):
+    """Test that a user trying to download a file that doesn't match their credentials returns a 403 status code."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.FORBIDDEN
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=USER_HEADER)
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
