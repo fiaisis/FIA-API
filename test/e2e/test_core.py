@@ -1066,6 +1066,7 @@ def test_download_invalid_user_perms(mock_post):
 
     assert response.status_code == HTTPStatus.FORBIDDEN
 
+
 @patch("fia_api.routers.jobs.get_job_by_id")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_valid_user_perms(mock_post, mock_get_job):
