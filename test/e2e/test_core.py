@@ -1065,4 +1065,3 @@ def test_download_invalid_user_perms(mock_post):
     response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=USER_HEADER)
 
     assert response.status_code == HTTPStatus.FORBIDDEN
-
