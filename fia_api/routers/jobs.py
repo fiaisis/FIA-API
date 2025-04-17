@@ -228,7 +228,7 @@ async def download_file(
     """
     user = get_user_from_token(credentials.credentials)
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
-    job = get_job_by_id(job_id, user_number=user.user_number)
+    job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
 
     if job.owner is None:
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Job has no owner.")
