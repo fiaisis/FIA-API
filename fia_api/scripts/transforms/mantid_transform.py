@@ -3,8 +3,7 @@
 import logging
 import os
 
-from db.data_models import Job
-
+from fia_api.core.models import Job
 from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.transform import Transform
 

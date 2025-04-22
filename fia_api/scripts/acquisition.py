@@ -6,9 +6,9 @@ from http import HTTPStatus
 from pathlib import Path
 
 import requests
-from db.data_models import Job
 
 from fia_api.core.exceptions import MissingScriptError
+from fia_api.core.models import Job
 from fia_api.core.utility import forbid_path_characters
 from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.factory import get_transform_for_instrument
