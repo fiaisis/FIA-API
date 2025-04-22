@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import enum
-import hashlib
 from datetime import datetime  # type: ignore
+from typing import Any
 
 from sqlalchemy import Enum, ForeignKey, Integer, inspect
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+from fia_api.core.utility import hash_script
 
 
 class State(enum.Enum):
@@ -55,8 +57,17 @@ class Base(DeclarativeBase):
         }
 
 
-def hash_script(context) -> str:
-    return hashlib.sha512(context.get_current_parameters()["script"].encode()).hexdigest()
+def create_default_hash(context: dict[str, Any]) -> str:
+    """
+    Generate a hash for the `script` field of the current parameters in the database context.
+
+    This function extracts the `script` field from the current parameters and applies the `hash_script` utility
+    to compute its hash. The resulting hash value is used as the default or updated value for the `script_hash` field.
+
+    :param context: The SQLAlchemy execution context dictionary containing the current parameters.
+    :return: A hash string derived from the `script` field.
+    """
+    return hash_script(context.get_current_parameters()["script"])
 
 
 class Script(Base):
@@ -67,7 +78,7 @@ class Script(Base):
     __tablename__ = "scripts"
     script: Mapped[str] = mapped_column()
     sha: Mapped[str | None] = mapped_column()
-    script_hash: Mapped[str] = mapped_column(default=hash_script, onupdate=hash_script)
+    script_hash: Mapped[str] = mapped_column(default=create_default_hash, onupdate=create_default_hash)
 
     def __repr__(self) -> str:
         return f"Script(id={self.id}, sha='{self.sha}', script_hash='{self.script_hash}', value='{self.script}')"
