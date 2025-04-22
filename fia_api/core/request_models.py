@@ -2,8 +2,9 @@
 
 from typing import Any
 
-from db.data_models import State
 from pydantic import BaseModel
+
+from fia_api.core.models import State
 
 
 class PartialJobUpdateRequest(BaseModel):

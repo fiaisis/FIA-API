@@ -29,7 +29,6 @@ from fia_api.routers.health import health_router
 from fia_api.routers.instrument_specs import InstrumentSpecRouter
 from fia_api.routers.job_creation import JobCreationRouter
 from fia_api.routers.jobs import JobsRouter
-from fia_api.routers.scripts import ScriptRouter
 
 
 class EndpointFilter(logging.Filter):
@@ -66,7 +65,6 @@ app.include_router(InstrumentSpecRouter)
 app.include_router(JobCreationRouter)
 app.include_router(JobsRouter)
 app.include_router(health_router)
-app.include_router(ScriptRouter)
 app.include_router(FindFileRouter)
 
 app.add_exception_handler(MissingRecordError, missing_record_handler)

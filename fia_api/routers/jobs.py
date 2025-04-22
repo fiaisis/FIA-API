@@ -3,14 +3,14 @@ import os
 from http import HTTPStatus
 from typing import Annotated, Literal
 
-from db.data_models import JobType
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.request_models import PartialJobUpdateRequest
-from fia_api.core.responses import CountResponse, JobResponse, JobWithRunResponse
+from fia_api.core.models import JobType
+from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
+from fia_api.core.responses import AutoreductionResponse, CountResponse, JobResponse, JobWithRunResponse
 from fia_api.core.services.job import (
     count_jobs,
     count_jobs_by_instrument,

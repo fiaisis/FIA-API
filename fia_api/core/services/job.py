@@ -4,16 +4,22 @@ import os
 from collections.abc import Mapping, Sequence
 from typing import Any, Literal
 
-from db.data_models import Job
 from pydantic import BaseModel
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.exceptions import AuthenticationError, MissingRecordError
 from fia_api.core.job_maker import JobMaker
+from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import Repo
-from fia_api.core.request_models import PartialJobUpdateRequest
+from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
 from fia_api.core.specifications.filters import apply_filters_to_spec
+from fia_api.core.specifications.instrument import InstrumentSpecification
 from fia_api.core.specifications.job import JobSpecification
+from fia_api.core.specifications.job_owner import JobOwnerSpecification
+from fia_api.core.specifications.run import RunSpecification
+from fia_api.core.specifications.script import ScriptSpecification
+from fia_api.core.utility import hash_script
+from fia_api.scripts.acquisition import get_script_for_job
 
 
 def job_maker() -> JobMaker:

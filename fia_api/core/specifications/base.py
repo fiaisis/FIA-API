@@ -14,8 +14,9 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any, Generic, Literal, TypeVar
 
-from db.data_models import Base
 from sqlalchemy import Select, select
+
+from fia_api.core.models import Base
 
 T = TypeVar("T", bound=Base)
 

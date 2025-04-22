@@ -5,9 +5,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from db.data_models import Job, Run, Script, State
 from pydantic import BaseModel
 
+from fia_api.core.models import Job, Run, Script, State
 from fia_api.core.utility import filter_script_for_tokens
 
 

@@ -12,10 +12,10 @@ from __future__ import annotations
 
 from typing import Literal
 
-from db.data_models import Instrument, Job, JobOwner, Run
 from sqlalchemy import and_, or_
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
+from fia_api.core.models import Instrument, Job, JobOwner, Run
 from fia_api.core.specifications.base import Specification, apply_ordering, paginate
 
 JobOrderField = Literal["start", "end", "state", "id", "outputs"]

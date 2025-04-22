@@ -11,9 +11,9 @@ from collections.abc import Mapping
 from http import HTTPStatus
 from typing import Any
 
-from db.data_models import Instrument, Job, JobOwner, Run
 from fastapi import HTTPException
 
+from fia_api.core.models import Instrument, Job, JobOwner, Run
 from fia_api.core.specifications.base import Specification, T
 
 logger = logging.getLogger(__name__)

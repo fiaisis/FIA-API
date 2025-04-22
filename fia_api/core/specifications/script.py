@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from db.data_models import Script
-
+from fia_api.core.models import Script
 from fia_api.core.specifications.base import Specification
 
 
