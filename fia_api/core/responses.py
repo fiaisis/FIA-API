@@ -151,3 +151,10 @@ class JobWithRunResponse(JobResponse):
             runner_image=job.runner_image,
             type=str(job.job_type),
         )
+
+
+class AutoreductionResponse(BaseModel):
+    """Autoreduction response contains all the data required to trigger an autoreduction"""
+
+    script: str
+    job_id: int
