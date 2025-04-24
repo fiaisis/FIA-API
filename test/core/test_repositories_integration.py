@@ -10,9 +10,9 @@ from unittest import mock
 from unittest.mock import Mock
 
 import pytest
-from db.data_models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
 from sqlalchemy import select
 
+from fia_api.core.models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import ENGINE, SESSION, Repo, test_connection
 from fia_api.core.specifications.job import JobSpecification
 

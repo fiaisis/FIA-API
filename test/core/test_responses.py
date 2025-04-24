@@ -4,8 +4,7 @@ import copy
 import datetime
 from unittest import mock
 
-from db.data_models import Instrument, Job, JobOwner, JobType, Run, Script, State
-
+from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.responses import (
     JobResponse,
     JobWithRunResponse,
