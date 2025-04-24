@@ -210,4 +210,83 @@ def update_job_by_id(id_: int, job: PartialJobUpdateRequest) -> Job:
         if value is not None:
             setattr(original_job, attr, value)
 
-    return _REPO.update_one(original_job)
+    return _JOB_REPO.update_one(original_job)
+
+
+def create_autoreduction_job(job_request: AutoreductionRequest) -> Job:
+    """
+    Create an autoreduction job in the system based on a provided request.
+
+    This method constructs a new job for the autoreduction process. If the run associated with
+    the job request already exists, it is used. If not, the required run and associated entities
+    (instrument, owner) are created. The method also handles the script generation and hashing.
+
+    :param job_request: (AutoreductionRequest) The job creation request data containing information
+                        about the run, instrument name, experiment number, and other related metadata.
+    :return: The created Job instance.
+    """
+
+    run = _RUN_REPO.find_one(RunSpecification().by_filename(job_request.filename))
+
+    if run:
+        job = Job(
+            start=None,
+            end=None,
+            state=State.NOT_STARTED,
+            inputs=job_request.additional_values,
+            script_id=None,
+            outputs=None,
+            runner_image=job_request.runner_image,
+            job_type=JobType.AUTOREDUCTION,
+            run_id=run.id,
+            owner_id=run.owner_id,
+            instrument_id=run.instrument_id,
+        )
+        instrument = run.instrument
+
+    else:
+        instrument = _INSTRUMENT_REPO.find_one(InstrumentSpecification().by_name(job_request.instrument_name))
+        if instrument is None:
+            instrument = _INSTRUMENT_REPO.add_one(Instrument(instrument_name=job_request.instrument_name))
+        owner = _OWNER_REPO.find_one(
+            JobOwnerSpecification().by_values(experiment_number=int(job_request.rb_number), user_number=None)
+        )
+        if owner is None:
+            owner = _OWNER_REPO.add_one(JobOwner(experiment_number=int(job_request.rb_number)))
+        run = _RUN_REPO.add_one(
+            Run(
+                title=job_request.title,
+                users=job_request.users,
+                run_start=job_request.run_start,
+                run_end=job_request.run_end,
+                filename=job_request.filename,
+                owner_id=owner.id,
+                instrument_id=instrument.id,
+                good_frames=job_request.good_frames,
+                raw_frames=job_request.raw_frames,
+            )
+        )
+
+        job = Job(
+            start=None,
+            end=None,
+            state=State.NOT_STARTED,
+            inputs=job_request.additional_values,
+            script_id=None,
+            outputs=None,
+            runner_image=job_request.runner_image,
+            job_type=JobType.AUTOREDUCTION,
+            run_id=run.id,
+            owner_id=owner.id,
+            instrument_id=instrument.id,
+        )
+
+    pre_script = get_script_for_job(instrument.instrument_name, job)
+    script = _SCRIPT_REPO.find_one(ScriptSpecification().by_script_hash(hash_script(pre_script.value)))
+    if script is None:
+        script = Script(script=pre_script.value, sha=pre_script.sha)
+        job.script = script
+    else:
+        job.script_id = script.id
+
+    return _JOB_REPO.add_one(job)
