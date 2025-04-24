@@ -11,6 +11,7 @@ from db.data_models import Instrument, Job, JobOwner, JobType, Run, Script, Stat
 from sqlalchemy.orm import make_transient
 from starlette.testclient import TestClient
 
+from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import SESSION
 from fia_api.core.responses import JobResponse
 from fia_api.fia_api import app
