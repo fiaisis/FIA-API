@@ -57,7 +57,11 @@ OrderField = Literal[
     "filename",
 ]
 
-_REPO: Repo[Job] = Repo()
+_JOB_REPO: Repo[Job] = Repo()
+_RUN_REPO: Repo[Run] = Repo()
+_INSTRUMENT_REPO: Repo[Instrument] = Repo()
+_OWNER_REPO: Repo[JobOwner] = Repo()
+_SCRIPT_REPO: Repo[Script] = Repo()
 
 
 def get_job_by_instrument(
@@ -91,7 +95,7 @@ def get_job_by_instrument(
     )
     if filters:
         specification = apply_filters_to_spec(filters, specification)
-    return _REPO.find(specification)
+    return _JOB_REPO.find(specification)
 
 
 def get_all_jobs(
@@ -126,7 +130,7 @@ def get_all_jobs(
     if filters:
         apply_filters_to_spec(filters, specification)
 
-    return _REPO.find(specification)
+    return _JOB_REPO.find(specification)
 
 
 def get_job_by_id(job_id: int, user_number: int | None = None) -> Job:
@@ -136,7 +140,7 @@ def get_job_by_id(job_id: int, user_number: int | None = None) -> Job:
     :return: The job
     :raises: MissingRecordError when no jobs for that ID is found
     """
-    job = _REPO.find_one(JobSpecification().by_id(job_id))
+    job = _JOB_REPO.find_one(JobSpecification().by_id(job_id))
     if job is None:
         raise MissingRecordError(f"No Job for id {job_id}")
 
@@ -159,7 +163,7 @@ def count_jobs_by_instrument(instrument: str, filters: Mapping[str, Any]) -> int
     spec = JobSpecification().by_instruments(instruments=[instrument])
     if filters:
         spec = apply_filters_to_spec(filters, spec)
-    return _REPO.count(spec)
+    return _JOB_REPO.count(spec)
 
 
 def count_jobs(filters: Mapping[str, Any] | None = None) -> int:
@@ -170,7 +174,7 @@ def count_jobs(filters: Mapping[str, Any] | None = None) -> int:
     spec = JobSpecification().all()
     if filters:
         spec = apply_filters_to_spec(filters, spec)
-    return _REPO.count(spec)
+    return _JOB_REPO.count(spec)
 
 
 def get_experiment_number_for_job_id(job_id: int) -> int:
@@ -179,7 +183,7 @@ def get_experiment_number_for_job_id(job_id: int) -> int:
     :param job_id: (int) The id of the job
     :return: (int) the experiment number of the job found with the id
     """
-    job = _REPO.find_one(JobSpecification().by_id(job_id))
+    job = _JOB_REPO.find_one(JobSpecification().by_id(job_id))
     if job is not None:
         owner = job.owner
         if owner is not None and owner.experiment_number is not None:
@@ -196,7 +200,7 @@ def update_job_by_id(id_: int, job: PartialJobUpdateRequest) -> Job:
     :param job: The job to update with
     :return: The updated job
     """
-    original_job = _REPO.find_one(JobSpecification().by_id(id_))
+    original_job = _JOB_REPO.find_one(JobSpecification().by_id(id_))
     if original_job is None:
         raise MissingRecordError(f"No job found with id {id_}")
     # We only update the fields that should change, not those that should never e.g. script, inputs.
