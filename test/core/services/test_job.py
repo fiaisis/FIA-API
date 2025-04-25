@@ -1,26 +1,26 @@
 """Tests for job service"""
 
-from unittest.mock import Mock, patch, ANY
+from unittest.mock import ANY, Mock, patch
 
 import faker.generator
 import pytest
 
 from fia_api.core.exceptions import AuthenticationError, MissingRecordError
-from fia_api.core.models import State, Script, Run, JobOwner, Instrument, JobType
+from fia_api.core.models import Instrument, JobOwner, JobType, Run, Script, State
 from fia_api.core.request_models import AutoreductionRequest
 from fia_api.core.services.job import (
     count_jobs,
     count_jobs_by_instrument,
+    create_autoreduction_job,
     get_all_jobs,
     get_experiment_number_for_job_id,
     get_job_by_id,
     get_job_by_instrument,
     update_job_by_id,
-    create_autoreduction_job,
 )
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_jobs_by_instrument(mock_spec_class, mock_repo):
     """
@@ -34,7 +34,7 @@ def test_get_jobs_by_instrument(mock_spec_class, mock_repo):
     mock_repo.find.assert_called_once_with(spec.by_instruments(["test"], limit=5, offset=6))
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 def test_get_job_by_id_job_exists(mock_repo):
     """
     Test that correct repo call and return is made
@@ -47,7 +47,7 @@ def test_get_job_by_id_job_exists(mock_repo):
     assert job == expected_job
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 def test_get_job_by_id_not_found_raises(mock_repo):
     """
     Test MissingRecordError raised when repo returns None
@@ -59,7 +59,7 @@ def test_get_job_by_id_not_found_raises(mock_repo):
         get_job_by_id(1)
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 def test_count_jobs(mock_repo):
     """
     Test count is called
@@ -69,7 +69,7 @@ def test_count_jobs(mock_repo):
     mock_repo.count.assert_called_once()
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_count_jobs_by_instrument(mock_spec_class, mock_repo):
     """
@@ -82,7 +82,7 @@ def test_count_jobs_by_instrument(mock_spec_class, mock_repo):
     mock_repo.count.assert_called_once_with(spec.by_instruments(["TEST"]))
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 def test_get_job_by_id_for_user_no_experiments(mock_get_exp, mock_repo):
     """Test get_job_by_id when no experiments are permitted"""
@@ -95,7 +95,7 @@ def test_get_job_by_id_for_user_no_experiments(mock_get_exp, mock_repo):
         get_job_by_id(1, user_number=1234)
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 def test_get_job_by_id_for_user_with_experiments(mock_get_exp, mock_repo):
     """Test get_job_by_id_"""
@@ -108,7 +108,7 @@ def test_get_job_by_id_for_user_with_experiments(mock_get_exp, mock_repo):
     assert get_job_by_id(1, 1234) == job
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 def test_get_job_by_id_for_user_with_user_number(mock_get_exp, mock_repo):
     """Test get_job_by_id_"""
@@ -121,7 +121,7 @@ def test_get_job_by_id_for_user_with_user_number(mock_get_exp, mock_repo):
     assert get_job_by_id(1, 1234) == job
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_without_user(mock_spec_class, mock_repo):
     """Test get_all_jobs without a user number"""
@@ -131,7 +131,7 @@ def test_get_all_jobs_without_user(mock_spec_class, mock_repo):
     mock_repo.find.assert_called_once_with(spec.all())
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 def test_get_all_jobs_with_user_having_access(mock_get_experiments, mock_spec_class, mock_repo):
@@ -146,7 +146,7 @@ def test_get_all_jobs_with_user_having_access(mock_get_experiments, mock_spec_cl
     mock_repo.find.assert_called_once_with(spec.by_experiment_numbers())
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 def test_get_all_jobs_with_user_no_access(mock_get_experiments, mock_spec_class, mock_repo):
@@ -163,7 +163,7 @@ def test_get_all_jobs_with_user_no_access(mock_get_experiments, mock_spec_class,
     assert jobs == []
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_experiment_number_from_job_id(mock_spec_class, mock_repo):
     job_id = faker.generator.random.randint(1, 1000)
@@ -175,7 +175,7 @@ def test_get_experiment_number_from_job_id(mock_spec_class, mock_repo):
     mock_repo.find_one.assert_called_once_with(mock_spec_class().by_id())
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 def test_get_experiment_number_from_job_id_expect_raise(mock_repo):
     job_id = faker.generator.random.randint(1, 1000)
     mock_repo.find_one.return_value = None
@@ -184,7 +184,7 @@ def test_get_experiment_number_from_job_id_expect_raise(mock_repo):
         get_experiment_number_for_job_id(job_id)
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_order_by_run_start_desc(mock_spec_class, mock_repo):
     """Test get_all_jobs with order_by 'run_start' in descending order."""
@@ -194,7 +194,7 @@ def test_get_all_jobs_order_by_run_start_desc(mock_spec_class, mock_repo):
     mock_repo.find.assert_called_once_with(spec.all())
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_order_by_run_start_asc(mock_spec_class, mock_repo):
     """Test get_all_jobs with order_by 'run_start' in ascending order."""
@@ -204,7 +204,7 @@ def test_get_all_jobs_order_by_run_start_asc(mock_spec_class, mock_repo):
     mock_repo.find.assert_called_once_with(spec.all())
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_default_order_by_start(mock_spec_class, mock_repo):
     """
@@ -216,7 +216,7 @@ def test_get_all_jobs_default_order_by_start(mock_spec_class, mock_repo):
     mock_repo.find.assert_called_once_with(spec.all())
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_with_pagination(mock_spec_class, mock_repo):
     """Test get_all_jobs with custom pagination (limit and offset)."""
@@ -226,7 +226,7 @@ def test_get_all_jobs_with_pagination(mock_spec_class, mock_repo):
     mock_repo.find.assert_called_once_with(spec.all())
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_update_job_by_id(mock_spec_class, mock_repo):
     """Test update_job_by_id with valid job data."""
@@ -256,7 +256,7 @@ def test_update_job_by_id(mock_spec_class, mock_repo):
     mock_repo.update_one.assert_called_once_with(original_job)
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_update_job_by_id_invalid_job_id(mock_spec_class, mock_repo):
     """Test update_job_by_id when the job ID does not exist."""
@@ -273,7 +273,7 @@ def test_update_job_by_id_invalid_job_id(mock_spec_class, mock_repo):
     mock_repo.update_one.assert_not_called()
 
 
-@patch("fia_api.core.services.job._REPO")
+@patch("fia_api.core.services.job._JOB_REPO")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_update_job_by_id_never_updates_certain_fields(mock_spec_class, mock_repo):
     """Test update_job_by_id ensuring certain fields are never updated"""
