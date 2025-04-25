@@ -482,15 +482,15 @@ def test_run_not_exists_creates_instrument_owner_run_and_new_script(
     mock_owner_repo.find_one.assert_called_once_with(ANY)
     owner_arg = mock_owner_repo.add_one.call_args[0][0]
     assert isinstance(owner_arg, JobOwner)
-    assert owner_arg.experiment_number == 4321 # noqa: PLR2004
+    assert owner_arg.experiment_number == 4321  # noqa: PLR2004
 
     run_arg = mock_run_repo.add_one.call_args[0][0]
     assert isinstance(run_arg, Run)
     assert run_arg.filename == "baz.fits"
     assert run_arg.owner_id == new_owner.id
     assert run_arg.instrument_id == new_instr.id
-    assert run_arg.good_frames == 3 # noqa: PLR2004
-    assert run_arg.raw_frames == 5 # noqa: PLR2004
+    assert run_arg.good_frames == 3  # noqa: PLR2004
+    assert run_arg.raw_frames == 5  # noqa: PLR2004
 
     passed_job = mock_job_repo.add_one.call_args[0][0]
     assert isinstance(passed_job.script, Script)
