@@ -240,6 +240,11 @@ async def download_file(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail="Experiment number not found in scenario where it should be expected.",
             )
+        if job.instrument is None:
+            raise HTTPException(
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                detail="Instrument not found in scenario where it should be expected.",
+            )
         filepath = find_file_instrument(
             ceph_dir=ceph_dir,
             instrument=job.instrument.instrument_name,

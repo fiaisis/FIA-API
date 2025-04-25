@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import enum
-from datetime import datetime  # type: ignore
-from typing import Any
+from datetime import datetime
 
 from sqlalchemy import Enum, ForeignKey, Integer, inspect
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.engine.default import DefaultExecutionContext
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from fia_api.core.utility import hash_script
@@ -57,7 +57,7 @@ class Base(DeclarativeBase):
         }
 
 
-def create_default_hash(context: dict[str, Any]) -> str:
+def create_default_hash(context: DefaultExecutionContext) -> str:
     """
     Generate a hash for the `script` field of the current parameters in the database context.
 
@@ -67,7 +67,7 @@ def create_default_hash(context: dict[str, Any]) -> str:
     :param context: The SQLAlchemy execution context dictionary containing the current parameters.
     :return: A hash string derived from the `script` field.
     """
-    return hash_script(context.get_current_parameters()["script"])
+    return hash_script(context.get_current_parameters()["script"])  # type: ignore
 
 
 class Script(Base):
@@ -101,8 +101,8 @@ class Job(Base):
     state: Mapped[State] = mapped_column(Enum(State))
     status_message: Mapped[str | None] = mapped_column()
     inputs: Mapped[JSONB] = mapped_column(JSONB)
-    script_id: Mapped[int | None] = mapped_column(ForeignKey("scripts.id"))
-    script: Mapped[Script | None] = relationship("Script", lazy="joined")
+    script_id: Mapped[int] = mapped_column(ForeignKey("scripts.id"))
+    script: Mapped[Script] = relationship("Script", lazy="joined")
     outputs: Mapped[str | None] = mapped_column()
     stacktrace: Mapped[str | None] = mapped_column()
     runner_image: Mapped[str | None] = mapped_column()

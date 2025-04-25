@@ -245,7 +245,7 @@ def create_autoreduction_job(job_request: AutoreductionRequest) -> Job:
         instrument = run.instrument
 
     else:
-        instrument = _INSTRUMENT_REPO.find_one(InstrumentSpecification().by_name(job_request.instrument_name))
+        instrument = _INSTRUMENT_REPO.find_one(InstrumentSpecification().by_name(job_request.instrument_name))  # type: ignore # The above declaration is guaranteed to be not None, but mypy cannot know this
         if instrument is None:
             instrument = _INSTRUMENT_REPO.add_one(Instrument(instrument_name=job_request.instrument_name))
         owner = _OWNER_REPO.find_one(

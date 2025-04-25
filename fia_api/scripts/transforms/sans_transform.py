@@ -24,6 +24,9 @@ class SansTransform(Transform):
 
     def apply(self, script: PreScript, job: Job) -> None:  # noqa: C901, PLR0912
         logger.info("Beginning %s transform for job %s...", job.instrument, job.id)
+        if job.instrument is None:
+            logger.warning("cannot apply sans transform on unknown instrument")
+            raise RuntimeError("cannot apply sans transform on unknown instrument")
         lines = script.value.splitlines()
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
         # If you get here in the future, try removing the type ignore and see if it passes with newer mypy
