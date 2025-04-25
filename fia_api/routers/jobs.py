@@ -1,7 +1,7 @@
 import json
 import os
 from http import HTTPStatus
-from typing import Annotated, Literal, cast
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import FileResponse
@@ -292,4 +292,4 @@ def create_autoreduction(
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
     job = create_autoreduction_job(job_request)
     response.status_code = HTTPStatus.CREATED
-    return AutoreductionResponse(job_id=job.id, script=cast(str, job.script.script))
+    return AutoreductionResponse(job_id=job.id, script=job.script.script)

@@ -1039,7 +1039,7 @@ def test_post_autoreduction_run_doesnt_exist():
 def test_post_autoreduction_run_exists():
     with SESSION() as session:
         try:
-            run = session.execute(select(Run).where(Run.id == 5001).limit(1)).scalar()
+            run = session.execute(select(Run).where(Run.id == 5001).limit(1)).scalar() # noqa: PLR2004
             response = client.post(
                 "/job/autoreduction",
                 json={
