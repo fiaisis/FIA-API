@@ -335,7 +335,6 @@ def test_run_exists_creates_job_with_new_script(
     mock_script_repo,
     mock_job_repo,
 ):
-    # Simulate an existing run in the repository
     existing_run = Mock(spec=Run)
     existing_run.id = 42
     existing_run.owner_id = 7
@@ -343,7 +342,6 @@ def test_run_exists_creates_job_with_new_script(
     existing_run.instrument = Mock(spec=Instrument, instrument_name="CAM1")
     mock_run_repo.find_one.return_value = existing_run
 
-    # Simulate script generation & no existing script in DB
     pre_script = Mock(value="print('do work')", sha="deadbeef")
     mock_get_script.return_value = pre_script
     mock_hash_script.return_value = "deadbeef"
@@ -368,17 +366,15 @@ def test_run_exists_creates_job_with_new_script(
     mock_hash_script.assert_called_once_with(pre_script.value)
 
     passed_job = mock_job_repo.add_one.call_args[0][0]
-    # New Script() attached
     assert isinstance(passed_job.script, Script)
     assert passed_job.script.script == pre_script.value
     assert passed_job.script.sha == pre_script.sha
     assert passed_job.script_id is None
 
-    # Core fields correct
     assert passed_job.runner_image == "python:3.10"
     assert passed_job.job_type == JobType.AUTOREDUCTION
     assert passed_job.inputs == {"x": 1}
-    assert passed_job.run == existing_run
+    assert passed_job.run_id == existing_run.id
     assert passed_job.owner_id == existing_run.owner_id
     assert passed_job.instrument_id == existing_run.instrument_id
 
@@ -405,7 +401,7 @@ def test_run_exists_reuses_existing_script(
     pre_script = Mock(value="do it", sha="cafebabe")
     mock_get_script.return_value = pre_script
     mock_hash_script.return_value = "cafebabe"
-    # Simulate existing Script in DB
+
     existing_script = Mock(spec=Script, id=314)
     mock_script_repo.find_one.return_value = existing_script
 
@@ -424,7 +420,6 @@ def test_run_exists_reuses_existing_script(
     assert result is returned_job
 
     passed_job = mock_job_repo.add_one.call_args[0][0]
-    # Should reuse existing script via script_id
     assert passed_job.script_id == existing_script.id
     assert not hasattr(passed_job, "script") or passed_job.script is None
 
@@ -445,24 +440,19 @@ def test_run_not_exists_creates_instrument_owner_run_and_new_script(
     mock_script_repo,
     mock_job_repo,
 ):
-    # No run exists
     mock_run_repo.find_one.return_value = None
 
-    # Instrument not found → add it
     mock_instrument_repo.find_one.return_value = None
     new_instr = Mock(spec=Instrument, id=77, instrument_name="XYZ")
     mock_instrument_repo.add_one.return_value = new_instr
 
-    # Owner not found → add it
     mock_owner_repo.find_one.return_value = None
     new_owner = Mock(spec=JobOwner, id=88, experiment_number=4321)
     mock_owner_repo.add_one.return_value = new_owner
 
-    # New run will be created
     created_run = Mock(spec=Run, id=99)
     mock_run_repo.add_one.return_value = created_run
 
-    # Script logic: generate + no existing script
     pre_script = Mock(value="xyz", sha="00ff")
     mock_get_script.return_value = pre_script
     mock_hash_script.return_value = "00ff"
@@ -484,19 +474,16 @@ def test_run_not_exists_creates_instrument_owner_run_and_new_script(
     result = create_autoreduction_job(req)
     assert result is returned_job
 
-    # Should have tried to find then add the instrument
     mock_instrument_repo.find_one.assert_called_once_with(ANY)
     inst_arg = mock_instrument_repo.add_one.call_args[0][0]
     assert isinstance(inst_arg, Instrument)
     assert inst_arg.instrument_name == "XYZ"
 
-    # Should have tried to find then add the owner
     mock_owner_repo.find_one.assert_called_once_with(ANY)
     owner_arg = mock_owner_repo.add_one.call_args[0][0]
     assert isinstance(owner_arg, JobOwner)
     assert owner_arg.experiment_number == 4321
 
-    # Verify new Run fields
     run_arg = mock_run_repo.add_one.call_args[0][0]
     assert isinstance(run_arg, Run)
     assert run_arg.filename == "baz.fits"
@@ -505,13 +492,11 @@ def test_run_not_exists_creates_instrument_owner_run_and_new_script(
     assert run_arg.good_frames == 3
     assert run_arg.raw_frames == 5
 
-    # Verify Script attached
     passed_job = mock_job_repo.add_one.call_args[0][0]
     assert isinstance(passed_job.script, Script)
     assert passed_job.script.sha == "00ff"
     assert passed_job.script.script == pre_script.value
 
-    # And job references correct IDs
     assert passed_job.run_id == created_run.id
     assert passed_job.owner_id == new_owner.id
     assert passed_job.instrument_id == new_instr.id
