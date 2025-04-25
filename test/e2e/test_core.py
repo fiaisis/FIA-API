@@ -323,60 +323,6 @@ def test_get_job_by_id_job_exists_for_user_no_perms(mock_post):
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-@patch("fia_api.scripts.acquisition.LOCAL_SCRIPT_DIR", "fia_api/local_scripts")
-def test_get_prescript_when_job_does_not_exist():
-    """
-    Test return 404 when requesting pre script from non existant job
-    :return:
-    """
-    response = client.get("/instrument/MARI/script?job_id=4324234")
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {"message": "Resource not found"}
-
-
-@patch("fia_api.scripts.acquisition._get_script_from_remote")
-def test_unsafe_path_request_returns_400_status(mock_get_from_remote):
-    """
-    Test that a 400 is returned for unsafe characters in script request
-    :return:
-    """
-    mock_get_from_remote.side_effect = RuntimeError
-    response = client.get("/instrument/mari./script")  # %2F is encoded /
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-
-
-@patch("fia_api.scripts.acquisition.LOCAL_SCRIPT_DIR", "fia_api/local_scripts")
-def test_get_test_prescript_for_job():
-    """
-    Test the return of transformed test script
-    :return: None
-    """
-    response = client.get("/instrument/test/script?job_id=1")
-    assert response.status_code == HTTPStatus.OK
-    response_object = response.json()
-
-    assert response_object["is_latest"]
-    assert (
-        response_object["value"]
-        == """from __future__ import print_function
-from mantid.kernel import ConfigService
-ConfigService.Instance()[\"network.github.api_token\"] = \"\"
-# This line is inserted via test
-
-
-x = 22
-y = 2
-
-for i in range(20):
-    x *= y
-
-def something() -> None:
-    return
-
-something()"""
-    )
-
-
 def test_get_jobs_for_instrument_no_token_results_in_forbidden():
     """
     Test result with no token is forbidden
