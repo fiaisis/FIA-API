@@ -297,4 +297,4 @@ def create_autoreduction(
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
     job = create_autoreduction_job(job_request)
     response.status_code = HTTPStatus.CREATED
-    return AutoreductionResponse(job_id=job.id, script=job.script.script) # type: ignore
+    return AutoreductionResponse(job_id=job.id, script=job.script.script)  # type: ignore
