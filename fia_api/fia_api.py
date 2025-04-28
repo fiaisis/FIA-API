@@ -21,6 +21,7 @@ from fia_api.exception_handlers import (
     missing_record_handler,
     missing_script_handler,
     unsafe_path_handler,
+    validation_exception_handler,
 )
 from fia_api.routers.extras import ExtrasRouter
 from fia_api.routers.find_file import FindFileRouter
@@ -66,4 +67,4 @@ app.add_exception_handler(MissingScriptError, missing_script_handler)
 app.add_exception_handler(UnsafePathError, unsafe_path_handler)
 app.add_exception_handler(AuthenticationError, authentication_error_handler)
 app.add_exception_handler(JobRequestError, bad_job_request_handler)
-app.add_exception_handler(RequestValidationError, bad_job_request_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)

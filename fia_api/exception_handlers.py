@@ -1,8 +1,8 @@
 """API Level Exception Handlers."""
 
 import logging
+from http import HTTPStatus
 
-from fastapi.exceptions import RequestValidationError
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
@@ -73,7 +73,7 @@ async def authentication_error_handler(_: Request, __: Exception) -> JSONRespons
     return JSONResponse(status_code=403, content={"message": "Forbidden"})
 
 
-async def validation_exception_hander(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def validation_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     Provide a more verbose error message for validation errors
     :param request: The request object
@@ -82,5 +82,5 @@ async def validation_exception_hander(request: Request, exc: RequestValidationEr
     """
     exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
     logger.error(f"{request}: {exc_str}")
-    content = {"status_code": 422, "message": exc_str}
-    return JSONResponse(content=content, status_code=422)
+    content = {"status_code": 10422, "message": exc_str}
+    return JSONResponse(content=content, status_code=HTTPStatus.UNPROCESSABLE_ENTITY)
