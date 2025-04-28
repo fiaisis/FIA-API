@@ -78,9 +78,9 @@ def test_get_script_by_sha_no_job_id_instrument_exists_hash_exists():
     }
 
 
-def test_get_script_by_sha_instrument_doesnt_exist_returns_404():
+def test_get_script_by_sha_instrument_doesnt_exist_returns_422():
     """
-    Test 404 response when instrument doesnt exist
+    Test 422 response when instrument doesnt exist
     :return: None
     """
     response = client.get("/instrument/foo/script/sha/64c6121")
