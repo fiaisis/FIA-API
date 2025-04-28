@@ -5,7 +5,6 @@ import os
 import sys
 
 from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError
 from starlette.middleware.cors import CORSMiddleware
 
 from fia_api.core.exceptions import (
@@ -66,4 +65,3 @@ app.add_exception_handler(MissingScriptError, missing_script_handler)
 app.add_exception_handler(UnsafePathError, unsafe_path_handler)
 app.add_exception_handler(AuthenticationError, authentication_error_handler)
 app.add_exception_handler(JobRequestError, bad_job_request_handler)
-app.add_exception_handler(RequestValidationError, bad_job_request_handler)
