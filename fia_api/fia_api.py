@@ -32,7 +32,7 @@ from fia_api.routers.scripts import ScriptRouter
 
 class EndpointFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
-        return record.getMessage().find("/healthz") == -1
+        return record.getMessage().find("/healthz") == -1 and record.getMessage().find("/ready") == -1
 
 
 stdout_handler = logging.StreamHandler(stream=sys.stdout)
