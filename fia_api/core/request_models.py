@@ -11,7 +11,7 @@ class PartialJobUpdateRequest(BaseModel):
 
     state: State | None = None
     status_message: str | None = None
-    outputs: list[str] | None = None
+    outputs: str | None = None
     start: str | None = None
     stacktrace: str | None = None
     end: str | None = None
