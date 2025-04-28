@@ -73,7 +73,7 @@ async def authentication_error_handler(_: Request, __: Exception) -> JSONRespons
     return JSONResponse(status_code=403, content={"message": "Forbidden"})
 
 
-async def validation_exception_hander(request: Request, exc: RequestValidationError):
+async def validation_exception_hander(request: Request, exc: RequestValidationError) -> JSONResponse:
     """
     Provide a more verbose error message for validation errors
     :param request: The request object
