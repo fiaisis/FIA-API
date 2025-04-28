@@ -280,7 +280,7 @@ async def download_file(
 
 
 @JobsRouter.post("/job/autoreduction")
-def create_autoreduction(
+async def create_autoreduction(
     job_request: AutoreductionRequest,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
     response: Response,
