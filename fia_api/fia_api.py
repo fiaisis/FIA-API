@@ -29,6 +29,12 @@ from fia_api.routers.job_creation import JobCreationRouter
 from fia_api.routers.jobs import JobsRouter
 from fia_api.routers.scripts import ScriptRouter
 
+
+class EndpointFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.getMessage().find("/healthz") == -1 and record.getMessage().find("/ready") == -1
+
+
 stdout_handler = logging.StreamHandler(stream=sys.stdout)
 logging.basicConfig(
     handlers=[stdout_handler],
@@ -36,6 +42,7 @@ logging.basicConfig(
     level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
+logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
 
 DEV_MODE = bool(os.environ.get("DEV_MODE", False))
 
