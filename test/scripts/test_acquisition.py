@@ -2,12 +2,11 @@
 
 import os
 from pathlib import Path, PosixPath
-from unittest.mock import MagicMock, Mock, mock_open, patch
+from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
 from fia_api.core.exceptions import (
-    MissingRecordError,
     MissingScriptError,
     UnsafePathError,
 )
@@ -16,7 +15,6 @@ from fia_api.scripts.acquisition import (
     _get_script_from_remote,
     _get_script_locally,
     get_by_instrument_name,
-    get_script_for_job,
     write_script_locally,
 )
 from fia_api.scripts.pre_script import PreScript
@@ -196,66 +194,6 @@ def test_get_by_instrument_name_local(mock_local, mock_remote):
     get_by_instrument_name(INSTRUMENT)
     mock_remote.assert_called_once()
     mock_local.assert_called_once()
-
-
-@patch("fia_api.scripts.acquisition.get_by_instrument_name")
-def test_get_script_for_job_no_job_id(mock_get_by_name):
-    """
-    Test base script returned when no id provided
-    :param mock_get_by_name: Mock
-    :return: None
-    """
-    expected_script = PreScript(value="some script")
-    mock_get_by_name.return_value = expected_script
-    result = get_script_for_job("some instrument")
-
-    assert result == expected_script
-
-
-@patch("fia_api.scripts.acquisition.get_transform_for_instrument")
-@patch("fia_api.scripts.acquisition.Repo")
-@patch("fia_api.scripts.acquisition.get_by_instrument_name")
-def test_get_script_for_job_with_valid_job_id(mock_get_by_name, mock_repo, mock_get_transform):
-    """
-    Test transform applied to obtained script when job id provided
-    :param mock_get_by_name: Mock
-    :param mock_repo: Mock
-    :param mock_get_transform: Mock
-    :return: None
-    """
-    mock_reduction = MagicMock()
-    mock_transform = Mock()
-    mock_get_transform.return_value = mock_transform
-    mock_repo.return_value.find_one.return_value = mock_reduction
-    expected_script = PreScript("some script")
-    mock_get_by_name.return_value = expected_script
-    result = get_script_for_job("some instrument", 1)
-    mock_get_by_name.assert_called_once_with("some instrument")
-    mock_get_transform.assert_called_once_with("some instrument")
-    mock_transform.apply.assert_called_once_with(expected_script, mock_reduction)
-
-    assert result == expected_script
-
-
-@patch("fia_api.scripts.acquisition.Repo")
-def test_get_script_for_job_with_invalid_job_id(mock_repo):
-    """
-    Test exception raised when job id is given but no job exists
-    :param _: Mock
-    :param mock_repo: Mock
-    :return: None
-    """
-    mock_repo.return_value.find_one.return_value = None
-    instrument = "some_instrument"
-    jobid = -1
-
-    with (
-        pytest.raises(MissingRecordError) as excinfo,
-        patch("fia_api.scripts.acquisition.get_by_instrument_name", return_value="some instrument"),
-    ):
-        get_script_for_job(instrument, jobid)
-
-    assert f"No job found with id: {jobid}" in str(excinfo.value)
 
 
 @patch("fia_api.scripts.acquisition.requests.get")
