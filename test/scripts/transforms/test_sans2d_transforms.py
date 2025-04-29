@@ -168,3 +168,12 @@ def test_sans2d_transform_apply_with_optionals(script, reduction_2):
                 break
         else:
             assert line == original_lines[index]
+
+
+def test_sans_tranform_raises_when_job_has_no_instrument(script):
+    """Test exception is raised when job has no instrument"""
+    sans_transform = SansTransform()
+    job = Mock()
+    job.instrument = None
+    with pytest.raises(RuntimeError):
+        sans_transform.apply(script, job)

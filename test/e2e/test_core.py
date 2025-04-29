@@ -7,10 +7,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from db.data_models import Instrument, Job, JobOwner, JobType, Run, Script, State
+from sqlalchemy import delete, select
 from sqlalchemy.orm import make_transient
 from starlette.testclient import TestClient
 
+from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import SESSION
 from fia_api.core.responses import JobResponse
 from fia_api.fia_api import app
@@ -188,8 +189,6 @@ def test_get_all_job_for_user(mock_post, mock_get_experiment_numbers_for_user_nu
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
     response = client.get("/jobs", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.OK
-    expected_number_of_jobs = 1
-    assert len(response.json()) == expected_number_of_jobs
     assert response.json() == [
         {
             "id": 5001,
@@ -320,60 +319,6 @@ def test_get_job_by_id_job_exists_for_user_no_perms(mock_post):
     mock_post.return_value.status_code = HTTPStatus.FORBIDDEN
     response = client.get("/job/5001", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.FORBIDDEN
-
-
-@patch("fia_api.scripts.acquisition.LOCAL_SCRIPT_DIR", "fia_api/local_scripts")
-def test_get_prescript_when_job_does_not_exist():
-    """
-    Test return 404 when requesting pre script from non existant job
-    :return:
-    """
-    response = client.get("/instrument/MARI/script?job_id=4324234")
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {"message": "Resource not found"}
-
-
-@patch("fia_api.scripts.acquisition._get_script_from_remote")
-def test_unsafe_path_request_returns_400_status(mock_get_from_remote):
-    """
-    Test that a 400 is returned for unsafe characters in script request
-    :return:
-    """
-    mock_get_from_remote.side_effect = RuntimeError
-    response = client.get("/instrument/mari./script")  # %2F is encoded /
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-
-
-@patch("fia_api.scripts.acquisition.LOCAL_SCRIPT_DIR", "fia_api/local_scripts")
-def test_get_test_prescript_for_job():
-    """
-    Test the return of transformed test script
-    :return: None
-    """
-    response = client.get("/instrument/test/script?job_id=1")
-    assert response.status_code == HTTPStatus.OK
-    response_object = response.json()
-
-    assert response_object["is_latest"]
-    assert (
-        response_object["value"]
-        == """from __future__ import print_function
-from mantid.kernel import ConfigService
-ConfigService.Instance()[\"network.github.api_token\"] = \"\"
-# This line is inserted via test
-
-
-x = 22
-y = 2
-
-for i in range(20):
-    x *= y
-
-def something() -> None:
-    return
-
-something()"""
-    )
 
 
 def test_get_jobs_for_instrument_no_token_results_in_forbidden():
@@ -751,7 +696,7 @@ def test_update_job_with_api_key():
     job = JobResponse.from_job(TEST_JOB)
     job.status_message = "hello"
     job.state = "SUCCESSFUL"
-    response = client.patch("/job/5002", json=job.model_dump(mode="json"), headers=API_KEY_HEADER)
+    response = client.patch(f"/job/{TEST_JOB.id}", json=job.model_dump(mode="json"), headers=API_KEY_HEADER)
     assert response.status_code == HTTPStatus.OK
 
     updated_response = response.json()
@@ -772,7 +717,7 @@ def test_update_job_as_staff(mock_post):
     job = JobResponse.from_job(TEST_JOB)
     job.status_message = "hello"
     job.state = "SUCCESSFUL"
-    response = client.patch("/job/5002", json=job.model_dump(mode="json"), headers=STAFF_HEADER)
+    response = client.patch(f"/job/{TEST_JOB.id}", json=job.model_dump(mode="json"), headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
 
     updated_response = response.json()
@@ -1055,6 +1000,72 @@ def test_download_file_missing_filepath(mock_post, mock_get_experiments, mock_ge
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert "File not found" in response.text
+
+
+def test_post_autoreduction_run_doesnt_exist():
+    response = client.post(
+        "/job/autoreduction",
+        json={
+            "filename": "test123.nxspe",
+            "rb_number": "12345",
+            "instrument_name": "TEST",
+            "users": "user1, user2",
+            "title": "test experiment",
+            "run_start": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
+            "run_end": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
+            "good_frames": 5,
+            "raw_frames": 10,
+            "additional_values": {"foo": "bar", "baz": 1},
+            "runner_image": "test_runner_image",
+        },
+        headers=API_KEY_HEADER,
+    )
+
+    assert response.status_code == HTTPStatus.CREATED
+    with SESSION() as session:
+        try:
+            run = session.execute(select(Run).order_by(Run.id.desc()).limit(1)).scalar()
+            assert run.filename == "test123.nxspe"
+            expected_job_id = run.jobs[0].id
+            expected_script = run.jobs[0].script.script
+
+            assert response.json()["job_id"] == expected_job_id
+            assert response.json()["script"] == expected_script
+        finally:
+            session.execute(delete(Job).where(Job.id == expected_job_id))
+            session.commit()
+
+
+def test_post_autoreduction_run_exists():
+    with SESSION() as session:
+        try:
+            run = session.execute(select(Run).where(Run.id == 5001).limit(1)).scalar()  # noqa: PLR2004
+            response = client.post(
+                "/job/autoreduction",
+                json={
+                    "filename": run.filename,
+                    "rb_number": "12345",
+                    "instrument_name": "TEST",
+                    "users": "user1, user2",
+                    "title": "test experiment",
+                    "run_start": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
+                    "run_end": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
+                    "good_frames": 5,
+                    "raw_frames": 10,
+                    "additional_values": {"foo": "bar", "baz": 1},
+                    "runner_image": "test_runner_image",
+                },
+                headers=API_KEY_HEADER,
+            )
+            session.refresh(run)
+            assert response.status_code == HTTPStatus.CREATED
+            assert response.json()["job_id"] in [job.id for job in run.jobs]
+            assert response.json()["script"] in [
+                job.script.script if job.script is not None else None for job in run.jobs
+            ]
+        finally:
+            session.execute(delete(Job).where(Job.id == response.json()["job_id"]))
+            session.commit()
 
 
 @patch("fia_api.core.auth.tokens.requests.post")

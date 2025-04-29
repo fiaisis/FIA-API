@@ -2,10 +2,10 @@
 
 from typing import Any
 
-from db.data_models import Instrument
 from sqlalchemy.dialects.postgresql import JSONB
 
 from fia_api.core.exceptions import MissingRecordError
+from fia_api.core.models import Instrument
 from fia_api.core.repositories import Repo
 from fia_api.core.specifications.instrument import InstrumentSpecification
 

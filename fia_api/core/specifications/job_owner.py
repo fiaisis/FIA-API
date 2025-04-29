@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from db.data_models import JobOwner
 from sqlalchemy import select
 
+from fia_api.core.models import JobOwner
 from fia_api.core.specifications.base import Specification
 
 

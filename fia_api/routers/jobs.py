@@ -3,17 +3,18 @@ import os
 from http import HTTPStatus
 from typing import Annotated, Literal
 
-from db.data_models import JobType
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.request_models import PartialJobUpdateRequest
-from fia_api.core.responses import CountResponse, JobResponse, JobWithRunResponse
+from fia_api.core.models import JobType
+from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
+from fia_api.core.responses import AutoreductionResponse, CountResponse, JobResponse, JobWithRunResponse
 from fia_api.core.services.job import (
     count_jobs,
     count_jobs_by_instrument,
+    create_autoreduction_job,
     get_all_jobs,
     get_job_by_id,
     get_job_by_instrument,
@@ -239,6 +240,11 @@ async def download_file(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail="Experiment number not found in scenario where it should be expected.",
             )
+        if job.instrument is None:
+            raise HTTPException(
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                detail="Instrument not found in scenario where it should be expected.",
+            )
         filepath = find_file_instrument(
             ceph_dir=ceph_dir,
             instrument=job.instrument.instrument_name,
@@ -271,3 +277,24 @@ async def download_file(
         filename=filename,
         media_type="application/octet-stream",
     )
+
+
+@JobsRouter.post("/job/autoreduction")
+async def create_autoreduction(
+    job_request: AutoreductionRequest,
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+    response: Response,
+) -> AutoreductionResponse:
+    """
+    Given an AutoreductionRequest, return an AutoreductionResponse containing the job id and the autoreduction script
+    \f
+    :param job_request: The AutoreductionRequest
+    :param credentials: Dependency injected HTTPAuthorizationCredentials.
+    :return:  The AutoreductionResponse
+    """
+    user = get_user_from_token(credentials.credentials)
+    if user.user_number != -1:  # API Key user has psuedo user number of -1
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
+    job = create_autoreduction_job(job_request)
+    response.status_code = HTTPStatus.CREATED
+    return AutoreductionResponse(job_id=job.id, script=job.script.script)  # type: ignore

@@ -4,16 +4,22 @@ import os
 from collections.abc import Mapping, Sequence
 from typing import Any, Literal
 
-from db.data_models import Job
 from pydantic import BaseModel
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.exceptions import AuthenticationError, MissingRecordError
 from fia_api.core.job_maker import JobMaker
+from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import Repo
-from fia_api.core.request_models import PartialJobUpdateRequest
+from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
 from fia_api.core.specifications.filters import apply_filters_to_spec
+from fia_api.core.specifications.instrument import InstrumentSpecification
 from fia_api.core.specifications.job import JobSpecification
+from fia_api.core.specifications.job_owner import JobOwnerSpecification
+from fia_api.core.specifications.run import RunSpecification
+from fia_api.core.specifications.script import ScriptSpecification
+from fia_api.core.utility import hash_script
+from fia_api.scripts.acquisition import get_script_for_job
 
 
 def job_maker() -> JobMaker:
@@ -51,7 +57,11 @@ OrderField = Literal[
     "filename",
 ]
 
-_REPO: Repo[Job] = Repo()
+_JOB_REPO: Repo[Job] = Repo()
+_RUN_REPO: Repo[Run] = Repo()
+_INSTRUMENT_REPO: Repo[Instrument] = Repo()
+_OWNER_REPO: Repo[JobOwner] = Repo()
+_SCRIPT_REPO: Repo[Script] = Repo()
 
 
 def get_job_by_instrument(
@@ -85,7 +95,7 @@ def get_job_by_instrument(
     )
     if filters:
         specification = apply_filters_to_spec(filters, specification)
-    return _REPO.find(specification)
+    return _JOB_REPO.find(specification)
 
 
 def get_all_jobs(
@@ -120,7 +130,7 @@ def get_all_jobs(
     if filters:
         apply_filters_to_spec(filters, specification)
 
-    return _REPO.find(specification)
+    return _JOB_REPO.find(specification)
 
 
 def get_job_by_id(job_id: int, user_number: int | None = None) -> Job:
@@ -130,7 +140,7 @@ def get_job_by_id(job_id: int, user_number: int | None = None) -> Job:
     :return: The job
     :raises: MissingRecordError when no jobs for that ID is found
     """
-    job = _REPO.find_one(JobSpecification().by_id(job_id))
+    job = _JOB_REPO.find_one(JobSpecification().by_id(job_id))
     if job is None:
         raise MissingRecordError(f"No Job for id {job_id}")
 
@@ -153,7 +163,7 @@ def count_jobs_by_instrument(instrument: str, filters: Mapping[str, Any]) -> int
     spec = JobSpecification().by_instruments(instruments=[instrument])
     if filters:
         spec = apply_filters_to_spec(filters, spec)
-    return _REPO.count(spec)
+    return _JOB_REPO.count(spec)
 
 
 def count_jobs(filters: Mapping[str, Any] | None = None) -> int:
@@ -164,7 +174,7 @@ def count_jobs(filters: Mapping[str, Any] | None = None) -> int:
     spec = JobSpecification().all()
     if filters:
         spec = apply_filters_to_spec(filters, spec)
-    return _REPO.count(spec)
+    return _JOB_REPO.count(spec)
 
 
 def get_experiment_number_for_job_id(job_id: int) -> int:
@@ -173,7 +183,7 @@ def get_experiment_number_for_job_id(job_id: int) -> int:
     :param job_id: (int) The id of the job
     :return: (int) the experiment number of the job found with the id
     """
-    job = _REPO.find_one(JobSpecification().by_id(job_id))
+    job = _JOB_REPO.find_one(JobSpecification().by_id(job_id))
     if job is not None:
         owner = job.owner
         if owner is not None and owner.experiment_number is not None:
@@ -190,7 +200,7 @@ def update_job_by_id(id_: int, job: PartialJobUpdateRequest) -> Job:
     :param job: The job to update with
     :return: The updated job
     """
-    original_job = _REPO.find_one(JobSpecification().by_id(id_))
+    original_job = _JOB_REPO.find_one(JobSpecification().by_id(id_))
     if original_job is None:
         raise MissingRecordError(f"No job found with id {id_}")
     # We only update the fields that should change, not those that should never e.g. script, inputs.
@@ -200,4 +210,83 @@ def update_job_by_id(id_: int, job: PartialJobUpdateRequest) -> Job:
         if value is not None:
             setattr(original_job, attr, value)
 
-    return _REPO.update_one(original_job)
+    return _JOB_REPO.update_one(original_job)
+
+
+def create_autoreduction_job(job_request: AutoreductionRequest) -> Job:
+    """
+    Create an autoreduction job in the system based on a provided request.
+
+    This method constructs a new job for the autoreduction process. If the run associated with
+    the job request already exists, it is used. If not, the required run and associated entities
+    (instrument, owner) are created. The method also handles the script generation and hashing.
+
+    :param job_request: (AutoreductionRequest) The job creation request data containing information
+                        about the run, instrument name, experiment number, and other related metadata.
+    :return: The created Job instance.
+    """
+
+    run = _RUN_REPO.find_one(RunSpecification().by_filename(job_request.filename))
+
+    if run:
+        job = Job(
+            start=None,
+            end=None,
+            state=State.NOT_STARTED,
+            inputs=job_request.additional_values,
+            script_id=None,
+            outputs=None,
+            runner_image=job_request.runner_image,
+            job_type=JobType.AUTOREDUCTION,
+            run_id=run.id,
+            owner_id=run.owner_id,
+            instrument_id=run.instrument_id,
+        )
+        instrument = run.instrument
+
+    else:
+        instrument = _INSTRUMENT_REPO.find_one(InstrumentSpecification().by_name(job_request.instrument_name))  # type: ignore # The above declaration is guaranteed to be not None, but mypy cannot know this
+        if instrument is None:
+            instrument = _INSTRUMENT_REPO.add_one(Instrument(instrument_name=job_request.instrument_name))
+        owner = _OWNER_REPO.find_one(
+            JobOwnerSpecification().by_values(experiment_number=int(job_request.rb_number), user_number=None)
+        )
+        if owner is None:
+            owner = _OWNER_REPO.add_one(JobOwner(experiment_number=int(job_request.rb_number)))
+        run = _RUN_REPO.add_one(
+            Run(
+                title=job_request.title,
+                users=job_request.users,
+                run_start=job_request.run_start,
+                run_end=job_request.run_end,
+                filename=job_request.filename,
+                owner_id=owner.id,
+                instrument_id=instrument.id,
+                good_frames=job_request.good_frames,
+                raw_frames=job_request.raw_frames,
+            )
+        )
+
+        job = Job(
+            start=None,
+            end=None,
+            state=State.NOT_STARTED,
+            inputs=job_request.additional_values,
+            script_id=None,
+            outputs=None,
+            runner_image=job_request.runner_image,
+            job_type=JobType.AUTOREDUCTION,
+            run_id=run.id,
+            owner_id=owner.id,
+            instrument_id=instrument.id,
+        )
+
+    pre_script = get_script_for_job(instrument.instrument_name, job)
+    script = _SCRIPT_REPO.find_one(ScriptSpecification().by_script_hash(hash_script(pre_script.value)))
+    if script is None:
+        script = Script(script=pre_script.value, sha=pre_script.sha)
+        job.script = script
+    else:
+        job.script_id = script.id
+
+    return _JOB_REPO.add_one(job)

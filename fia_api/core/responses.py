@@ -5,9 +5,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from db.data_models import Job, Run, Script, State
 from pydantic import BaseModel
 
+from fia_api.core.models import Job, Run, Script, State
 from fia_api.core.utility import filter_script_for_tokens
 
 
@@ -151,3 +151,10 @@ class JobWithRunResponse(JobResponse):
             runner_image=job.runner_image,
             type=str(job.job_type),
         )
+
+
+class AutoreductionResponse(BaseModel):
+    """Autoreduction response contains all the data required to trigger an autoreduction"""
+
+    script: str
+    job_id: int

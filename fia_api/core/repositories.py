@@ -5,12 +5,12 @@ import os
 from collections.abc import Sequence
 from typing import Generic, TypeVar
 
-from db.data_models import Base
 from sqlalchemy import NullPool, create_engine, func, select
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.orm import sessionmaker
 
 from fia_api.core.exceptions import NonUniqueRecordError
+from fia_api.core.models import Base
 from fia_api.core.specifications.base import Specification
 
 T = TypeVar("T", bound=Base)

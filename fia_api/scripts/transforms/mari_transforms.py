@@ -5,10 +5,10 @@ scripts.
 
 import logging
 
-from db.data_models import Job
 from sqlalchemy import ColumnElement
 from sqlalchemy.dialects.postgresql import JSONB
 
+from fia_api.core.models import Job
 from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.transform import Transform
 

@@ -10,8 +10,7 @@ MissingTransformError (Exception): A custom exception for handling cases where a
 
 from abc import ABC, abstractmethod
 
-from db.data_models import Job
-
+from fia_api.core.models import Job
 from fia_api.scripts.pre_script import PreScript
 
 

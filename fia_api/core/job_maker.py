@@ -1,34 +1,25 @@
 from __future__ import annotations
 
 import functools
-import hashlib
 import json
 import logging
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from db.data_models import Job, JobOwner, JobType, Script, State
 from pika.adapters.blocking_connection import BlockingConnection  # type: ignore[import-untyped]
 from pika.connection import ConnectionParameters  # type: ignore[import-untyped]
 from pika.credentials import PlainCredentials  # type: ignore[import-untyped]
 
 from fia_api.core.exceptions import JobRequestError
+from fia_api.core.models import Job, JobOwner, JobType, Script, State
 from fia_api.core.repositories import Repo
 from fia_api.core.specifications.job import JobSpecification
 from fia_api.core.specifications.job_owner import JobOwnerSpecification
 from fia_api.core.specifications.script import ScriptSpecification
+from fia_api.core.utility import hash_script
 
 logger = logging.getLogger(__name__)
-
-
-def hash_script(script: str) -> str:
-    """
-    Given a script, return the sha512 hash of the script
-    :param script: the script to hash
-    :return: The script hash
-    """
-    return hashlib.sha512(script.encode()).hexdigest()
 
 
 def require_owner(func: Callable[..., Any]) -> Callable[..., Any]:

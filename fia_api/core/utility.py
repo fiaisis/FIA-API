@@ -1,6 +1,9 @@
 """Collection of utility functions"""
 
+from __future__ import annotations
+
 import functools
+import hashlib
 import os
 from collections.abc import Callable
 from contextlib import suppress
@@ -176,3 +179,12 @@ def request_path_check(path: Path, base_dir: str) -> Path:
     if path.is_relative_to(base_dir):
         path = path.relative_to(base_dir)
     return path
+
+
+def hash_script(script: str) -> str:
+    """
+    Given a script, return the sha512 hash of the script
+    :param script: the script to hash
+    :return: The script hash
+    """
+    return hashlib.sha512(script.encode()).hexdigest()

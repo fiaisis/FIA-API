@@ -4,10 +4,10 @@ import random
 from datetime import UTC, datetime, timedelta
 from typing import ClassVar
 
-from db.data_models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
 from faker import Faker
 from faker.providers import BaseProvider
 
+from fia_api.core.models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import ENGINE, SESSION
 
 random.seed(0)

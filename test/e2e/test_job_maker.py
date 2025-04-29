@@ -3,11 +3,11 @@ from http import HTTPStatus
 from typing import Any
 
 import pytest
-from db.data_models import Job
 from pika.adapters.blocking_connection import BlockingChannel, BlockingConnection
 from sqlalchemy import func, select
 from starlette.testclient import TestClient
 
+from fia_api.core.models import Job
 from fia_api.fia_api import app
 from utils.db_generator import SESSION
 
