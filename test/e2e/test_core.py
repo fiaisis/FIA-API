@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from db.data_models import Instrument, Job, JobOwner, JobType, Run, Script, State
+from sqlalchemy import select
 from sqlalchemy.orm import make_transient
 from starlette.testclient import TestClient
 
@@ -1056,6 +1056,62 @@ def test_download_file_missing_filepath(mock_post, mock_get_experiments, mock_ge
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert "File not found" in response.text
+
+
+def test_post_autoreduction_run_doesnt_exist():
+    response = client.post(
+        "/job/autoreduction",
+        json={
+            "filename": "test123.nxspe",
+            "rb_number": "12345",
+            "instrument_name": "TEST",
+            "users": "user1, user2",
+            "title": "test experiment",
+            "run_start": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
+            "run_end": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
+            "good_frames": 5,
+            "raw_frames": 10,
+            "additional_values": {"foo": "bar", "baz": 1},
+            "runner_image": "test_runner_image",
+        },
+        headers=API_KEY_HEADER,
+    )
+
+    assert response.status_code == HTTPStatus.CREATED
+    with SESSION() as session:
+        run = session.execute(select(Run).order_by(Run.id.desc()).limit(1)).scalar()
+        assert run.filename == "test123.nxspe"
+        expected_job_id = run.jobs[0].id
+        expected_script = run.jobs[0].script.script
+
+        assert response.json()["job_id"] == expected_job_id
+        assert response.json()["script"] == expected_script
+
+
+def test_post_autoreduction_run_exists():
+    with SESSION() as session:
+        run = session.execute(select(Run).where(Run.id == 5001).limit(1)).scalar()
+        response = client.post(
+            "/job/autoreduction",
+            json={
+                "filename": run.filename,
+                "rb_number": "12345",
+                "instrument_name": "TEST",
+                "users": "user1, user2",
+                "title": "test experiment",
+                "run_start": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
+                "run_end": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
+                "good_frames": 5,
+                "raw_frames": 10,
+                "additional_values": {"foo": "bar", "baz": 1},
+                "runner_image": "test_runner_image",
+            },
+            headers=API_KEY_HEADER,
+        )
+        session.refresh(run)
+        assert response.status_code == HTTPStatus.CREATED
+        assert response.json()["job_id"] in [job.id for job in run.jobs]
+        assert response.json()["script"] in [job.script.script if job.script is not None else None for job in run.jobs]
 
 
 @patch("fia_api.core.auth.tokens.requests.post")

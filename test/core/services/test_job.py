@@ -1,12 +1,13 @@
 """Tests for job service"""
 
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, ANY
 
 import faker.generator
 import pytest
-from db.data_models import State
 
 from fia_api.core.exceptions import AuthenticationError, MissingRecordError
+from fia_api.core.models import State, Script, Run, JobOwner, Instrument, JobType
+from fia_api.core.request_models import AutoreductionRequest
 from fia_api.core.services.job import (
     count_jobs,
     count_jobs_by_instrument,
@@ -15,6 +16,7 @@ from fia_api.core.services.job import (
     get_job_by_id,
     get_job_by_instrument,
     update_job_by_id,
+    create_autoreduction_job,
 )
 
 
@@ -300,3 +302,216 @@ def test_update_job_by_id_never_updates_certain_fields(mock_spec_class, mock_rep
     assert original_job.input == {"output_key": "previous_output"}  # Ensure this remains unchanged
     assert original_job.stacktrace == "Some stacktrace info"
     mock_repo.update_one.assert_called_once_with(original_job)
+
+
+def make_request(**kwargs) -> AutoreductionRequest:
+    """
+    Build a valid AutoreductionRequest.
+    """
+    return AutoreductionRequest(
+        filename=kwargs.get("filename", "file.fits"),
+        rb_number=kwargs.get("rb_number", "123"),
+        instrument_name=kwargs.get("instrument_name", "CAM1"),
+        title=kwargs.get("title", "My Run"),
+        users=kwargs.get("users", "alice,bob"),
+        run_start=kwargs.get("run_start", "2025-04-20T00:00:00"),
+        run_end=kwargs.get("run_end", "2025-04-20T01:00:00"),
+        good_frames=kwargs.get("good_frames", 10),
+        raw_frames=kwargs.get("raw_frames", 20),
+        additional_values=kwargs.get("additional_values", {"a": 1}),
+        runner_image=kwargs.get("runner_image", "python:3.9"),
+    )
+
+
+@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job._SCRIPT_REPO")
+@patch("fia_api.core.services.job.hash_script")
+@patch("fia_api.core.services.job.get_script_for_job")
+@patch("fia_api.core.services.job._RUN_REPO")
+def test_run_exists_creates_job_with_new_script(
+    mock_run_repo,
+    mock_get_script,
+    mock_hash_script,
+    mock_script_repo,
+    mock_job_repo,
+):
+    # Simulate an existing run in the repository
+    existing_run = Mock(spec=Run)
+    existing_run.id = 42
+    existing_run.owner_id = 7
+    existing_run.instrument_id = 99
+    existing_run.instrument = Mock(spec=Instrument, instrument_name="CAM1")
+    mock_run_repo.find_one.return_value = existing_run
+
+    # Simulate script generation & no existing script in DB
+    pre_script = Mock(value="print('do work')", sha="deadbeef")
+    mock_get_script.return_value = pre_script
+    mock_hash_script.return_value = "deadbeef"
+    mock_script_repo.find_one.return_value = None
+
+    req = make_request(
+        filename="foo.fits",
+        additional_values={"x": 1},
+        runner_image="python:3.10",
+        instrument_name="CAM1",
+        rb_number="123",
+    )
+
+    returned_job = Mock()
+    mock_job_repo.add_one.return_value = returned_job
+
+    result = create_autoreduction_job(req)
+    assert result is returned_job
+
+    mock_run_repo.find_one.assert_called_once_with(ANY)  # we looked up by filename
+    mock_get_script.assert_called_once_with("CAM1", ANY)
+    mock_hash_script.assert_called_once_with(pre_script.value)
+
+    passed_job = mock_job_repo.add_one.call_args[0][0]
+    # New Script() attached
+    assert isinstance(passed_job.script, Script)
+    assert passed_job.script.script == pre_script.value
+    assert passed_job.script.sha == pre_script.sha
+    assert passed_job.script_id is None
+
+    # Core fields correct
+    assert passed_job.runner_image == "python:3.10"
+    assert passed_job.job_type == JobType.AUTOREDUCTION
+    assert passed_job.inputs == {"x": 1}
+    assert passed_job.run == existing_run
+    assert passed_job.owner_id == existing_run.owner_id
+    assert passed_job.instrument_id == existing_run.instrument_id
+
+
+@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job._SCRIPT_REPO")
+@patch("fia_api.core.services.job.hash_script")
+@patch("fia_api.core.services.job.get_script_for_job")
+@patch("fia_api.core.services.job._RUN_REPO")
+def test_run_exists_reuses_existing_script(
+    mock_run_repo,
+    mock_get_script,
+    mock_hash_script,
+    mock_script_repo,
+    mock_job_repo,
+):
+    existing_run = Mock(spec=Run)
+    existing_run.id = 7
+    existing_run.owner_id = 5
+    existing_run.instrument_id = 11
+    existing_run.instrument = Mock(spec=Instrument, instrument_name="CAM2")
+    mock_run_repo.find_one.return_value = existing_run
+
+    pre_script = Mock(value="do it", sha="cafebabe")
+    mock_get_script.return_value = pre_script
+    mock_hash_script.return_value = "cafebabe"
+    # Simulate existing Script in DB
+    existing_script = Mock(spec=Script, id=314)
+    mock_script_repo.find_one.return_value = existing_script
+
+    req = make_request(
+        filename="bar.fits",
+        additional_values={},
+        runner_image="img:latest",
+        instrument_name="CAM2",
+        rb_number="999",
+    )
+
+    returned_job = Mock()
+    mock_job_repo.add_one.return_value = returned_job
+
+    result = create_autoreduction_job(req)
+    assert result is returned_job
+
+    passed_job = mock_job_repo.add_one.call_args[0][0]
+    # Should reuse existing script via script_id
+    assert passed_job.script_id == existing_script.id
+    assert not hasattr(passed_job, "script") or passed_job.script is None
+
+
+@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job._SCRIPT_REPO")
+@patch("fia_api.core.services.job.hash_script")
+@patch("fia_api.core.services.job.get_script_for_job")
+@patch("fia_api.core.services.job._OWNER_REPO")
+@patch("fia_api.core.services.job._INSTRUMENT_REPO")
+@patch("fia_api.core.services.job._RUN_REPO")
+def test_run_not_exists_creates_instrument_owner_run_and_new_script(
+    mock_run_repo,
+    mock_instrument_repo,
+    mock_owner_repo,
+    mock_get_script,
+    mock_hash_script,
+    mock_script_repo,
+    mock_job_repo,
+):
+    # No run exists
+    mock_run_repo.find_one.return_value = None
+
+    # Instrument not found → add it
+    mock_instrument_repo.find_one.return_value = None
+    new_instr = Mock(spec=Instrument, id=77, instrument_name="XYZ")
+    mock_instrument_repo.add_one.return_value = new_instr
+
+    # Owner not found → add it
+    mock_owner_repo.find_one.return_value = None
+    new_owner = Mock(spec=JobOwner, id=88, experiment_number=4321)
+    mock_owner_repo.add_one.return_value = new_owner
+
+    # New run will be created
+    created_run = Mock(spec=Run, id=99)
+    mock_run_repo.add_one.return_value = created_run
+
+    # Script logic: generate + no existing script
+    pre_script = Mock(value="xyz", sha="00ff")
+    mock_get_script.return_value = pre_script
+    mock_hash_script.return_value = "00ff"
+    mock_script_repo.find_one.return_value = None
+
+    req = make_request(
+        filename="baz.fits",
+        additional_values={"k": "v"},
+        runner_image="ri",
+        instrument_name="XYZ",
+        rb_number="4321",
+        good_frames=3,
+        raw_frames=5,
+    )
+
+    returned_job = Mock()
+    mock_job_repo.add_one.return_value = returned_job
+
+    result = create_autoreduction_job(req)
+    assert result is returned_job
+
+    # Should have tried to find then add the instrument
+    mock_instrument_repo.find_one.assert_called_once_with(ANY)
+    inst_arg = mock_instrument_repo.add_one.call_args[0][0]
+    assert isinstance(inst_arg, Instrument)
+    assert inst_arg.instrument_name == "XYZ"
+
+    # Should have tried to find then add the owner
+    mock_owner_repo.find_one.assert_called_once_with(ANY)
+    owner_arg = mock_owner_repo.add_one.call_args[0][0]
+    assert isinstance(owner_arg, JobOwner)
+    assert owner_arg.experiment_number == 4321
+
+    # Verify new Run fields
+    run_arg = mock_run_repo.add_one.call_args[0][0]
+    assert isinstance(run_arg, Run)
+    assert run_arg.filename == "baz.fits"
+    assert run_arg.owner_id == new_owner.id
+    assert run_arg.instrument_id == new_instr.id
+    assert run_arg.good_frames == 3
+    assert run_arg.raw_frames == 5
+
+    # Verify Script attached
+    passed_job = mock_job_repo.add_one.call_args[0][0]
+    assert isinstance(passed_job.script, Script)
+    assert passed_job.script.sha == "00ff"
+    assert passed_job.script.script == pre_script.value
+
+    # And job references correct IDs
+    assert passed_job.run_id == created_run.id
+    assert passed_job.owner_id == new_owner.id
+    assert passed_job.instrument_id == new_instr.id
