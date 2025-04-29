@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import make_transient
 from starlette.testclient import TestClient
 
@@ -189,8 +189,6 @@ def test_get_all_job_for_user(mock_post, mock_get_experiment_numbers_for_user_nu
     mock_get_experiment_numbers_for_user_number.return_value = [1820497]
     response = client.get("/jobs", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.OK
-    expected_number_of_jobs = 1
-    assert len(response.json()) == expected_number_of_jobs
     assert response.json() == [
         {
             "id": 5001,
@@ -698,7 +696,7 @@ def test_update_job_with_api_key():
     job = JobResponse.from_job(TEST_JOB)
     job.status_message = "hello"
     job.state = "SUCCESSFUL"
-    response = client.patch("/job/5002", json=job.model_dump(mode="json"), headers=API_KEY_HEADER)
+    response = client.patch(f"/job/{TEST_JOB.id}", json=job.model_dump(mode="json"), headers=API_KEY_HEADER)
     assert response.status_code == HTTPStatus.OK
 
     updated_response = response.json()
@@ -719,7 +717,7 @@ def test_update_job_as_staff(mock_post):
     job = JobResponse.from_job(TEST_JOB)
     job.status_message = "hello"
     job.state = "SUCCESSFUL"
-    response = client.patch("/job/5002", json=job.model_dump(mode="json"), headers=STAFF_HEADER)
+    response = client.patch(f"/job/{TEST_JOB.id}", json=job.model_dump(mode="json"), headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
 
     updated_response = response.json()
@@ -1025,39 +1023,49 @@ def test_post_autoreduction_run_doesnt_exist():
 
     assert response.status_code == HTTPStatus.CREATED
     with SESSION() as session:
-        run = session.execute(select(Run).order_by(Run.id.desc()).limit(1)).scalar()
-        assert run.filename == "test123.nxspe"
-        expected_job_id = run.jobs[0].id
-        expected_script = run.jobs[0].script.script
+        try:
+            run = session.execute(select(Run).order_by(Run.id.desc()).limit(1)).scalar()
+            assert run.filename == "test123.nxspe"
+            expected_job_id = run.jobs[0].id
+            expected_script = run.jobs[0].script.script
 
-        assert response.json()["job_id"] == expected_job_id
-        assert response.json()["script"] == expected_script
+            assert response.json()["job_id"] == expected_job_id
+            assert response.json()["script"] == expected_script
+        finally:
+            session.execute(delete(Job).where(Job.id == expected_job_id))
+            session.commit()
 
 
 def test_post_autoreduction_run_exists():
     with SESSION() as session:
-        run = session.execute(select(Run).where(Run.id == 5001).limit(1)).scalar()
-        response = client.post(
-            "/job/autoreduction",
-            json={
-                "filename": run.filename,
-                "rb_number": "12345",
-                "instrument_name": "TEST",
-                "users": "user1, user2",
-                "title": "test experiment",
-                "run_start": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
-                "run_end": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
-                "good_frames": 5,
-                "raw_frames": 10,
-                "additional_values": {"foo": "bar", "baz": 1},
-                "runner_image": "test_runner_image",
-            },
-            headers=API_KEY_HEADER,
-        )
-        session.refresh(run)
-        assert response.status_code == HTTPStatus.CREATED
-        assert response.json()["job_id"] in [job.id for job in run.jobs]
-        assert response.json()["script"] in [job.script.script if job.script is not None else None for job in run.jobs]
+        try:
+            run = session.execute(select(Run).where(Run.id == 5001).limit(1)).scalar()
+            response = client.post(
+                "/job/autoreduction",
+                json={
+                    "filename": run.filename,
+                    "rb_number": "12345",
+                    "instrument_name": "TEST",
+                    "users": "user1, user2",
+                    "title": "test experiment",
+                    "run_start": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
+                    "run_end": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
+                    "good_frames": 5,
+                    "raw_frames": 10,
+                    "additional_values": {"foo": "bar", "baz": 1},
+                    "runner_image": "test_runner_image",
+                },
+                headers=API_KEY_HEADER,
+            )
+            session.refresh(run)
+            assert response.status_code == HTTPStatus.CREATED
+            assert response.json()["job_id"] in [job.id for job in run.jobs]
+            assert response.json()["script"] in [
+                job.script.script if job.script is not None else None for job in run.jobs
+            ]
+        finally:
+            session.execute(delete(Job).where(Job.id == response.json()["job_id"]))
+            session.commit()
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
