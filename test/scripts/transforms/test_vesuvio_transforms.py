@@ -8,7 +8,7 @@ from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.vesuvio_transform import VesuvioTransform
 
 
-@pytest.fixture()
+@pytest.fixture
 def script():
     """
     VesuvioTransform  PreScript fixture
@@ -34,7 +34,7 @@ cache_location="/extras/vesuvio/cached_files/"
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def reduction():
     """
     Reduction fixture
