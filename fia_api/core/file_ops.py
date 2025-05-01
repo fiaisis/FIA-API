@@ -15,7 +15,7 @@ def read_dir(path: Path) -> list[str]:
     :return: A list of paths in the given param path
     """
     try:
-        return os.listdir(path)
+        return os.listdir(path)  # noqa: PTH208
     except Exception as err:
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,

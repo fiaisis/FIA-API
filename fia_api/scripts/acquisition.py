@@ -48,7 +48,7 @@ def _get_script_from_remote(instrument: str) -> PreScript:
     try:
         logger.info("Attempting to get latest %s script...", instrument)
         request = requests.get(
-            f"https://raw.githubusercontent.com/fiaisis/autoreduction-scripts/main/" f"{instrument.upper()}/reduce.py",
+            f"https://raw.githubusercontent.com/fiaisis/autoreduction-scripts/main/{instrument.upper()}/reduce.py",
             timeout=30,
         )
         if request.status_code != HTTPStatus.OK:
