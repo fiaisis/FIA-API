@@ -30,7 +30,7 @@ def forbid_path_characters(func: FuncT) -> FuncT:
             raise UnsafePathError(f"Potentially unsafe path was requested: {arg}")
         return func(arg)
 
-    return cast(FuncT, wrapper)
+    return cast("FuncT", wrapper)
 
 
 def filter_script_for_tokens(script: str) -> str:

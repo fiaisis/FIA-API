@@ -161,7 +161,7 @@ async def count_jobs_for_instrument(
     :return: CountResponse containing the count
     """
     instrument = instrument.upper()
-    return CountResponse(count=count_jobs_by_instrument(instrument, filters=json.loads(filters) if filters else None))
+    return CountResponse(count=count_jobs_by_instrument(instrument, filters=json.loads(filters) if filters else None))  # type: ignore
 
 
 @JobsRouter.get("/job/{job_id}", tags=["jobs"])

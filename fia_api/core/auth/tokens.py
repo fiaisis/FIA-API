@@ -14,7 +14,7 @@ from fia_api.core.exceptions import AuthenticationError
 
 logger = logging.getLogger(__name__)
 
-DEV_MODE = bool(os.environ.get("DEV_MODE", False))
+DEV_MODE = bool(os.environ.get("DEV_MODE", False))  # noqa: PLW1508
 
 
 @dataclass

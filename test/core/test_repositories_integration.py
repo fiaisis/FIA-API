@@ -112,7 +112,7 @@ def _setup() -> None:
         session.refresh(TEST_RUN_3)
 
 
-@pytest.fixture()
+@pytest.fixture
 def job_repo() -> Repo[Job]:
     """
     JobRepo fixture
@@ -121,7 +121,7 @@ def job_repo() -> Repo[Job]:
     return Repo()
 
 
-@pytest.fixture()
+@pytest.fixture
 def run_repo() -> Repo[Run]:
     """
     RunRepo fixture
@@ -130,7 +130,7 @@ def run_repo() -> Repo[Run]:
     return Repo()
 
 
-@pytest.fixture()
+@pytest.fixture
 def owner_repo() -> Repo[JobOwner]:
     """
     JobOwnerRepo fixture.

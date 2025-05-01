@@ -45,7 +45,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
 
-DEV_MODE = bool(os.environ.get("DEV_MODE", False))
+DEV_MODE = bool(os.environ.get("DEV_MODE", False))  # noqa: PLW1508
 
 app = FastAPI(title="FIA API", root_path="/" if DEV_MODE else "/api")
 

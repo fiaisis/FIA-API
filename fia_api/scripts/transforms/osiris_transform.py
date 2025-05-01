@@ -36,13 +36,13 @@ class OsirisTransform(Transform):
                 lines[index] = f"calibration_run_numbers = [{job.inputs['calibration_run_numbers']}]"  # type: ignore
                 continue
             if line.startswith("cycle ="):
-                lines[index] = f"cycle = \"{job.inputs['cycle_string']}\""  # type: ignore
+                lines[index] = f'cycle = "{job.inputs["cycle_string"]}"'  # type: ignore
                 continue
             if line.startswith("analyser ="):
-                lines[index] = f"analyser = \"{job.inputs['analyser']}\""  # type: ignore
+                lines[index] = f'analyser = "{job.inputs["analyser"]}"'  # type: ignore
                 continue
             if line.startswith("reflection = "):
-                lines[index] = f"reflection = \"{job.inputs['reflection']}\""  # type: ignore
+                lines[index] = f'reflection = "{job.inputs["reflection"]}"'  # type: ignore
                 continue
             if line.startswith("spectroscopy_reduction ="):
                 lines[index] = f"spectroscopy_reduction = {job.inputs['spectroscopy_reduction'] == 'true'}"  # type: ignore

@@ -17,7 +17,7 @@ def _setup_env(monkeypatch, tmp_path):
     monkeypatch.setenv("EXTRAS_DIRECTORY", str(tmp_path))
 
 
-@pytest.fixture()
+@pytest.fixture
 def _setup_inst_folder(tmp_path):
     for instrument_folder in sorted(instrument_folders):
         path = tmp_path / instrument_folder
@@ -25,12 +25,12 @@ def _setup_inst_folder(tmp_path):
 
 
 # To prevent duplicated tests with multiple backends
-@pytest.fixture()
+@pytest.fixture
 def anyio_backend():
     return "asyncio"
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_file():
     file_names = ["test_file_1.txt", "test_file_2.png"]
     files = {
@@ -95,7 +95,7 @@ def test_read_dir_handles_io_error(tmp_path):
             pytest.raises(fastapi.exceptions.HTTPException)
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_write_files_handles_permission_error(tmp_path, mock_file):
     # Mock UploadFile
     mock_remote_file = MagicMock(spec=UploadFile)
@@ -120,7 +120,7 @@ async def test_write_files_handles_permission_error(tmp_path, mock_file):
     mock_path.write_bytes.assert_awaited_once_with(mock_file[1])  # Ensure file written
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_write_files_handles_file_not_found_error(tmp_path, mock_file):
     path = tmp_path / "not_found"
     thefile = UploadFile(

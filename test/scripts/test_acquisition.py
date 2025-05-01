@@ -30,7 +30,7 @@ def _working_directory_fix():
         os.chdir(current_working_directory / ".." / "..")
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_response():
     """
     Response pytest fixture

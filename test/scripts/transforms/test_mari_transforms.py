@@ -8,7 +8,7 @@ from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.mari_transforms import MariTransform
 
 
-@pytest.fixture()
+@pytest.fixture
 def script():
     """
     MariTransform  PreScript fixture
@@ -89,7 +89,7 @@ output = [f'/output/{output_ws.getName()}.nxs']"""
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def reduction():
     """
     Reduction fixture
