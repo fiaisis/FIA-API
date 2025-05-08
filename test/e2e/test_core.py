@@ -47,7 +47,7 @@ TEST_RUN = Run(
 TEST_RUN.jobs.append(TEST_JOB)
 
 
-@pytest.fixture
+@pytest.fixture()
 def _user_owned_data_setup() -> None:
     """
     Set up the test database before module
