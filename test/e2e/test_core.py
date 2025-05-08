@@ -47,7 +47,7 @@ TEST_RUN = Run(
 TEST_RUN.jobs.append(TEST_JOB)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _user_owned_data_setup() -> None:
     """
     Set up the test database before module
@@ -1008,7 +1008,7 @@ def test_post_autoreduction_run_doesnt_exist():
         json={
             "filename": "test123.nxspe",
             "rb_number": "12345",
-            "instrument_name": "TEST",
+            "instrument_name": "LOQ",
             "users": "user1, user2",
             "title": "test experiment",
             "run_start": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
@@ -1045,7 +1045,7 @@ def test_post_autoreduction_run_exists():
                 json={
                     "filename": run.filename,
                     "rb_number": "12345",
-                    "instrument_name": "TEST",
+                    "instrument_name": "LOQ",
                     "users": "user1, user2",
                     "title": "test experiment",
                     "run_start": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
