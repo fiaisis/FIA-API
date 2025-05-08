@@ -241,6 +241,7 @@ def create_autoreduction_job(job_request: AutoreductionRequest) -> Job:
             run_id=run.id,
             owner_id=run.owner_id,
             instrument_id=run.instrument_id,
+            instrument=run.instrument,
         )
         instrument = run.instrument
 
