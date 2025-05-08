@@ -279,6 +279,7 @@ def create_autoreduction_job(job_request: AutoreductionRequest) -> Job:
             run_id=run.id,
             owner_id=owner.id,
             instrument_id=instrument.id,
+            instrument=instrument,
         )
 
     pre_script = get_script_for_job(instrument.instrument_name, job)
