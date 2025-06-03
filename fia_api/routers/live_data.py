@@ -33,6 +33,7 @@ async def update_instrument_script(
 ) -> Literal["ok"]:
     """
     Given an instrument string and a script request, update the live data script for that instrument
+    \f
     :param instrument: The instrument string
     :param script_request: The json wrapped update request
     :param credentials: injected http authorization credentials
