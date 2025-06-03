@@ -176,6 +176,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:password@localhost:5432/test_db
           GITHUB_PACKAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SCRIPT_WRITE_TOKEN: ${{ secrets.SCRIPT_WRITE_TOKEN }}
         run: |
           pytest test/e2e --random-order --random-order-bucket=global --cov --cov-report=xml --ignore=test/e2e/test_job_maker.py
 
