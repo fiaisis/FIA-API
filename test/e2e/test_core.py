@@ -597,6 +597,46 @@ def test_put_instrument_specification_no_api_key():
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
+def test_get_instrument_latest_run(mock_post):
+    """
+    Test correct latest run for instrument returned
+    :return:
+    """
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get("/instrument/let/latest-run", headers=STAFF_HEADER)
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"latest_run": "75827"}
+
+
+def test_get_instrument_latest_run_no_jwt_returns_403():
+    """
+    Test that getting latest run without JWT returns 403
+    :return:
+    """
+    response = client.get("/instrument/het/latest-run")
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_get_instrument_latest_run_bad_jwt():
+    """
+    Test that getting latest run with bad JWT returns 403
+    :return:
+    """
+    response = client.get("/instrument/het/latest-run", headers={"Authorization": "foo"})
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_put_instrument_latest_run(mock_post):
+    """Test instrument latest run is updated"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    client.put("/instrument/tosca/latest-run", json={"latest_run": "54321"}, headers=STAFF_HEADER)
+    response = client.get("/instrument/tosca/latest-run", headers=STAFF_HEADER)
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"latest_run": "54321"}
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
 def test_get_mantid_runners(mock_post):
     """Test endpoint contains all the Mantid runners."""
     mock_post.return_value.status_code = HTTPStatus.OK
