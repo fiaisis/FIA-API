@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
-from typing import Literal
 
 from sqlalchemy import Enum, ForeignKey, Integer, inspect
 from sqlalchemy.dialects.postgresql import JSONB
@@ -181,44 +180,3 @@ class Run(Base):
             f" users={self.users}, owner_id={self.owner_id}, run_start={self.run_start},"
             f" run_end={self.run_end}, good_frames={self.good_frames}, raw_frames={self.raw_frames})>"
         )
-
-
-InstrumentString = Literal[
-    "alf",
-    "argus",
-    "chipir",
-    "chronus",
-    "crisp",
-    "emu",
-    "enginx",
-    "gem",
-    "hifi",
-    "hrpd",
-    "imat",
-    "ines",
-    "inter",
-    "iris",
-    "larmor",
-    "let",
-    "loq",
-    "maps",
-    "mari",
-    "merlin",
-    "musr",
-    "nimrod",
-    "offspec",
-    "osiris",
-    "pearl",
-    "polaris",
-    "polref",
-    "sandals",
-    "sans2d",
-    "surf",
-    "sxd",
-    "tosca",
-    "vesuvio",
-    "wish",
-    "zoom",
-    "test",
-    "test",
-]

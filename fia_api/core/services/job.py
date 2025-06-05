@@ -7,7 +7,7 @@ from typing import Any, Literal
 from pydantic import BaseModel
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
-from fia_api.core.exceptions import AuthError, MissingRecordError
+from fia_api.core.exceptions import AuthenticationError, MissingRecordError
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import Repo
@@ -149,7 +149,7 @@ def get_job_by_id(job_id: int, user_number: int | None = None) -> Job:
         if job.owner is None or (
             job.owner.experiment_number not in experiments and job.owner.user_number != user_number
         ):
-            raise AuthError("User does not have permission for job")
+            raise AuthenticationError("User does not have permission for job")
 
     return job
 

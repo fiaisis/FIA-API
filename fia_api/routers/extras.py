@@ -1,19 +1,58 @@
 import os
 from http import HTTPStatus
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.file_ops import read_dir, write_file_from_remote
-from fia_api.core.models import InstrumentString
 from fia_api.core.utility import safe_check_filepath
 
 ExtrasRouter = APIRouter(prefix="/extras", tags=["files"])
 
 jwt_api_security = JWTAPIBearer()
+
+InstrumentString = Literal[
+    "alf",
+    "argus",
+    "chipir",
+    "chronus",
+    "crisp",
+    "emu",
+    "enginx",
+    "gem",
+    "hifi",
+    "hrpd",
+    "imat",
+    "ines",
+    "inter",
+    "iris",
+    "larmor",
+    "let",
+    "loq",
+    "maps",
+    "mari",
+    "merlin",
+    "musr",
+    "nimrod",
+    "offspec",
+    "osiris",
+    "pearl",
+    "polaris",
+    "polref",
+    "sandals",
+    "sans2d",
+    "surf",
+    "sxd",
+    "tosca",
+    "vesuvio",
+    "wish",
+    "zoom",
+    "test",
+    "test",
+]
 
 
 @ExtrasRouter.get("/", tags=["files"])
