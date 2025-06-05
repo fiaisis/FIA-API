@@ -9,7 +9,7 @@ class MissingRecordError(DatabaseError):
     """Record was requested but did not exist"""
 
 
-class AuthError(Exception):
+class AuthenticationError(Exception):
     """Raised when there was a problem with authentication or authorisation"""
 
 

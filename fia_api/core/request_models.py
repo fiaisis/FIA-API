@@ -36,11 +36,3 @@ class AutoreductionRequest(BaseModel):
     raw_frames: int
     additional_values: dict[str, Any]
     runner_image: str
-
-
-class LiveDataScriptUpdateRequest(BaseModel):
-    """
-    Script Update Request for live data
-    """
-
-    value: str

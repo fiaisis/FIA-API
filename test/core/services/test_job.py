@@ -5,7 +5,7 @@ from unittest.mock import ANY, Mock, patch
 import faker.generator
 import pytest
 
-from fia_api.core.exceptions import AuthError, MissingRecordError
+from fia_api.core.exceptions import AuthenticationError, MissingRecordError
 from fia_api.core.models import Instrument, JobOwner, JobType, Run, Script, State
 from fia_api.core.request_models import AutoreductionRequest
 from fia_api.core.services.job import (
@@ -91,7 +91,7 @@ def test_get_job_by_id_for_user_no_experiments(mock_get_exp, mock_repo):
     mock_repo.find_one.return_value = job
     mock_get_exp.return_value = []
 
-    with pytest.raises(AuthError):
+    with pytest.raises(AuthenticationError):
         get_job_by_id(1, user_number=1234)
 
 

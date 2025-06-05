@@ -9,7 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.middleware.cors import CORSMiddleware
 
 from fia_api.core.exceptions import (
-    AuthError,
+    AuthenticationError,
     JobRequestError,
     MissingRecordError,
     MissingScriptError,
@@ -29,7 +29,6 @@ from fia_api.routers.health import health_router
 from fia_api.routers.instrument_specs import InstrumentSpecRouter
 from fia_api.routers.job_creation import JobCreationRouter
 from fia_api.routers.jobs import JobsRouter
-from fia_api.routers.live_data import LiveDataRouter
 
 
 class EndpointFilter(logging.Filter):
@@ -67,11 +66,10 @@ app.include_router(JobCreationRouter)
 app.include_router(JobsRouter)
 app.include_router(health_router)
 app.include_router(FindFileRouter)
-app.include_router(LiveDataRouter)
 
 app.add_exception_handler(MissingRecordError, missing_record_handler)
 app.add_exception_handler(MissingScriptError, missing_script_handler)
 app.add_exception_handler(UnsafePathError, unsafe_path_handler)
-app.add_exception_handler(AuthError, authentication_error_handler)
+app.add_exception_handler(AuthenticationError, authentication_error_handler)
 app.add_exception_handler(JobRequestError, bad_job_request_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
