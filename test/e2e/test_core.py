@@ -618,6 +618,22 @@ def test_get_instrument_latest_run_no_jwt_returns_403():
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_get_instrument_latest_run_user_token_returns_403(mock_post):
+    """Test that getting latest run with non staff token returns 403"""
+    mock_post.return_value.status_code = HTTPStatus.OK
+    response = client.get("/instrument/het/latest-run", headers=USER_HEADER)
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_put_instrument_latest_run_with_user_token_returns_403(mock_post):
+    mock_post.return_value.status_code = HTTPStatus.OK
+    """Test that putting latest run with non staff token returns 403"""
+    response = client.put("/instrument/het/latest-run", json={"latest_run": "75827"}, headers=USER_HEADER)
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
 def test_get_instrument_latest_run_bad_jwt():
     """
     Test that getting latest run with bad JWT returns 403
