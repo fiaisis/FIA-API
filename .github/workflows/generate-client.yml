@@ -54,18 +54,13 @@ jobs:
 
       - name: Generate client code
         run: |
-          # Generate the client code
           openapi-python-client generate --url http://localhost:8000/openapi.json
-          # Move generated files to fia_api_client directory if needed
-          if [ -d "fia-api-client" ]; then
-            cp -r fia-api-client/* fia_api_client/
-            rm -rf fia-api-client
-          fi
+          
 
       - name: Commit changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add fia_api_client/
+          git add fia-api-client/
           git commit -m "Update API client based on latest OpenAPI schema" || echo "No changes to commit"
           git push
