@@ -37,6 +37,10 @@ test = [
     "pytest-env==1.1.5",
 ]
 
+client-generation = [
+    "openapi-python-client==0.25.0",
+]
+
 [tool.setuptools]
 packages = ["fia_api"]
 
