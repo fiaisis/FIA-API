@@ -97,10 +97,10 @@ def test_get_all_job_for_staff(mock_post):
 
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_get_job_filtered_on_exact_experiment_number(mock_post):
-    expected_experiment_number = 882000
+    expected_experiment_number = 818853
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get(
-        '/jobs?include_run=true&filters={"experiment_number_in": [882000]}',
+        '/jobs?include_run=true&filters={"experiment_number_in": [818853]}',
         headers=STAFF_HEADER,
     )
     data = response.json()
@@ -111,7 +111,7 @@ def test_get_job_filtered_on_exact_experiment_number(mock_post):
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_count_jobs_with_filters(mock_post):
     """Test count with filter"""
-    expected_count = 4814
+    expected_count = 4813
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get('/jobs/count?filters={"title":"n"}')
     assert response.json()["count"] == expected_count
@@ -120,7 +120,7 @@ def test_count_jobs_with_filters(mock_post):
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_count_jobs_by_instrument_with_filter(mock_post):
     """Test count by instrument with filter"""
-    expected_count = 119
+    expected_count = 118
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get('/instrument/MARI/jobs/count?filters={"title":"n"}')
     assert response.json()["count"] == expected_count
@@ -548,16 +548,17 @@ def test_get_instrument_specification(mock_post):
     response = client.get("/instrument/het/specification", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
-        "ask": 8893.939623321,
-        "attorney": 4274,
-        "become": 5873,
-        "begin": 54.6477170013272,
-        "decade": "dSKUxJgukcXlhktChZZh",
-        "do": False,
-        "purpose": False,
-        "so": -8539.92322065455,
-        "sure": 78316125067539.8,
-        "system": 7065,
+        "and": "azwVvzwemQhTlFQDUuXm",
+        "animal": 2098,
+        "area": True,
+        "commercial": False,
+        "dinner": True,
+        "environmental": False,
+        "exactly": False,
+        "green": -3060079982.5833,
+        "maybe": 4116,
+        "might": True,
+        "sea": "hOJYuVxrfTPqxqbctkBj",
     }
 
 
