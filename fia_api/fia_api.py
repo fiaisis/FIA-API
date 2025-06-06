@@ -26,6 +26,7 @@ from fia_api.exception_handlers import (
 from fia_api.routers.extras import ExtrasRouter
 from fia_api.routers.find_file import FindFileRouter
 from fia_api.routers.health import health_router
+from fia_api.routers.instrument import InstrumentRouter
 from fia_api.routers.instrument_specs import InstrumentSpecRouter
 from fia_api.routers.job_creation import JobCreationRouter
 from fia_api.routers.jobs import JobsRouter
@@ -61,6 +62,7 @@ app.add_middleware(
 )
 
 app.include_router(ExtrasRouter)
+app.include_router(InstrumentRouter)
 app.include_router(InstrumentSpecRouter)
 app.include_router(JobCreationRouter)
 app.include_router(JobsRouter)

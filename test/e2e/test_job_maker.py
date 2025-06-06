@@ -70,13 +70,13 @@ def test_post_rerun_job(producer_channel):
     assert response.status_code == HTTPStatus.OK
     assert message == [
         {
-            "rb_number": 882000,
+            "rb_number": 818853,
             "job_id": expected_id,
             "job_type": "rerun",
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
             "script": 'print("Hello World!")',
-            "filename": "WISH593155",
-            "instrument": "WISH",
+            "filename": "NILE767455",
+            "instrument": "NILE",
         }
     ]
 
