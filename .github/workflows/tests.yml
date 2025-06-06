@@ -1,4 +1,5 @@
 ---
+name: Run Tests
 on: push
 
 permissions:
@@ -6,7 +7,7 @@ permissions:
   packages: read
 
 jobs:
-  pytest:
+  Unit Tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout project
@@ -37,7 +38,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
-  integration:
+  Integration Tests:
     runs-on: ubuntu-latest
 
     services:
