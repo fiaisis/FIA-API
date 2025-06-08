@@ -1,10 +1,12 @@
 import json
 import os
+import io
+import zipfile
 from http import HTTPStatus
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
@@ -213,23 +215,8 @@ async def count_all_jobs(
     return CountResponse(count=count_jobs(filters=json.loads(filters) if filters else None))
 
 
-@JobsRouter.get("/job/{job_id}/filename/{filename}", tags=["jobs"])
-async def download_file(
-    job_id: int,
-    filename: str,
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-) -> FileResponse:
-    """
-    Find a file in the CEPH_DIR and return it as a FileResponse.
-    \f
-    :param job_id: the unique identifier of the job.
-    :param filename: the name of the file to find.
-    :param credentials: Dependency injected HTTPAuthorizationCredentials.
-    :return: FileResponse containing the file.
-    """
-    user = get_user_from_token(credentials.credentials)
+def get_file_path(job, filename):
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
-    job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
 
     if job.owner is None:
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Job has no owner.")
@@ -245,14 +232,14 @@ async def download_file(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail="Instrument not found in scenario where it should be expected.",
             )
-        filepath = find_file_instrument(
+        return find_file_instrument(
             ceph_dir=ceph_dir,
             instrument=job.instrument.instrument_name,
             experiment_number=int(job.owner.experiment_number),
             filename=filename,
         )
     elif job.owner.experiment_number is not None:
-        filepath = find_file_experiment_number(
+        return find_file_experiment_number(
             ceph_dir=ceph_dir,
             experiment_number=int(job.owner.experiment_number),
             filename=filename,
@@ -263,15 +250,32 @@ async def download_file(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail="User number not found in scenario where it should be expected.",
             )
-        filepath = find_file_user_number(
+        return find_file_user_number(
             ceph_dir=ceph_dir,
             user_number=int(job.owner.user_number),
             filename=filename,
         )
 
+
+@JobsRouter.get("/job/{job_id}/filename/{filename}", tags=["jobs"])
+async def download_file(
+    job_id: int,
+    filename: str,
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+) -> FileResponse:
+    """
+    Find a file in the CEPH_DIR and return it as a FileResponse.
+    \f
+    :param job_id: the unique identifier of the job.
+    :param filename: the name of the file to find.
+    :param credentials: Dependency injected HTTPAuthorizationCredentials.
+    :return: FileResponse containing the file.
+    """
+    user = get_user_from_token(credentials.credentials)
+    job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
+    filepath = get_file_path(job, filename)
     if filepath is None:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="File not found.")
-
     return FileResponse(
         path=filepath,
         filename=filename,
@@ -298,3 +302,30 @@ async def create_autoreduction(
     job = create_autoreduction_job(job_request)
     response.status_code = HTTPStatus.CREATED
     return AutoreductionResponse(job_id=job.id, script=job.script.script)  # type: ignore
+
+
+@JobsRouter.post("/jobs/bulk-download", tags=["jobs"])
+async def bulk_download_files(
+    files: Annotated[list[dict], Body(..., example=[{"job_id": 1, "filename": "file1.txt"}])],
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+):
+    """
+    Download multiple files as a ZIP archive.
+    """
+    user = get_user_from_token(credentials.credentials)
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, "w", zipfile.ZIP_DEFLATED) as zf:
+        for file in files:
+            job_id = file["job_id"]
+            filename = file["filename"]
+            job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
+            filepath = get_file_path(job, filename)
+            if filepath and os.path.exists(filepath):
+                with open(filepath, "rb") as f:
+                    zf.writestr(filename, f.read())
+    memory_file.seek(0)
+    return StreamingResponse(
+        memory_file,
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=bulk_download.zip"},
+    )
