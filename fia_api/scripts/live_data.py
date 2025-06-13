@@ -1,7 +1,7 @@
 import os
 from typing import cast
 
-from github import Auth, Github
+from github import Auth, Github, InputGitAuthor
 from github.ContentFile import ContentFile
 
 from fia_api.core.models import InstrumentString
@@ -36,4 +36,5 @@ class LiveDataScript:
             f"FIA-API triggered {self.instrument} live data script update",
             value,
             self._file_sha,
+            committer=InputGitAuthor("fiaisis", "fia@stfc.ac.uk"),
         )
