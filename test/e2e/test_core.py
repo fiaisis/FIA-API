@@ -1183,9 +1183,7 @@ def test_download_zip_with_invalid_file(mock_post, mock_get_experiments):
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiments.return_value = [1820497]
 
-    payload = {
-        "5001": ["MAR29531_10.5meV_sa.nxspe", "nonexistent_file.nxspe"]
-    }
+    payload = {"5001": ["MAR29531_10.5meV_sa.nxspe", "nonexistent_file.nxspe"]}
 
     response = client.post("/job/download-zip", json=payload, headers=STAFF_HEADER)
 
