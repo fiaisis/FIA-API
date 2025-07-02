@@ -286,9 +286,9 @@ async def download_file(
 
 @JobsRouter.post("/job/download-zip", tags=["jobs"])
 async def download_zip(
-    job_files: dict,
+    job_files: dict[str, list[str]],
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-):
+) -> StreamingResponse:
     """
     Zips and returns a set of files given job IDs and filenames.
     \f
