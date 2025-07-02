@@ -1158,9 +1158,7 @@ def test_download_zip_success(mock_post, mock_get_experiments):
     mock_post.return_value.status_code = HTTPStatus.OK
     mock_get_experiments.return_value = [1820497]
 
-    # Construct payload with job IDs and filenames
     payload = {"5001": ["MAR29531_10.5meV_sa.nxspe", "MAR29531_10.5meV_sa_copy.nxspe"]}
-
     response = client.post("/job/download-zip", json=payload, headers=STAFF_HEADER)
 
     assert response.status_code == HTTPStatus.OK
@@ -1184,7 +1182,6 @@ def test_download_zip_with_invalid_file(mock_post, mock_get_experiments):
     mock_get_experiments.return_value = [1820497]
 
     payload = {"5001": ["MAR29531_10.5meV_sa.nxspe", "nonexistent_file.nxspe"]}
-
     response = client.post("/job/download-zip", json=payload, headers=STAFF_HEADER)
 
     assert response.status_code == HTTPStatus.OK
@@ -1195,3 +1192,29 @@ def test_download_zip_with_invalid_file(mock_post, mock_get_experiments):
         names = zipf.namelist()
         assert "5001/MAR29531_10.5meV_sa.nxspe" in names
         assert "5001/nonexistent_file.nxspe" not in names
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_zip_unauthorized(mock_post, mock_get_experiments):
+    """Test that a request without authentication returns 403 for zip download."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+
+    payload = {"5001": ["MAR29531_10.5meV_sa.nxspe"]}
+    response = client.post("/job/download-zip", json=payload)
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_zip_invalid_job(mock_post):
+    """Test that a 404 is returned for an invalid job ID in zip download."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+
+    payload = {"99999": ["MAR29531_10.5meV_sa.nxspe"]}
+    response = client.post("/job/download-zip", json=payload, headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
