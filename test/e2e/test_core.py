@@ -1,7 +1,9 @@
 """end-to-end tests"""
 
 import datetime
+import io
 import os
+import zipfile
 from http import HTTPStatus
 from pathlib import Path
 from unittest.mock import patch
@@ -1146,3 +1148,27 @@ def test_download_valid_user_perms(mock_post, mock_get_job):
     response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=USER_HEADER)
 
     assert response.status_code == HTTPStatus.OK
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_zip_success(mock_post, mock_get_experiments):
+    """Test that a valid request returns a zip file containing multiple files."""
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+
+    # Construct payload with job IDs and filenames
+    payload = {"5001": ["MAR29531_10.5meV_sa.nxspe", "MAR29531_10.5meV_sa_copy.nxspe"]}
+
+    response = client.post("/job/download-zip", json=payload, headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers["content-type"] == "application/zip"
+    assert response.headers["content-disposition"] == "attachment; filename=reduction_files.zip"
+
+    # Validate the contents of the zip
+    zip_bytes = io.BytesIO(response.content)
+    with zipfile.ZipFile(zip_bytes, "r") as zipf:
+        names = zipf.namelist()
+        assert "5001/MAR29531_10.5meV_sa.nxspe" in names
+        assert "5001/MAR29531_10.5meV_sa_copy.nxspe" in names
