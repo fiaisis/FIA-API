@@ -1149,6 +1149,7 @@ def test_download_valid_user_perms(mock_post, mock_get_job):
 
     assert response.status_code == HTTPStatus.OK
 
+
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_zip_success(mock_post, mock_get_experiments):
