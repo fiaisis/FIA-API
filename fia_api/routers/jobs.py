@@ -320,7 +320,7 @@ async def download_zip(
                 else:
                     filepath = None
 
-                if filepath and Path.is_file(filepath):
+                if filepath and Path(filepath).is_file():
                     arcname = f"{job_id}/{filename}"
                     zipf.write(filepath, arcname=arcname)
 
@@ -328,7 +328,7 @@ async def download_zip(
     return StreamingResponse(
         zip_stream,
         media_type="application/zip",
-        headers={"Content-Disposition": "attachment; filename=bulk_download.zip"},
+        headers={"Content-Disposition": "attachment; filename=reduction_files.zip"},
     )
 
 
