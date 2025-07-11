@@ -43,6 +43,9 @@ class Base(DeclarativeBase):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
+    def __hash__(self) -> int:
+        return hash(self.id)
+
     def __eq__(self, other: object) -> bool:
         """
         Check if two instances of Base are equal by comparing the values of their column attributes.
@@ -132,6 +135,9 @@ class Instrument(Base):
     latest_run: Mapped[str | None] = mapped_column()
     specification: Mapped[JSONB | None] = mapped_column(JSONB)
 
+    def __hash__(self) -> int:
+        return hash(self.instrument_name)
+
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Instrument):
             return bool(self.instrument_name == other.instrument_name and self.latest_run == other.latest_run)
@@ -159,6 +165,9 @@ class Run(Base):
     owner_id: Mapped[int] = mapped_column(ForeignKey("job_owners.id"))
     owner: Mapped[JobOwner | None] = relationship("JobOwner", lazy="joined")
     jobs: Mapped[list[Job] | None] = relationship(back_populates="run", lazy="joined")
+
+    def __hash__(self) -> int:
+        return hash(f"{self.title}{self.id}")
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Run):
