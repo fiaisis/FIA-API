@@ -81,7 +81,7 @@ class EnginxTransform(Transform):
         :param job: The job containing the parameters
         :return: None
         """
-        focus_runs = [job.run.filename.rsplit(".", 1)[0]]
+        focus_runs = [job.run.filename.rsplit(".", 1)[0]]  # type: ignore
         lines[index] = line.replace(line.split("=")[1], str(focus_runs))
 
     def _transform_ceria_run(self, line: str, lines: list[str], index: int, job: Job) -> None:
@@ -111,4 +111,5 @@ class EnginxTransform(Transform):
         :param job: The job containing the parameters
         :return: None
         """
-        lines[index] = line.replace(line.split("=")[1], f'GROUP["{job.inputs["group"]}"]')
+        # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
+        lines[index] = line.replace(line.split("=")[1], f'GROUP["{job.inputs["group"]}"]')  # type: ignore
