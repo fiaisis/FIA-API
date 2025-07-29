@@ -81,18 +81,8 @@ class EnginxTransform(Transform):
         :param job: The job containing the parameters
         :return: None
         """
-        focus_runs = job.inputs["focus_runs"]  # type: ignore
-        # Convert to list format if it's not already
-        if isinstance(focus_runs, str):
-            focus_runs = [focus_runs]
-        # Add ENGINX prefix if not already present
-        focus_runs_with_prefix = []
-        for run in focus_runs:
-            if "ENGINX" not in run:
-                focus_runs_with_prefix.append(f"ENGINX{run}")
-            else:
-                focus_runs_with_prefix.append(run)
-        lines[index] = line.replace(line.split("=")[1], str(focus_runs_with_prefix))
+        focus_runs = [job.run.filename.rsplit(".", 1)[0]]
+        lines[index] = line.replace(line.split("=")[1], str(focus_runs))
 
     def _transform_ceria_run(self, line: str, lines: list[str], index: int, job: Job) -> None:
         """
@@ -121,6 +111,4 @@ class EnginxTransform(Transform):
         :param job: The job containing the parameters
         :return: None
         """
-        # This will be implemented in the future
-        # For now, just log a message
-        logger.info("Group transformation not implemented yet")
+        lines[index] = line.replace(line.split("=")[1], f'GROUP["{job.inputs["group"]}"]')
