@@ -300,6 +300,9 @@ async def download_zip(
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
 
     zip_stream = io.BytesIO()
+    missing_files = []
+    any_file_added = False
+
     with zipfile.ZipFile(zip_stream, "w", zipfile.ZIP_DEFLATED) as zipf:
         for job_id_str, filenames in job_files.items():
             job_id = int(job_id_str)
@@ -323,6 +326,14 @@ async def download_zip(
                 if filepath and Path(filepath).is_file():
                     arcname = f"{job_id}/{filename}"
                     zipf.write(filepath, arcname=arcname)
+                    any_file_added = True
+                else:
+                    missing_files.append(f"{job_id}/{filename}")
+
+    if not any_file_added:
+        missing_list = ", ".join(missing_files)
+        error_message = f"None of the requested files could be found. Missing files: {missing_list}"
+        raise HTTPException(status_code=404, detail=error_message)
 
     zip_stream.seek(0)
     return StreamingResponse(
