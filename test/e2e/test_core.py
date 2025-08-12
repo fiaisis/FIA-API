@@ -1218,3 +1218,34 @@ def test_download_zip_invalid_job(mock_post):
     response = client.post("/job/download-zip", json=payload, headers=STAFF_HEADER)
 
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_zip_partial_missing_adds_headers(mock_post, mock_get_experiments):
+    """
+    When some files are missing: return 200, include only existing files in the ZIP,
+    and set x-missing-files* headers.
+    """
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+
+    payload = {
+        "5001": [
+            "MAR29531_10.5meV_sa.nxspe",
+            "nonexistent_file.nxspe",
+        ]
+    }
+    resp = client.post("/job/download-zip", json=payload, headers=STAFF_HEADER)
+
+    assert resp.status_code == HTTPStatus.OK
+    assert resp.headers["content-type"] == "application/zip"
+    assert resp.headers["content-disposition"] == "attachment; filename=reduction_files.zip"
+    assert resp.headers.get("x-missing-files-count") == "1"
+    assert "5001/nonexistent_file.nxspe" in resp.headers.get("x-missing-files", "")
+
+    # ZIP should contain only the existing file
+    with zipfile.ZipFile(io.BytesIO(resp.content), "r") as zf:
+        names = zf.namelist()
+        assert "5001/MAR29531_10.5meV_sa.nxspe" in names
+        assert "5001/nonexistent_file.nxspe" not in names
