@@ -1219,6 +1219,7 @@ def test_download_zip_invalid_job(mock_post):
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 
+
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_zip_partial_missing_adds_headers(mock_post, mock_get_experiments):
