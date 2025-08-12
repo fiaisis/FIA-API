@@ -336,11 +336,14 @@ async def download_zip(
         raise HTTPException(status_code=404, detail=error_message)
 
     zip_stream.seek(0)
-    return StreamingResponse(
-        zip_stream,
-        media_type="application/zip",
-        headers={"Content-Disposition": "attachment; filename=reduction_files.zip"},
-    )
+    resp = StreamingResponse(zip_stream, media_type="application/zip")
+    resp.headers["content-disposition"] = "attachment; filename=reduction_files.zip"
+
+    if missing_files:
+        resp.headers["x-missing-files-count"] = str(len(missing_files))
+        resp.headers["x-missing-files"] = ";".join(missing_files)
+
+    return resp
 
 
 @JobsRouter.post("/job/autoreduction")
