@@ -39,6 +39,7 @@ class EndpointFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         return record.getMessage().find("/healthz") == -1 and record.getMessage().find("/ready") == -1
 
+
 async def no_files_added_handler(_: Request, exc: NoFilesAddedError):
     return JSONResponse(
         status_code=404,
@@ -52,7 +53,6 @@ async def no_files_added_handler(_: Request, exc: NoFilesAddedError):
             "x-missing-files": ";".join(exc.missing_files),
         },
     )
-
 
 
 stdout_handler = logging.StreamHandler(stream=sys.stdout)

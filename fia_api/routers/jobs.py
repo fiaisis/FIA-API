@@ -307,11 +307,7 @@ async def download_zip(
     with zipfile.ZipFile(zip_stream, "w", zipfile.ZIP_DEFLATED) as zipf:
         for job_id_str, filenames in job_files.items():
             job_id = int(job_id_str)
-            job = (
-                get_job_by_id(job_id)
-                if user.role == "staff"
-                else get_job_by_id(job_id, user_number=user.user_number)
-            )
+            job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
 
             if job.owner is None:
                 continue
