@@ -4,8 +4,9 @@ import logging
 import os
 import sys
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 
 from fia_api.core.exceptions import (
@@ -13,6 +14,7 @@ from fia_api.core.exceptions import (
     JobRequestError,
     MissingRecordError,
     MissingScriptError,
+    NoFilesAddedError,
     UnsafePathError,
 )
 from fia_api.exception_handlers import (
@@ -36,6 +38,21 @@ from fia_api.routers.live_data import LiveDataRouter
 class EndpointFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         return record.getMessage().find("/healthz") == -1 and record.getMessage().find("/ready") == -1
+
+async def no_files_added_handler(_: Request, exc: NoFilesAddedError):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "detail": "None of the requested files could be found.",
+            "missing_files_count": len(exc.missing_files),
+            "missing_files": exc.missing_files,
+        },
+        headers={
+            "x-missing-files-count": str(len(exc.missing_files)),
+            "x-missing-files": ";".join(exc.missing_files),
+        },
+    )
+
 
 
 stdout_handler = logging.StreamHandler(stream=sys.stdout)
@@ -77,3 +94,4 @@ app.add_exception_handler(UnsafePathError, unsafe_path_handler)
 app.add_exception_handler(AuthError, authentication_error_handler)
 app.add_exception_handler(JobRequestError, bad_job_request_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(NoFilesAddedError, no_files_added_handler)
