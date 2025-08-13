@@ -1281,7 +1281,7 @@ def test_download_zip_all_missing_returns_404(mock_post, mock_get_experiments):
 
     body = resp.json()
     assert body["detail"] == "None of the requested files could be found."
-    assert body["missing_files_count"] == 2
+    assert body["missing_files_count"] == 2  # noqa: PLR2004
     assert set(body["missing_files"]) == {
         "5001/does_not_exist_1.nxspe",
         "5001/does_not_exist_2.nxspe",
