@@ -1218,3 +1218,71 @@ def test_download_zip_invalid_job(mock_post):
     response = client.post("/job/download-zip", json=payload, headers=STAFF_HEADER)
 
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_zip_partial_missing_returns_200(mock_post, mock_get_experiments):
+    """
+    When some files are missing: return 200, include only existing files in the ZIP,
+    and set x-missing-files* headers.
+    """
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+
+    payload = {
+        "5001": [
+            "MAR29531_10.5meV_sa.nxspe",
+            "does_not_exist_1.nxspe",
+        ]
+    }
+    resp = client.post("/job/download-zip", json=payload, headers=STAFF_HEADER)
+
+    assert resp.status_code == HTTPStatus.OK
+    assert resp.headers["content-type"] == "application/zip"
+    assert resp.headers["content-disposition"] == "attachment; filename=reduction_files.zip"
+    assert resp.headers.get("x-missing-files-count") == "1"
+    assert "5001/does_not_exist_1.nxspe" in resp.headers.get("x-missing-files", "")
+
+    # ZIP should contain only the existing file
+    with zipfile.ZipFile(io.BytesIO(resp.content), "r") as zf:
+        names = zf.namelist()
+        assert "5001/MAR29531_10.5meV_sa.nxspe" in names
+        assert "5001/does_not_exist_1.nxspe" not in names
+
+
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_download_zip_all_missing_returns_404(mock_post, mock_get_experiments):
+    """
+    When ALL requested files are missing: return 404 via NoFilesAddedError handler
+    and include x-missing-files* headers plus a structured JSON body.
+    """
+    os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
+    mock_post.return_value.status_code = HTTPStatus.OK
+    mock_get_experiments.return_value = [1820497]
+    payload = {
+        "5001": [
+            "does_not_exist_1.nxspe",
+            "does_not_exist_2.nxspe",
+        ]
+    }
+
+    resp = client.post("/job/download-zip", json=payload, headers=STAFF_HEADER)
+
+    assert resp.status_code == HTTPStatus.NOT_FOUND
+    assert resp.headers.get("content-type") == "application/json"
+
+    assert resp.headers.get("x-missing-files-count") == "2"
+    missing_hdr = resp.headers.get("x-missing-files", "")
+    assert "5001/does_not_exist_1.nxspe" in missing_hdr
+    assert "5001/does_not_exist_2.nxspe" in missing_hdr
+
+    body = resp.json()
+    assert body["detail"] == "None of the requested files could be found."
+    assert body["missing_files_count"] == 2  # noqa: PLR2004
+    assert set(body["missing_files"]) == {
+        "5001/does_not_exist_1.nxspe",
+        "5001/does_not_exist_2.nxspe",
+    }

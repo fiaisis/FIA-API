@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
+from fia_api.core.exceptions import NoFilesAddedError
 from fia_api.core.models import JobType
 from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
 from fia_api.core.responses import AutoreductionResponse, CountResponse, JobResponse, JobWithRunResponse
@@ -300,6 +301,9 @@ async def download_zip(
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
 
     zip_stream = io.BytesIO()
+    missing_files: list[str] = []
+    no_file_added = True
+
     with zipfile.ZipFile(zip_stream, "w", zipfile.ZIP_DEFLATED) as zipf:
         for job_id_str, filenames in job_files.items():
             job_id = int(job_id_str)
@@ -311,7 +315,10 @@ async def download_zip(
             for filename in filenames:
                 if job.job_type != JobType.SIMPLE and job.owner.experiment_number and job.instrument:
                     filepath = find_file_instrument(
-                        ceph_dir, job.instrument.instrument_name, int(job.owner.experiment_number), filename
+                        ceph_dir,
+                        job.instrument.instrument_name,
+                        int(job.owner.experiment_number),
+                        filename,
                     )
                 elif job.owner.experiment_number:
                     filepath = find_file_experiment_number(ceph_dir, int(job.owner.experiment_number), filename)
@@ -323,13 +330,22 @@ async def download_zip(
                 if filepath and Path(filepath).is_file():
                     arcname = f"{job_id}/{filename}"
                     zipf.write(filepath, arcname=arcname)
+                    no_file_added = False
+                else:
+                    missing_files.append(f"{job_id}/{filename}")
+
+    if no_file_added:
+        raise NoFilesAddedError(missing_files)
 
     zip_stream.seek(0)
-    return StreamingResponse(
-        zip_stream,
-        media_type="application/zip",
-        headers={"Content-Disposition": "attachment; filename=reduction_files.zip"},
-    )
+    resp = StreamingResponse(zip_stream, media_type="application/zip")
+    resp.headers["content-disposition"] = "attachment; filename=reduction_files.zip"
+
+    if missing_files:
+        resp.headers["x-missing-files-count"] = str(len(missing_files))
+        resp.headers["x-missing-files"] = ";".join(missing_files)
+
+    return resp
 
 
 @JobsRouter.post("/job/autoreduction")

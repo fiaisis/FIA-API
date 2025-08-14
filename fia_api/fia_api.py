@@ -13,6 +13,7 @@ from fia_api.core.exceptions import (
     JobRequestError,
     MissingRecordError,
     MissingScriptError,
+    NoFilesAddedError,
     UnsafePathError,
 )
 from fia_api.exception_handlers import (
@@ -20,6 +21,7 @@ from fia_api.exception_handlers import (
     bad_job_request_handler,
     missing_record_handler,
     missing_script_handler,
+    no_files_added_handler,
     unsafe_path_handler,
     validation_exception_handler,
 )
@@ -77,3 +79,4 @@ app.add_exception_handler(UnsafePathError, unsafe_path_handler)
 app.add_exception_handler(AuthError, authentication_error_handler)
 app.add_exception_handler(JobRequestError, bad_job_request_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(NoFilesAddedError, no_files_added_handler)
