@@ -90,7 +90,7 @@ async def validation_exception_handler(request: Request, exc: Exception) -> JSON
 
 async def no_files_added_handler(_: Request, exc: Exception) -> JSONResponse:
     """Handler for NoFilesAddedError."""
-    assert isinstance(exc, NoFilesAddedError)  # Makes mypy happy
+    assert isinstance(exc, NoFilesAddedError)  # Won't be an issue once merged
     return JSONResponse(
         status_code=404,
         content={
