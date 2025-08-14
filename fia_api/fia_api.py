@@ -24,6 +24,7 @@ from fia_api.exception_handlers import (
     missing_script_handler,
     unsafe_path_handler,
     validation_exception_handler,
+    no_files_added_handler
 )
 from fia_api.routers.extras import ExtrasRouter
 from fia_api.routers.find_file import FindFileRouter
@@ -38,21 +39,6 @@ from fia_api.routers.live_data import LiveDataRouter
 class EndpointFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         return record.getMessage().find("/healthz") == -1 and record.getMessage().find("/ready") == -1
-
-
-async def no_files_added_handler(_: Request, exc: NoFilesAddedError):
-    return JSONResponse(
-        status_code=404,
-        content={
-            "detail": "None of the requested files could be found.",
-            "missing_files_count": len(exc.missing_files),
-            "missing_files": exc.missing_files,
-        },
-        headers={
-            "x-missing-files-count": str(len(exc.missing_files)),
-            "x-missing-files": ";".join(exc.missing_files),
-        },
-    )
 
 
 stdout_handler = logging.StreamHandler(stream=sys.stdout)

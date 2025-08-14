@@ -6,6 +6,8 @@ from http import HTTPStatus
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from fia_api.core.exceptions import NoFilesAddedError
+
 logger = logging.getLogger(__name__)
 
 
@@ -84,3 +86,18 @@ async def validation_exception_handler(request: Request, exc: Exception) -> JSON
     logger.error(f"{request}: {exc_str}")
     content = {"status_code": 10422, "message": exc_str}
     return JSONResponse(content=content, status_code=HTTPStatus.UNPROCESSABLE_ENTITY)
+
+async def no_files_added_handler(_: Request, exc: NoFilesAddedError) -> JSONResponse:
+    """Handler for NoFilesAddedError."""
+    return JSONResponse(
+        status_code=404,
+        content={
+            "detail": "None of the requested files could be found.",
+            "missing_files_count": len(exc.missing_files),
+            "missing_files": exc.missing_files,
+        },
+        headers={
+            "x-missing-files-count": str(len(exc.missing_files)),
+            "x-missing-files": ";".join(exc.missing_files),
+        },
+    )
