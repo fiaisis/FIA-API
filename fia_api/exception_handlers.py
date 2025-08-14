@@ -88,8 +88,9 @@ async def validation_exception_handler(request: Request, exc: Exception) -> JSON
     return JSONResponse(content=content, status_code=HTTPStatus.UNPROCESSABLE_ENTITY)
 
 
-async def no_files_added_handler(_: Request, exc: NoFilesAddedError) -> JSONResponse:
+async def no_files_added_handler(_: Request, exc: Exception) -> JSONResponse:
     """Handler for NoFilesAddedError."""
+    assert isinstance(exc, NoFilesAddedError) # Makes mypy happy
     return JSONResponse(
         status_code=404,
         content={
