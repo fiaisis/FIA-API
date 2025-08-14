@@ -87,6 +87,7 @@ async def validation_exception_handler(request: Request, exc: Exception) -> JSON
     content = {"status_code": 10422, "message": exc_str}
     return JSONResponse(content=content, status_code=HTTPStatus.UNPROCESSABLE_ENTITY)
 
+
 async def no_files_added_handler(_: Request, exc: NoFilesAddedError) -> JSONResponse:
     """Handler for NoFilesAddedError."""
     return JSONResponse(

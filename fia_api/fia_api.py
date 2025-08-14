@@ -4,9 +4,8 @@ import logging
 import os
 import sys
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 
 from fia_api.core.exceptions import (
@@ -22,9 +21,9 @@ from fia_api.exception_handlers import (
     bad_job_request_handler,
     missing_record_handler,
     missing_script_handler,
+    no_files_added_handler,
     unsafe_path_handler,
     validation_exception_handler,
-    no_files_added_handler
 )
 from fia_api.routers.extras import ExtrasRouter
 from fia_api.routers.find_file import FindFileRouter
