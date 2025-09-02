@@ -11,6 +11,7 @@ from test.utils import setup_database
 client = TestClient(app)
 setup = False
 
+
 @pytest.fixture(autouse=True)
 def _setup(faker):
     """
