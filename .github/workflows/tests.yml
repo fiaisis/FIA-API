@@ -7,7 +7,7 @@ permissions:
   packages: read
 
 jobs:
-  Unit Tests:
+  Unit-Tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout project
@@ -38,7 +38,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
-  Integration Tests:
+  Integration-Tests:
     runs-on: ubuntu-latest
 
     services:
