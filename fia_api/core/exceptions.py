@@ -9,7 +9,7 @@ class MissingRecordError(DatabaseError):
     """Record was requested but did not exist"""
 
 
-class AuthenticationError(Exception):
+class AuthError(Exception):
     """Raised when there was a problem with authentication or authorisation"""
 
 
@@ -27,3 +27,14 @@ class UnsafePathError(Exception):
 
 class JobRequestError(ValueError):
     """The job request was malformed"""
+
+
+class NoFilesAddedError(Exception):
+    """
+    Raised when no files could be added to the ZIP response.
+    :param missing_files: list of "job_id/filename" strings that were not found.
+    """
+
+    def __init__(self, missing_files: list[str]) -> None:
+        self.missing_files = missing_files
+        super().__init__("None of the requested files could be found.")

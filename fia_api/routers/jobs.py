@@ -1,13 +1,19 @@
+"""Jobs API Router"""
+
+import io
 import json
 import os
+import zipfile
 from http import HTTPStatus
+from pathlib import Path
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
+from fia_api.core.exceptions import NoFilesAddedError
 from fia_api.core.models import JobType
 from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
 from fia_api.core.responses import AutoreductionResponse, CountResponse, JobResponse, JobWithRunResponse
@@ -277,6 +283,69 @@ async def download_file(
         filename=filename,
         media_type="application/octet-stream",
     )
+
+
+@JobsRouter.post("/job/download-zip", tags=["jobs"])
+async def download_zip(
+    job_files: dict[str, list[str]],
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+) -> StreamingResponse:
+    """
+    Zips and returns a set of files given job IDs and filenames.
+    \f
+    :param job_files: Dict mapping job_id (int) to list of filenames.
+    :param credentials: Dependency injected HTTPAuthorizationCredentials.
+    :return: StreamingResponse containing the ZIP file.
+    """
+    user = get_user_from_token(credentials.credentials)
+    ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
+
+    zip_stream = io.BytesIO()
+    missing_files: list[str] = []
+    no_file_added = True
+
+    with zipfile.ZipFile(zip_stream, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for job_id_str, filenames in job_files.items():
+            job_id = int(job_id_str)
+            job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
+
+            if job.owner is None:
+                continue
+
+            for filename in filenames:
+                if job.job_type != JobType.SIMPLE and job.owner.experiment_number and job.instrument:
+                    filepath = find_file_instrument(
+                        ceph_dir,
+                        job.instrument.instrument_name,
+                        int(job.owner.experiment_number),
+                        filename,
+                    )
+                elif job.owner.experiment_number:
+                    filepath = find_file_experiment_number(ceph_dir, int(job.owner.experiment_number), filename)
+                elif job.owner.user_number:
+                    filepath = find_file_user_number(ceph_dir, int(job.owner.user_number), filename)
+                else:
+                    filepath = None
+
+                if filepath and Path(filepath).is_file():
+                    arcname = f"{job_id}/{filename}"
+                    zipf.write(filepath, arcname=arcname)
+                    no_file_added = False
+                else:
+                    missing_files.append(f"{job_id}/{filename}")
+
+    if no_file_added:
+        raise NoFilesAddedError(missing_files)
+
+    zip_stream.seek(0)
+    resp = StreamingResponse(zip_stream, media_type="application/zip")
+    resp.headers["content-disposition"] = "attachment; filename=reduction_files.zip"
+
+    if missing_files:
+        resp.headers["x-missing-files-count"] = str(len(missing_files))
+        resp.headers["x-missing-files"] = ";".join(missing_files)
+
+    return resp
 
 
 @JobsRouter.post("/job/autoreduction")

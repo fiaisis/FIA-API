@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
+from typing import Literal
 
 from sqlalchemy import Enum, ForeignKey, Integer, inspect
 from sqlalchemy.dialects.postgresql import JSONB
@@ -41,6 +42,9 @@ class Base(DeclarativeBase):
     """
 
     id: Mapped[int] = mapped_column(primary_key=True)
+
+    def __hash__(self) -> int:
+        return hash(self.id)
 
     def __eq__(self, other: object) -> bool:
         """
@@ -131,6 +135,9 @@ class Instrument(Base):
     latest_run: Mapped[str | None] = mapped_column()
     specification: Mapped[JSONB | None] = mapped_column(JSONB)
 
+    def __hash__(self) -> int:
+        return hash(self.instrument_name)
+
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Instrument):
             return bool(self.instrument_name == other.instrument_name and self.latest_run == other.latest_run)
@@ -159,6 +166,9 @@ class Run(Base):
     owner: Mapped[JobOwner | None] = relationship("JobOwner", lazy="joined")
     jobs: Mapped[list[Job] | None] = relationship(back_populates="run", lazy="joined")
 
+    def __hash__(self) -> int:
+        return hash(f"{self.title}{self.id}")
+
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Run):
             return (
@@ -180,3 +190,44 @@ class Run(Base):
             f" users={self.users}, owner_id={self.owner_id}, run_start={self.run_start},"
             f" run_end={self.run_end}, good_frames={self.good_frames}, raw_frames={self.raw_frames})>"
         )
+
+
+InstrumentString = Literal[
+    "alf",
+    "argus",
+    "chipir",
+    "chronus",
+    "crisp",
+    "emu",
+    "enginx",
+    "gem",
+    "hifi",
+    "hrpd",
+    "imat",
+    "ines",
+    "inter",
+    "iris",
+    "larmor",
+    "let",
+    "loq",
+    "maps",
+    "mari",
+    "merlin",
+    "musr",
+    "nimrod",
+    "offspec",
+    "osiris",
+    "pearl",
+    "polaris",
+    "polref",
+    "sandals",
+    "sans2d",
+    "surf",
+    "sxd",
+    "tosca",
+    "vesuvio",
+    "wish",
+    "zoom",
+    "test",
+    "test",
+]

@@ -10,7 +10,7 @@ from fastapi import HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from fia_api.core.auth import AUTH_URL
-from fia_api.core.exceptions import AuthenticationError
+from fia_api.core.exceptions import AuthError
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +32,11 @@ def get_user_from_token(token: str) -> User:
     try:
         payload = jwt.decode(
             token, options={"verify_signature": False}
-        )  # We don't verify here as it is verified by the auth api after
+        )  # We don't verify here as it is verified by the auth api previously when the token is obtained via the
+        # JWTAPIBearer class below
         return User(user_number=payload.get("usernumber"), role=payload.get("role"))
     except RuntimeError as exc:
-        raise AuthenticationError("Problem unpacking jwt token") from exc
+        raise AuthError("Problem unpacking jwt token") from exc
 
 
 class JWTAPIBearer(HTTPBearer):

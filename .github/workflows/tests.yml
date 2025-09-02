@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout project
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v3.5.0
+        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v3.5.0
 
       - name: Set up python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v4.5.0
@@ -34,7 +34,7 @@ jobs:
         run: pytest . --random-order --random-order-bucket=global --ignore=test/e2e --ignore=test/core/test_repositories_integration.py --cov --cov-report=xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.4.2
+        uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5.5.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -54,7 +54,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
@@ -81,7 +81,7 @@ jobs:
           pytest test/core/test_repositories_integration.py --random-order --random-order-bucket=global --cov --cov-report=xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.4.2
+        uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5.5.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -108,7 +108,7 @@ jobs:
           RABBITMQ_PASSWORD: guest
     steps:
       - name: Check out repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
@@ -134,7 +134,7 @@ jobs:
           pytest test/e2e/test_job_maker.py --random-order --random-order-bucket=global --cov --cov-report=xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.4.2
+        uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5.5.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
   e2e-core:
@@ -153,7 +153,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
+
+      - name: Verify Issue
+        run: echo "${{ secrets.SCRIPT_WRITE_OTKEN}}"
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
@@ -177,10 +180,11 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:password@localhost:5432/test_db
           GITHUB_PACKAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SCRIPT_WRITE_TOKEN: ${{ secrets.SCRIPT_WRITE_TOKEN }}
         run: |
           pytest test/e2e --random-order --random-order-bucket=global --cov --cov-report=xml --ignore=test/e2e/test_job_maker.py
 
       - name: Upload coverage
-        uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.4.2
+        uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5.5.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

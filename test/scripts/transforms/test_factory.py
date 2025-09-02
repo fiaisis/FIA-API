@@ -2,6 +2,7 @@
 
 import pytest
 
+from fia_api.scripts.transforms.enginx_transform import EnginxTransform
 from fia_api.scripts.transforms.factory import get_transform_for_instrument
 from fia_api.scripts.transforms.iris_transform import IrisTransform
 from fia_api.scripts.transforms.mari_transforms import MariTransform
@@ -24,6 +25,7 @@ from fia_api.scripts.transforms.vesuvio_transform import VesuvioTransform
         ("loq", SansTransform),
         ("sans2d", SansTransform),
         ("vesuvio", VesuvioTransform),
+        ("enginx", EnginxTransform),
     ],
 )
 def test_transform_factory(name, expected_transform):
