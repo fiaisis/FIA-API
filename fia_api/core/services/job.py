@@ -282,7 +282,10 @@ def create_autoreduction_job(job_request: AutoreductionRequest) -> Job:
             instrument=instrument,
         )
 
+    job.run = run
     pre_script = get_script_for_job(instrument.instrument_name, job)
+    job.run = None
+    job.run_id = run.id
     script = _SCRIPT_REPO.find_one(ScriptSpecification().by_script_hash(hash_script(pre_script.value)))
     if script is None:
         script = Script(script=pre_script.value, sha=pre_script.sha)
