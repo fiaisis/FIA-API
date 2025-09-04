@@ -106,7 +106,7 @@ def reduction():
         "remove_bkg": False,
         "mask_file_link": "Some link",
         "wbvan": 12345,
-        "git_sha":"abc1234567",
+        "git_sha": "abc1234567",
     }
     return mock
 
