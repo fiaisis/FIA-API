@@ -65,7 +65,7 @@ class EnginxTransform(Transform):
         :param job: The job containing the parameters
         :return: None
         """
-        if "ENGINX" not in job.inputs["vanadium_run"]:  # type: ignore
+        if "ENGINX" not in str(job.inputs["vanadium_run"]):  # type: ignore
             vanadium_run = f"ENGINX{job.inputs['vanadium_run']}"  # type: ignore
         else:
             vanadium_run = job.inputs["vanadium_run"]  # type: ignore
@@ -94,7 +94,7 @@ class EnginxTransform(Transform):
         :param job: The job containing the parameters
         :return: None
         """
-        if "ENGINX" not in job.inputs["ceria_run"]:  # type: ignore
+        if "ENGINX" not in str(job.inputs["ceria_run"]):  # type: ignore
             ceria_run = f"ENGINX{job.inputs['ceria_run']}"  # type: ignore
         else:
             ceria_run = job.inputs["ceria_run"]  # type: ignore
