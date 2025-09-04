@@ -39,7 +39,7 @@ enginx = EnginX(
             save_dir=CWDIR,
             full_inst_calib_path=FULL_CALIB,
             ceria_run=ceria_run,
-            group=GROUP.BOTH,
+            group=group,
         )
 enginx.main(plot_cal=False, plot_foc=False)
 """
@@ -115,10 +115,10 @@ def test_enginx_transform_apply(script, reduction):
     # Check that all instances of vanadium_run, focus_runs, ceria_run, and group are updated
     for index, line in enumerate(updated_lines):
         if (
-            ("vanadium_run=" in line and 'vanadium_run="ENGINX654321"' not in line)
-            or ("focus_runs=" in line and "focus_runs=['ENGINX1234']" not in line)
-            or ("ceria_run=" in line and 'ceria_run="ENGINX987654"' not in line)
-            or ("group=" in line and 'group=GROUP["BOTH"]' not in line)
+            ("vanadium_run =" in line and 'vanadium_run = "ENGINX654321"' not in line)
+            or ("focus_runs =" in line and "focus_runs = ['ENGINX1234']" not in line)
+            or ("ceria_run =" in line and 'ceria_run = "ENGINX987654"' not in line)
+            or ("group =" in line and 'group = GROUP["BOTH"]' not in line)
         ):
             raise AssertionError(f"Line {index} not updated correctly: {line}")
 
@@ -136,14 +136,13 @@ def test_enginx_transform_apply_with_prefix(script, reduction_with_prefix):
     transform.apply(script, reduction_with_prefix)
     updated_lines = script.value.splitlines()
     assert len(original_lines) == len(updated_lines)
-
     # Check that all instances of vanadium_run, focus_runs, ceria_run, and group are updated
     for index, line in enumerate(updated_lines):
         if (
-            ("vanadium_run=" in line and 'vanadium_run="ENGINX654321"' not in line)
-            or ("focus_runs=" in line and "focus_runs=['ENGINX1234']" not in line)
-            or ("ceria_run=" in line and 'ceria_run="ENGINX987654"' not in line)
-            or ("group=" in line and 'group=GROUP["BOTH"]' not in line)
+            ("vanadium_run =" in line and 'vanadium_run = "ENGINX654321"' not in line)
+            or ("focus_runs =" in line and "focus_runs = ['ENGINX1234']" not in line)
+            or ("ceria_run =" in line and 'ceria_run = "ENGINX987654"' not in line)
+            or ("group =" in line and 'group = GROUP["BOTH"]' not in line)
         ):
             raise AssertionError(f"Line {index} not updated correctly: {line}")
 
@@ -165,10 +164,10 @@ def test_enginx_transform_apply_with_int_inputs(script, reduction_with_int_input
     # Check that all instances of vanadium_run, focus_runs, ceria_run, and group are updated
     for index, line in enumerate(updated_lines):
         if (
-            ("vanadium_run=" in line and 'vanadium_run="ENGINX654321"' not in line)
-            or ("focus_runs=" in line and "focus_runs=['ENGINX1234']" not in line)
-            or ("ceria_run=" in line and 'ceria_run="ENGINX987654"' not in line)
-            or ("group=" in line and 'group=GROUP["BOTH"]' not in line)
+            ("vanadium_run =" in line and 'vanadium_run = "ENGINX654321"' not in line)
+            or ("focus_runs =" in line and "focus_runs = ['ENGINX1234']" not in line)
+            or ("ceria_run =" in line and 'ceria_run = "ENGINX987654"' not in line)
+            or ("group =" in line and 'group = GROUP["BOTH"]' not in line)
         ):
             raise AssertionError(f"Line {index} not updated correctly: {line}")
 
@@ -200,9 +199,9 @@ def test_enginx_transform_with_string_focus_runs(script):
     # Check that all instances of vanadium_run, focus_runs, ceria_run, and group are updated
     for index, line in enumerate(updated_lines):
         if (
-            ("vanadium_run=" in line and 'vanadium_run="ENGINX654321"' not in line)
-            or ("focus_runs=" in line and "focus_runs=['ENGINX1234']" not in line)
-            or ("ceria_run=" in line and 'ceria_run="ENGINX987654"' not in line)
-            or ("group=" in line and 'group=GROUP["BOTH"]' not in line)
+            ("vanadium_run =" in line and 'vanadium_run = "ENGINX654321"' not in line)
+            or ("focus_runs =" in line and "focus_runs = ['ENGINX1234']" not in line)
+            or ("ceria_run =" in line and 'ceria_run = "ENGINX987654"' not in line)
+            or ("group =" in line and 'group = GROUP["BOTH"]' not in line)
         ):
             raise AssertionError(f"Line {index} not updated correctly: {line}")

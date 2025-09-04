@@ -48,7 +48,7 @@ class EnginxTransform(Transform):
                 continue
 
             # Placeholder for group transformation
-            if "group=" in line:
+            if "group =" in line:
                 self._transform_group(line, lines, index, job)
                 continue
 
@@ -69,7 +69,7 @@ class EnginxTransform(Transform):
             vanadium_run = f"ENGINX{job.inputs['vanadium_run']}"  # type: ignore
         else:
             vanadium_run = job.inputs["vanadium_run"]  # type: ignore
-        lines[index] = line.replace(line.split("=")[1], f'"{vanadium_run}"')
+        lines[index] = line.replace(line.split("=")[1], f' "{vanadium_run}"')
 
     def _transform_focus_runs(self, line: str, lines: list[str], index: int, job: Job) -> None:
         """
@@ -82,7 +82,7 @@ class EnginxTransform(Transform):
         :return: None
         """
         focus_runs = [job.run.filename.rsplit(".", 1)[0]]  # type: ignore
-        lines[index] = line.replace(line.split("=")[1], str(focus_runs))
+        lines[index] = line.replace(line.split("=")[1], f" {focus_runs!s}")
 
     def _transform_ceria_run(self, line: str, lines: list[str], index: int, job: Job) -> None:
         """
@@ -98,7 +98,7 @@ class EnginxTransform(Transform):
             ceria_run = f"ENGINX{job.inputs['ceria_run']}"  # type: ignore
         else:
             ceria_run = job.inputs["ceria_run"]  # type: ignore
-        lines[index] = line.replace(line.split("=")[1], f'"{ceria_run}"')
+        lines[index] = line.replace(line.split("=")[1], f' "{ceria_run}"')
 
     def _transform_group(self, line: str, lines: list[str], index: int, job: Job) -> None:
         """
@@ -112,4 +112,4 @@ class EnginxTransform(Transform):
         :return: None
         """
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
-        lines[index] = line.replace(line.split("=")[1], f'GROUP["{job.inputs["group"]}"]')  # type: ignore
+        lines[index] = line.replace(line.split("=")[1], f' GROUP["{job.inputs["group"]}"]')  # type: ignore
