@@ -44,6 +44,8 @@ class MariTransform(Transform):
                 continue
             if self._replace_input(line, lines, index, "sam_rmm", job.inputs["sam_rmm"]):  # type: ignore
                 continue
+            if self._replace_input(line, lines, index, "git_sha", job.inputs["git_sha"]):  # type: ignore
+                continue
             if self._replace_input(
                 line,
                 lines,
