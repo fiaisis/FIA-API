@@ -81,6 +81,23 @@ def reduction_with_prefix():
     return mock
 
 
+@pytest.fixture
+def reduction_with_int_inputs():
+    """
+    Reduction fixture with integer vanadium and ceria runs
+    :return:
+    """
+    mock = Mock()
+    mock.inputs = {
+        "vanadium_run": 654321,
+        "ceria_run": 987654,
+        "group": "BOTH",
+    }
+    mock.run = Mock()
+    mock.run.filename = "ENGINX1234.nxs"
+    return mock
+
+
 def test_enginx_transform_apply(script, reduction):
     """
     Test enginx transform applies correct updates to script
@@ -117,6 +134,31 @@ def test_enginx_transform_apply_with_prefix(script, reduction_with_prefix):
 
     original_lines = script.value.splitlines()
     transform.apply(script, reduction_with_prefix)
+    updated_lines = script.value.splitlines()
+    assert len(original_lines) == len(updated_lines)
+
+    # Check that all instances of vanadium_run, focus_runs, ceria_run, and group are updated
+    for index, line in enumerate(updated_lines):
+        if (
+            ("vanadium_run=" in line and 'vanadium_run="ENGINX654321"' not in line)
+            or ("focus_runs=" in line and "focus_runs=['ENGINX1234']" not in line)
+            or ("ceria_run=" in line and 'ceria_run="ENGINX987654"' not in line)
+            or ("group=" in line and 'group=GROUP["BOTH"]' not in line)
+        ):
+            raise AssertionError(f"Line {index} not updated correctly: {line}")
+
+
+def test_enginx_transform_apply_with_int_inputs(script, reduction_with_int_inputs):
+    """
+    Test enginx transform applies correct updates to script when inputs are integers
+    :param script: The script fixture
+    :param reduction_with_prefix: The reduction fixture with prefix
+    :return: None
+    """
+    transform = EnginxTransform()
+
+    original_lines = script.value.splitlines()
+    transform.apply(script, reduction_with_int_inputs)
     updated_lines = script.value.splitlines()
     assert len(original_lines) == len(updated_lines)
 
