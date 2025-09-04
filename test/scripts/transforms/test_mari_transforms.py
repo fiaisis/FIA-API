@@ -106,6 +106,7 @@ def reduction():
         "remove_bkg": False,
         "mask_file_link": "Some link",
         "wbvan": 12345,
+        "git_sha":"abc1234567",
     }
     return mock
 
@@ -136,6 +137,8 @@ def test_mari_transform_apply(script, reduction):  # noqa: C901
             assert line == "ei = [50, 20]"
         elif line.startswith("wbvan"):
             assert line == "wbvan = 12345"
+        elif line.startswith("git_sha"):
+            assert line == "git_sha = abc1234567"
         elif line.startswith("monovan"):
             assert line == "monovan = 54321"
         elif line.startswith("sam_mass"):
