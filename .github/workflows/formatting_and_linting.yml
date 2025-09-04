@@ -1,4 +1,5 @@
 ---
+name: Formatting and Linting
 on:
   push:
     branches-ignore:
