@@ -238,7 +238,7 @@ def create_autoreduction_job(job_request: AutoreductionRequest) -> Job:
             outputs=None,
             runner_image=job_request.runner_image,
             job_type=JobType.AUTOREDUCTION,
-            run=run,
+            run_id=run.id,
             owner_id=run.owner_id,
             instrument_id=run.instrument_id,
         )
@@ -276,7 +276,7 @@ def create_autoreduction_job(job_request: AutoreductionRequest) -> Job:
             outputs=None,
             runner_image=job_request.runner_image,
             job_type=JobType.AUTOREDUCTION,
-            run=run,
+            run_id=run.id,
             owner_id=owner.id,
             instrument_id=instrument.id,
             instrument=instrument,
