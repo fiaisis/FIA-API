@@ -61,6 +61,6 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add fia-api-client/
+          git add fia_api_client/
           git commit -m "Update API client based on latest OpenAPI schema" || echo "No changes to commit"
           git push
