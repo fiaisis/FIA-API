@@ -33,17 +33,17 @@ class EnginxTransform(Transform):
         # If you get here in the future, try removing the type ignore and see if it passes with newer mypy
         for index, line in enumerate(lines):
             # Transform vanadium_run (always prefixed with ENGINX)
-            if "vanadium_run=" in line:
+            if "vanadium_run =" in line:
                 self._transform_vanadium_run(line, lines, index, job)
                 continue
 
             # Transform focus_runs
-            if "focus_runs=" in line:
+            if "focus_runs =" in line:
                 self._transform_focus_runs(line, lines, index, job)
                 continue
 
             # Transform ceria_run
-            if "ceria_run=" in line:
+            if "ceria_run =" in line:
                 self._transform_ceria_run(line, lines, index, job)
                 continue
 
