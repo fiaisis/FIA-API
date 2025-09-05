@@ -5,7 +5,9 @@ instrument scripts.
 
 import logging
 
-from fia_api.core.models import Job
+from fia_api.core.models import Job, Run
+from fia_api.core.repositories import Repo
+from fia_api.core.specifications.run import RunSpecification
 from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.transform import Transform
 
@@ -81,7 +83,9 @@ class EnginxTransform(Transform):
         :param job: The job containing the parameters
         :return: None
         """
-        focus_runs = [job.run.filename.rsplit(".", 1)[0]]  # type: ignore
+        run_repo: Repo[Run] = Repo()
+        filename = run_repo.find_one(RunSpecification().by_id(job.run_id)).filename
+        focus_runs = [filename.rsplit(".", 1)[0]]  # type: ignore
         lines[index] = line.replace(line.split("=")[1], f" {focus_runs!s}")
 
     def _transform_ceria_run(self, line: str, lines: list[str], index: int, job: Job) -> None:

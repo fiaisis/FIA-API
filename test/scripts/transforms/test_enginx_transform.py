@@ -2,7 +2,7 @@
 Test cases for EnginxTransform
 """
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -76,8 +76,6 @@ def reduction_with_prefix():
         "group": "BOTH",
     }
     mock.id = "test-job-id-prefix"
-    mock.run = Mock()
-    mock.run.filename = "ENGINX1234.nxs"
     return mock
 
 
@@ -98,13 +96,18 @@ def reduction_with_int_inputs():
     return mock
 
 
-def test_enginx_transform_apply(script, reduction):
+@patch("fia_api.scripts.transforms.enginx_transform.Repo.find_one")
+def test_enginx_transform_apply(mock_find_one, script, reduction):
     """
     Test enginx transform applies correct updates to script
     :param script: The script fixture
     :param reduction: The reduction fixture
     :return: None
     """
+    mock_run = Mock()
+    mock_run.filename = "ENGINX1234.nxs"
+    mock_find_one.return_value = mock_run
+
     transform = EnginxTransform()
 
     original_lines = script.value.splitlines()
@@ -123,13 +126,18 @@ def test_enginx_transform_apply(script, reduction):
             raise AssertionError(f"Line {index} not updated correctly: {line}")
 
 
-def test_enginx_transform_apply_with_prefix(script, reduction_with_prefix):
+@patch("fia_api.scripts.transforms.enginx_transform.Repo.find_one")
+def test_enginx_transform_apply_with_prefix(mock_find_one, script, reduction_with_prefix):
     """
     Test enginx transform applies correct updates to script when prefix is already present
     :param script: The script fixture
     :param reduction_with_prefix: The reduction fixture with prefix
     :return: None
     """
+    mock_run = Mock()
+    mock_run.filename = "ENGINX1234.nxs"
+    mock_find_one.return_value = mock_run
+
     transform = EnginxTransform()
 
     original_lines = script.value.splitlines()
@@ -147,13 +155,18 @@ def test_enginx_transform_apply_with_prefix(script, reduction_with_prefix):
             raise AssertionError(f"Line {index} not updated correctly: {line}")
 
 
-def test_enginx_transform_apply_with_int_inputs(script, reduction_with_int_inputs):
+@patch("fia_api.scripts.transforms.enginx_transform.Repo.find_one")
+def test_enginx_transform_apply_with_int_inputs(mock_find_one, script, reduction_with_int_inputs):
     """
     Test enginx transform applies correct updates to script when inputs are integers
     :param script: The script fixture
     :param reduction_with_prefix: The reduction fixture with prefix
     :return: None
     """
+    mock_run = Mock()
+    mock_run.filename = "ENGINX1234.nxs"
+    mock_find_one.return_value = mock_run
+
     transform = EnginxTransform()
 
     original_lines = script.value.splitlines()
@@ -172,12 +185,17 @@ def test_enginx_transform_apply_with_int_inputs(script, reduction_with_int_input
             raise AssertionError(f"Line {index} not updated correctly: {line}")
 
 
-def test_enginx_transform_with_string_focus_runs(script):
+@patch("fia_api.scripts.transforms.enginx_transform.Repo.find_one")
+def test_enginx_transform_with_string_focus_runs(mock_find_one, script):
     """
     Test enginx transform handles string focus_runs correctly
     :param script: The script fixture
     :return: None
     """
+    mock_run = Mock()
+    mock_run.filename = "ENGINX1234.nxs"
+    mock_find_one.return_value = mock_run
+
     transform = EnginxTransform()
 
     mock = Mock()
