@@ -44,6 +44,10 @@ class EnginxTransform(Transform):
                 self._transform_focus_runs(line, lines, index, job)
                 continue
 
+            # Transform ceria_cycle
+            if "ceria_cycle =" in line:
+                self._transform_ceria_cycle(line, lines, index, job)
+
             # Transform ceria_run
             if "ceria_run =" in line:
                 self._transform_ceria_run(line, lines, index, job)
@@ -84,8 +88,9 @@ class EnginxTransform(Transform):
         :return: None
         """
         run_repo: Repo[Run] = Repo()
-        filename = run_repo.find_one(RunSpecification().by_id(job.run_id)).filename
-        focus_runs = [filename.rsplit(".", 1)[0]]  # type: ignore
+        # The below type ignore is because of the quick fix for enginx and will be resolved in the db refactor pr
+        filename = run_repo.find_one(RunSpecification().by_id(job.run_id)).filename  # type: ignore
+        focus_runs = [filename.rsplit(".", 1)[0]]
         lines[index] = line.replace(line.split("=")[1], f" {focus_runs!s}")
 
     def _transform_ceria_run(self, line: str, lines: list[str], index: int, job: Job) -> None:
@@ -103,6 +108,11 @@ class EnginxTransform(Transform):
         else:
             ceria_run = job.inputs["ceria_run"]  # type: ignore
         lines[index] = line.replace(line.split("=")[1], f' "{ceria_run}"')
+
+    def _transform_ceria_cycle(self, line: str, lines: list[str], index: int, job: Job) -> None:
+        """
+        Transform the ceria_cycle parameter in the script."""
+        lines[index] = line.replace(line.split("=")[1], f" '{job.inputs['ceria_cycle']}'")  # type: ignore
 
     def _transform_group(self, line: str, lines: list[str], index: int, job: Job) -> None:
         """

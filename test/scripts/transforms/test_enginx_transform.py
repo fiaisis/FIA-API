@@ -30,7 +30,9 @@ FULL_CALIB = os.path.join(CWDIR, "ENGINX_whole_inst_calib.nxs")
 
 vanadium_run = "1" # this is instrument spec
 focus_runs = ["1"] # this is the run number
+ceria_cycle = "foo"
 ceria_run = "1" # Per experiment in instrument specification
+ceria_path = f"/archive/ndxenginx/Instrument/data/{ceria_cycle}/{ceria_run}.nxs
 group = GROUP["BOTH"] # in instrument spec
 
 enginx = EnginX(
@@ -57,6 +59,7 @@ def reduction():
         "vanadium_run": "654321",
         "ceria_run": "987654",
         "group": "BOTH",
+        "ceria_cycle": "cycle_20_1",
     }
     mock.run = Mock()
     mock.run.filename = "ENGINX1234.nxs"
@@ -74,6 +77,7 @@ def reduction_with_prefix():
         "vanadium_run": "ENGINX654321",
         "ceria_run": "ENGINX987654",
         "group": "BOTH",
+        "ceria_cycle": "cycle_20_1",
     }
     mock.id = "test-job-id-prefix"
     return mock
@@ -86,11 +90,7 @@ def reduction_with_int_inputs():
     :return:
     """
     mock = Mock()
-    mock.inputs = {
-        "vanadium_run": 654321,
-        "ceria_run": 987654,
-        "group": "BOTH",
-    }
+    mock.inputs = {"vanadium_run": 654321, "ceria_run": 987654, "group": "BOTH", "ceria_cycle": "cycle_20_1"}
     mock.run = Mock()
     mock.run.filename = "ENGINX1234.nxs"
     return mock
@@ -122,6 +122,7 @@ def test_enginx_transform_apply(mock_find_one, script, reduction):
             or ("focus_runs =" in line and "focus_runs = ['ENGINX1234']" not in line)
             or ("ceria_run =" in line and 'ceria_run = "ENGINX987654"' not in line)
             or ("group =" in line and 'group = GROUP["BOTH"]' not in line)
+            or ("ceria_cycle =" in line and "ceria_cycle = 'cycle_20_1'" not in line)
         ):
             raise AssertionError(f"Line {index} not updated correctly: {line}")
 
@@ -151,6 +152,7 @@ def test_enginx_transform_apply_with_prefix(mock_find_one, script, reduction_wit
             or ("focus_runs =" in line and "focus_runs = ['ENGINX1234']" not in line)
             or ("ceria_run =" in line and 'ceria_run = "ENGINX987654"' not in line)
             or ("group =" in line and 'group = GROUP["BOTH"]' not in line)
+            or ("ceria_cycle =" in line and "ceria_cycle = 'cycle_20_1'" not in line)
         ):
             raise AssertionError(f"Line {index} not updated correctly: {line}")
 
@@ -181,6 +183,7 @@ def test_enginx_transform_apply_with_int_inputs(mock_find_one, script, reduction
             or ("focus_runs =" in line and "focus_runs = ['ENGINX1234']" not in line)
             or ("ceria_run =" in line and 'ceria_run = "ENGINX987654"' not in line)
             or ("group =" in line and 'group = GROUP["BOTH"]' not in line)
+            or ("ceria_cycle =" in line and "ceria_cycle = 'cycle_20_1'" not in line)
         ):
             raise AssertionError(f"Line {index} not updated correctly: {line}")
 
@@ -204,6 +207,7 @@ def test_enginx_transform_with_string_focus_runs(mock_find_one, script):
         "focus_runs": "765432",
         "ceria_run": "987654",
         "group": "BOTH",
+        "ceria_cycle": "cycle_20_1",
     }
     mock.id = "test-job-id-string"
     mock.run = Mock()
@@ -221,5 +225,6 @@ def test_enginx_transform_with_string_focus_runs(mock_find_one, script):
             or ("focus_runs =" in line and "focus_runs = ['ENGINX1234']" not in line)
             or ("ceria_run =" in line and 'ceria_run = "ENGINX987654"' not in line)
             or ("group =" in line and 'group = GROUP["BOTH"]' not in line)
+            or ("ceria_cycle =" in line and "ceria_cycle = 'cycle_20_1'" not in line)
         ):
             raise AssertionError(f"Line {index} not updated correctly: {line}")
