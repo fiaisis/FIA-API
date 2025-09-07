@@ -43,23 +43,9 @@ class EnginxTransform(Transform):
                 lines[index] = line.replace(line.split("=")[1], f"'{job.inputs['vanadium_path']}'")
                 continue
 
-            if "vanadium_run =" in line:
-                lines[index] = self.vanadium_run_replace(line, job)
-                continue
-
             # Transform focus_runs
             if "focus_runs =" in line:
                 lines[index] = self.focus_runs_replace(line, job)
-                continue
-
-            # Transform ceria_cycle
-            if "ceria_cycle =" in line:
-                lines[index] = self.ceria_cycle_replace(line, job)
-                continue
-
-            # Transform ceria_run
-            if "ceria_run =" in line:
-                lines[index] = self.ceria_run_replace(line, job)
                 continue
 
             # Transform group
