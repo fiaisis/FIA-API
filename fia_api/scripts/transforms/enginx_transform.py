@@ -43,9 +43,8 @@ class EnginxTransform(Transform):
                 lines[index] = line.replace(line.split("=")[1], f"'{job.inputs['vanadium_path']}'")
                 continue
 
-            # Transform focus_runs
-            if "focus_runs =" in line:
-                lines[index] = self.focus_runs_replace(line, job)
+            if "focus_path =" in line:
+                lines[index] = line.replace(line.split("=")[1], f"{job.inputs['focus_path']})")
                 continue
 
             # Transform group
