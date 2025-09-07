@@ -28,21 +28,32 @@ from Engineering.EnggUtils import GROUP
 CWDIR = "/output"
 FULL_CALIB = os.path.join(CWDIR, "ENGINX_whole_inst_calib.nxs")
 
-vanadium_run = "1" # this is instrument spec
-focus_runs = ["1"] # this is the run number
-ceria_cycle = "foo"
-ceria_run = "1" # Per experiment in instrument specification
-ceria_path = f"/archive/ndxenginx/Instrument/data/{ceria_cycle}/{ceria_run}.nxs
-group = GROUP["BOTH"] # in instrument spec
+vanadium_run = "ENGINX236516"
+vanadium_cycle = "cycle_1_2"
+vanadium_path = (
+    f"/archive/ndxenginx/Instrument/data/{vanadium_cycle}/{vanadium_run}.nxs"
+)
+focus_runs = ["ENGINX299080"]
+focus_cycle = "cycle_1_2"
+focus_path = f"/archive/ndxenginx/Instrument/data/{focus_cycle}/{focus_runs[0]}.nxs"
+ceria_cycle = "cycle_1_2"
+ceria_run = "ENGINX193749"
+ceria_path = f"/archive/ndxenginx/Instrument/data/{ceria_cycle}/{ceria_run}.nxs"
+group = GROUP["BOTH"]
 
+# Set values that don't change
+output_dir = f"/output/run-{focus_runs[0]}"
+calib_file = "/opt/conda/envs/mantid/scripts/Engineering/calib/ENGINX_full_instrument_calibration_193749.nxs"
+
+output = []
 enginx = EnginX(
-            vanadium_run=vanadium_run,
-            focus_runs=focus_runs,
-            save_dir=CWDIR,
-            full_inst_calib_path=FULL_CALIB,
-            ceria_run=ceria_run,
-            group=group,
-        )
+    vanadium_run=vanadium_path,
+    focus_runs=[focus_path],
+    save_dir=output_dir,
+    full_inst_calib_path=calib_file,
+    ceria_run=ceria_path,
+    group=group,
+)
 enginx.main(plot_cal=False, plot_foc=False)
 """
     )

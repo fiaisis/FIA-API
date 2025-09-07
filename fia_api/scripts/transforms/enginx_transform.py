@@ -44,7 +44,7 @@ class EnginxTransform(Transform):
                 continue
 
             if "focus_path =" in line:
-                lines[index] = line.replace(line.split("=")[1], f"{job.inputs['focus_path']}'")
+                lines[index] = line.replace(line.split("=")[1], f"'{job.inputs['focus_path']}'")
                 continue
 
             # Transform group
