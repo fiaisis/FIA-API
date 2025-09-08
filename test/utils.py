@@ -177,6 +177,7 @@ TEST_JOB = Job(
         "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
         "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
         "wbvan": 12345,
+        "git_sha": "abc1234567",
     },
     state=State.NOT_STARTED,
     owner=TEST_JOB_OWNER,
