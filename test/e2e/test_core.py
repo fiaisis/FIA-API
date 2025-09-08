@@ -197,6 +197,7 @@ def test_get_all_job_for_user(mock_post, mock_get_experiment_numbers_for_user_nu
             "end": None,
             "inputs": {
                 "ei": "'auto'",
+                "git_sha": "abc1234567",
                 "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
                 "monovan": 0,
                 "remove_bkg": True,
@@ -245,6 +246,7 @@ def test_get_all_job_for_user_include_run(mock_post, mock_get_experiment_numbers
             },
             "inputs": {
                 "ei": "'auto'",
+                "git_sha": "abc1234567",
                 "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
                 "monovan": 0,
                 "remove_bkg": True,
@@ -280,6 +282,7 @@ def test_get_job_by_id_job_exists_for_staff(mock_post):
         "end": None,
         "inputs": {
             "ei": "'auto'",
+            "git_sha": "abc1234567",
             "sam_mass": 0.0,
             "sam_rmm": 0.0,
             "monovan": 0,
@@ -346,6 +349,7 @@ def test_get_jobs_for_instrument_jobs_exist_for_dev_mode():
                 "end": None,
                 "inputs": {
                     "ei": "'auto'",
+                    "git_sha": "abc1234567",
                     "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
                     "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
                     "monovan": 0,
@@ -383,6 +387,7 @@ def test_get_jobs_for_instrument_jobs_exist_for_staff(mock_post):
             "end": None,
             "inputs": {
                 "ei": "'auto'",
+                "git_sha": "abc1234567",
                 "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/"
                 "964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
                 "monovan": 0,
@@ -432,6 +437,7 @@ def test_get_jobs_for_instrument_runs_included_for_staff(mock_post):
             "end": None,
             "inputs": {
                 "ei": "'auto'",
+                "git_sha": "abc1234567",
                 "mask_file_link": "https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_mask2023_1.xml",
                 "monovan": 0,
                 "remove_bkg": True,
@@ -696,6 +702,7 @@ def test_get_all_jobs_response_body_as_user_true_and_as_staff(mock_post, mock_ge
             "end": None,
             "inputs": {
                 "ei": "'auto'",
+                "git_sha": "abc1234567",
                 "sam_mass": 0.0,
                 "sam_rmm": 0.0,
                 "monovan": 0,

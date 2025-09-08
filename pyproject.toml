@@ -81,9 +81,9 @@ ignore = [
     "S101", # flake8-bandit - Use of assert (all over pytest tests)
     "ISC001", # Conflicts with the formatter
     "COM812", # Conflicts with the formatter
-    "TCH003", # Conflicts with pydantic
-    "TCH002", # Conflicts with pydantic
-    "TCH001", # Conflicts with pydantic
+    "TC003", # Conflicts with pydantic
+    "TC002", # Conflicts with pydantic
+    "TC001", # Conflicts with pydantic
 ]
 
 [tool.ruff.lint.pylint]

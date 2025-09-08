@@ -31,6 +31,12 @@ with open("mari_res2013.map", "w+" as fle):
     text = requests.get("https://raw.githubusercontent.com/pace-neutrons/InstrumentFiles/964733aec28b00b13f32fb61afa363a74dd62130/mari/mari_res2013.map").text
     fle.write(text)
 
+git_sha = "5a0b0a76caad4252465e9f889fbe18f82dd41d47"
+# Only needed for fixes with regards to reductions during MARI issues
+get_file_from_request(f"https://raw.githubusercontent.com/mantidproject/direct_reduction/{git_sha}/reduction_files/reduction_utils.py", "reduction_utils.py")
+get_file_from_request(f"https://raw.githubusercontent.com/mantidproject/direct_reduction/{git_sha}/reduction_files/DG_whitevan.py", "DG_whitevan.py")
+get_file_from_request(f"https://raw.githubusercontent.com/mantidproject/direct_reduction/{git_sha}/reduction_files/DG_reduction.py", "DG_reduction.py")
+get_file_from_request(f"https://raw.githubusercontent.com/mantidproject/direct_reduction/{git_sha}/reduction_files/DG_monovan.py", "DG_monovan.py")
 
 from mantid import config
 from MARIReduction_Sample import *
@@ -106,6 +112,7 @@ def reduction():
         "remove_bkg": False,
         "mask_file_link": "Some link",
         "wbvan": 12345,
+        "git_sha": "abc1234567",
     }
     return mock
 
@@ -136,6 +143,8 @@ def test_mari_transform_apply(script, reduction):  # noqa: C901
             assert line == "ei = [50, 20]"
         elif line.startswith("wbvan"):
             assert line == "wbvan = 12345"
+        elif line.startswith("git_sha"):
+            assert line == "git_sha = abc1234567"
         elif line.startswith("monovan"):
             assert line == "monovan = 54321"
         elif line.startswith("sam_mass"):
