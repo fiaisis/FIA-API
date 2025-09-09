@@ -2,7 +2,7 @@
 Test cases for EnginxTransform
 """
 
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -59,16 +59,12 @@ enginx.main(plot_cal=False, plot_foc=False)
     )
 
 
-@patch("fia_api.scripts.transforms.enginx_transform.Repo.find_one")
-def test_enginx_transform_with_string_focus_runs(mock_find_one, script):
+def test_enginx_transform_with_string_focus_runs(script):
     """
     Test enginx transform handles string focus_runs correctly
     :param script: The script fixture
     :return: None
     """
-    mock_run = Mock()
-    mock_run.filename = "ENGINX1234.nxs"
-    mock_find_one.return_value = mock_run
 
     transform = EnginxTransform()
 
