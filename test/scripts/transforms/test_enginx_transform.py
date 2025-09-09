@@ -59,146 +59,6 @@ enginx.main(plot_cal=False, plot_foc=False)
     )
 
 
-@pytest.fixture
-def reduction():
-    """
-    Reduction fixture
-    :return:
-    """
-    mock = Mock()
-    mock.inputs = {
-        "vanadium_run": "654321",
-        "ceria_run": "987654",
-        "group": "BOTH",
-        "ceria_cycle": "cycle_20_1",
-    }
-    mock.run = Mock()
-    mock.run.filename = "ENGINX1234.nxs"
-    return mock
-
-
-@pytest.fixture
-def reduction_with_prefix():
-    """
-    Reduction fixture with ENGINX prefix already in the run numbers
-    :return:
-    """
-    mock = Mock()
-    mock.inputs = {
-        "vanadium_run": "ENGINX654321",
-        "ceria_run": "ENGINX987654",
-        "group": "BOTH",
-        "ceria_cycle": "cycle_20_1",
-    }
-    mock.id = "test-job-id-prefix"
-    return mock
-
-
-@pytest.fixture
-def reduction_with_int_inputs():
-    """
-    Reduction fixture with integer vanadium and ceria runs
-    :return:
-    """
-    mock = Mock()
-    mock.inputs = {"vanadium_run": 654321, "ceria_run": 987654, "group": "BOTH", "ceria_cycle": "cycle_20_1"}
-    mock.run = Mock()
-    mock.run.filename = "ENGINX1234.nxs"
-    return mock
-
-
-@patch("fia_api.scripts.transforms.enginx_transform.Repo.find_one")
-def test_enginx_transform_apply(mock_find_one, script, reduction):
-    """
-    Test enginx transform applies correct updates to script
-    :param script: The script fixture
-    :param reduction: The reduction fixture
-    :return: None
-    """
-    mock_run = Mock()
-    mock_run.filename = "ENGINX1234.nxs"
-    mock_find_one.return_value = mock_run
-
-    transform = EnginxTransform()
-
-    original_lines = script.value.splitlines()
-    transform.apply(script, reduction)
-    updated_lines = script.value.splitlines()
-    assert len(original_lines) == len(updated_lines)
-
-    # Check that all instances of vanadium_run, focus_runs, ceria_run, and group are updated
-    for index, line in enumerate(updated_lines):
-        if (
-            ("vanadium_run =" in line and 'vanadium_run = "ENGINX654321"' not in line)
-            or ("focus_runs =" in line and "focus_runs = ['ENGINX1234']" not in line)
-            or ("ceria_run =" in line and 'ceria_run = "ENGINX987654"' not in line)
-            or ("group =" in line and 'group = GROUP["BOTH"]' not in line)
-            or ("ceria_cycle =" in line and "ceria_cycle = 'cycle_20_1'" not in line)
-        ):
-            raise AssertionError(f"Line {index} not updated correctly: {line}")
-
-
-@patch("fia_api.scripts.transforms.enginx_transform.Repo.find_one")
-def test_enginx_transform_apply_with_prefix(mock_find_one, script, reduction_with_prefix):
-    """
-    Test enginx transform applies correct updates to script when prefix is already present
-    :param script: The script fixture
-    :param reduction_with_prefix: The reduction fixture with prefix
-    :return: None
-    """
-    mock_run = Mock()
-    mock_run.filename = "ENGINX1234.nxs"
-    mock_find_one.return_value = mock_run
-
-    transform = EnginxTransform()
-
-    original_lines = script.value.splitlines()
-    transform.apply(script, reduction_with_prefix)
-    updated_lines = script.value.splitlines()
-    assert len(original_lines) == len(updated_lines)
-    # Check that all instances of vanadium_run, focus_runs, ceria_run, and group are updated
-    for index, line in enumerate(updated_lines):
-        if (
-            ("vanadium_run =" in line and 'vanadium_run = "ENGINX654321"' not in line)
-            or ("focus_runs =" in line and "focus_runs = ['ENGINX1234']" not in line)
-            or ("ceria_run =" in line and 'ceria_run = "ENGINX987654"' not in line)
-            or ("group =" in line and 'group = GROUP["BOTH"]' not in line)
-            or ("ceria_cycle =" in line and "ceria_cycle = 'cycle_20_1'" not in line)
-        ):
-            raise AssertionError(f"Line {index} not updated correctly: {line}")
-
-
-@patch("fia_api.scripts.transforms.enginx_transform.Repo.find_one")
-def test_enginx_transform_apply_with_int_inputs(mock_find_one, script, reduction_with_int_inputs):
-    """
-    Test enginx transform applies correct updates to script when inputs are integers
-    :param script: The script fixture
-    :param reduction_with_prefix: The reduction fixture with prefix
-    :return: None
-    """
-    mock_run = Mock()
-    mock_run.filename = "ENGINX1234.nxs"
-    mock_find_one.return_value = mock_run
-
-    transform = EnginxTransform()
-
-    original_lines = script.value.splitlines()
-    transform.apply(script, reduction_with_int_inputs)
-    updated_lines = script.value.splitlines()
-    assert len(original_lines) == len(updated_lines)
-
-    # Check that all instances of vanadium_run, focus_runs, ceria_run, and group are updated
-    for index, line in enumerate(updated_lines):
-        if (
-            ("vanadium_run =" in line and 'vanadium_run = "ENGINX654321"' not in line)
-            or ("focus_runs =" in line and "focus_runs = ['ENGINX1234']" not in line)
-            or ("ceria_run =" in line and 'ceria_run = "ENGINX987654"' not in line)
-            or ("group =" in line and 'group = GROUP["BOTH"]' not in line)
-            or ("ceria_cycle =" in line and "ceria_cycle = 'cycle_20_1'" not in line)
-        ):
-            raise AssertionError(f"Line {index} not updated correctly: {line}")
-
-
 @patch("fia_api.scripts.transforms.enginx_transform.Repo.find_one")
 def test_enginx_transform_with_string_focus_runs(mock_find_one, script):
     """
@@ -214,11 +74,10 @@ def test_enginx_transform_with_string_focus_runs(mock_find_one, script):
 
     mock = Mock()
     mock.inputs = {
-        "vanadium_run": "654321",
-        "focus_runs": "765432",
-        "ceria_run": "987654",
+        "focus_path": "/archive/ndxenginx/Instrument/data/cycle_1_2/ENGINX299080.nxs",
+        "vanadium_path": "/archive/ndxenginx/Instrument/data/cycle_1_2/ENGINX236516.nxs",
+        "ceria_path": "/archive/ndxenginx/Instrument/data/cycle_1_2/ENGINX193749.nxs",
         "group": "BOTH",
-        "ceria_cycle": "cycle_20_1",
     }
     mock.id = "test-job-id-string"
     mock.run = Mock()
@@ -232,10 +91,18 @@ def test_enginx_transform_with_string_focus_runs(mock_find_one, script):
     # Check that all instances of vanadium_run, focus_runs, ceria_run, and group are updated
     for index, line in enumerate(updated_lines):
         if (
-            ("vanadium_run =" in line and 'vanadium_run = "ENGINX654321"' not in line)
-            or ("focus_runs =" in line and "focus_runs = ['ENGINX1234']" not in line)
-            or ("ceria_run =" in line and 'ceria_run = "ENGINX987654"' not in line)
+            (
+                "vanadium_path =" in line
+                and "vanadium_path ='/archive/ndxenginx/Instrument/data/cycle_1_2/ENGINX236516.nxs'" not in line
+            )
+            or (
+                "focus_path =" in line
+                and "focus_path ='/archive/ndxenginx/Instrument/data/cycle_1_2/ENGINX299080.nxs'" not in line
+            )
+            or (
+                "ceria_path =" in line
+                and "ceria_path ='/archive/ndxenginx/Instrument/data/cycle_1_2/ENGINX193749.nxs'" not in line
+            )
             or ("group =" in line and 'group = GROUP["BOTH"]' not in line)
-            or ("ceria_cycle =" in line and "ceria_cycle = 'cycle_20_1'" not in line)
         ):
             raise AssertionError(f"Line {index} not updated correctly: {line}")
