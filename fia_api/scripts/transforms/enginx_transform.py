@@ -5,9 +5,7 @@ instrument scripts.
 
 import logging
 
-from fia_api.core.models import Job, Run
-from fia_api.core.repositories import Repo
-from fia_api.core.specifications.run import RunSpecification
+from fia_api.core.models import Job
 from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.transform import Transform
 
@@ -55,35 +53,12 @@ class EnginxTransform(Transform):
         script.value = "\n".join(lines)
         logger.info("Transform complete for reduction %s", job.id)
 
-    def vanadium_run_replace(self, line: str, job: Job) -> str:
-        """Return a transformed vanadium_run assignment line."""
-        if "ENGINX" not in str(job.inputs["vanadium_run"]):  # type: ignore
-            vanadium_run = f"ENGINX{job.inputs['vanadium_run']}"  # type: ignore
-        else:
-            vanadium_run = job.inputs["vanadium_run"]  # type: ignore
-        return line.replace(line.split("=")[1], f' "{vanadium_run}"')
-
-    def focus_runs_replace(self, line: str, job: Job) -> str:
-        """Return a transformed focus_runs assignment line using the job's run filename (without extension)."""
-        run_repo: Repo[Run] = Repo()
-        # The below type ignore is because of the quick fix for enginx and will be resolved in the db refactor pr
-        filename = run_repo.find_one(RunSpecification().by_id(job.run_id)).filename  # type: ignore
-        focus_runs = [filename.rsplit(".", 1)[0]]
-        return line.replace(line.split("=")[1], f" {focus_runs!s}")
-
-    def ceria_run_replace(self, line: str, job: Job) -> str:
-        """Return a transformed ceria_run assignment line."""
-        if "ENGINX" not in str(job.inputs["ceria_run"]):  # type: ignore
-            ceria_run = f"ENGINX{job.inputs['ceria_run']}"  # type: ignore
-        else:
-            ceria_run = job.inputs["ceria_run"]  # type: ignore
-        return line.replace(line.split("=")[1], f' "{ceria_run}"')
-
-    def ceria_cycle_replace(self, line: str, job: Job) -> str:
-        """Return a transformed ceria_cycle assignment line."""
-        return line.replace(line.split("=")[1], f" '{job.inputs['ceria_cycle']}'")  # type: ignore
-
     def group_replace(self, line: str, job: Job) -> str:
-        """Return a transformed group assignment line."""
+        """
+        Given the line, replace the group with the group specified in the job.
+        :param line: The line to transform
+        :param job: The job containing the group
+        :return: The transformed line
+        """
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
         return line.replace(line.split("=")[1], f' GROUP["{job.inputs["group"]}"]')  # type: ignore
