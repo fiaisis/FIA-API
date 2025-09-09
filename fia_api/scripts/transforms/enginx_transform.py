@@ -33,83 +33,32 @@ class EnginxTransform(Transform):
         # If you get here in the future, try removing the type ignore and see if it passes with newer mypy
         for index, line in enumerate(lines):
             # Transform vanadium_run (always prefixed with ENGINX)
-            if "vanadium_run=" in line:
-                self._transform_vanadium_run(line, lines, index, job)
+            if "ceria_path =" in line:
+                lines[index] = line.replace(line.split("=")[1], f"'{job.inputs['ceria_path']}'")  # type: ignore
                 continue
 
-            # Transform focus_runs
-            if "focus_runs=" in line:
-                self._transform_focus_runs(line, lines, index, job)
+            if "vanadium_path =" in line:
+                lines[index] = line.replace(line.split("=")[1], f"'{job.inputs['vanadium_path']}'")  # type: ignore
                 continue
 
-            # Transform ceria_run
-            if "ceria_run=" in line:
-                self._transform_ceria_run(line, lines, index, job)
+            if "focus_path =" in line:
+                lines[index] = line.replace(line.split("=")[1], f"'{job.inputs['focus_path']}'")  # type: ignore
                 continue
 
-            # Placeholder for group transformation
-            if "group=" in line:
-                self._transform_group(line, lines, index, job)
+            # Transform group
+            if "group =" in line:
+                lines[index] = self.group_replace(line, job)
                 continue
 
         script.value = "\n".join(lines)
         logger.info("Transform complete for reduction %s", job.id)
 
-    def _transform_vanadium_run(self, line: str, lines: list[str], index: int, job: Job) -> None:
+    def group_replace(self, line: str, job: Job) -> str:
         """
-        Transform the vanadium_run parameter in the script.
-
-        :param line: The current line
-        :param lines: All lines in the script
-        :param index: The index of the current line
-        :param job: The job containing the parameters
-        :return: None
-        """
-        if "ENGINX" not in str(job.inputs["vanadium_run"]):  # type: ignore
-            vanadium_run = f"ENGINX{job.inputs['vanadium_run']}"  # type: ignore
-        else:
-            vanadium_run = job.inputs["vanadium_run"]  # type: ignore
-        lines[index] = line.replace(line.split("=")[1], f'"{vanadium_run}"')
-
-    def _transform_focus_runs(self, line: str, lines: list[str], index: int, job: Job) -> None:
-        """
-        Transform the focus_runs parameter in the script.
-
-        :param line: The current line
-        :param lines: All lines in the script
-        :param index: The index of the current line
-        :param job: The job containing the parameters
-        :return: None
-        """
-        focus_runs = [job.run.filename.rsplit(".", 1)[0]]  # type: ignore
-        lines[index] = line.replace(line.split("=")[1], str(focus_runs))
-
-    def _transform_ceria_run(self, line: str, lines: list[str], index: int, job: Job) -> None:
-        """
-        Transform the ceria_run parameter in the script.
-
-        :param line: The current line
-        :param lines: All lines in the script
-        :param index: The index of the current line
-        :param job: The job containing the parameters
-        :return: None
-        """
-        if "ENGINX" not in str(job.inputs["ceria_run"]):  # type: ignore
-            ceria_run = f"ENGINX{job.inputs['ceria_run']}"  # type: ignore
-        else:
-            ceria_run = job.inputs["ceria_run"]  # type: ignore
-        lines[index] = line.replace(line.split("=")[1], f'"{ceria_run}"')
-
-    def _transform_group(self, line: str, lines: list[str], index: int, job: Job) -> None:
-        """
-        Transform the group parameter in the script.
-        This is a placeholder for future implementation.
-
-        :param line: The current line
-        :param lines: All lines in the script
-        :param index: The index of the current line
-        :param job: The job containing the parameters
-        :return: None
+        Given the line, replace the group with the group specified in the job.
+        :param line: The line to transform
+        :param job: The job containing the group
+        :return: The transformed line
         """
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
-        lines[index] = line.replace(line.split("=")[1], f'GROUP["{job.inputs["group"]}"]')  # type: ignore
+        return line.replace(line.split("=")[1], f' GROUP["{job.inputs["group"]}"]')  # type: ignore
