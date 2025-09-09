@@ -36,15 +36,15 @@ class EnginxTransform(Transform):
         for index, line in enumerate(lines):
             # Transform vanadium_run (always prefixed with ENGINX)
             if "ceria_path =" in line:
-                lines[index] = line.replace(line.split("=")[1], f"'{job.inputs['ceria_path']}'")
+                lines[index] = line.replace(line.split("=")[1], f"'{job.inputs['ceria_path']}'")  # type: ignore
                 continue
 
             if "vanadium_path =" in line:
-                lines[index] = line.replace(line.split("=")[1], f"'{job.inputs['vanadium_path']}'")
+                lines[index] = line.replace(line.split("=")[1], f"'{job.inputs['vanadium_path']}'")  # type: ignore
                 continue
 
             if "focus_path =" in line:
-                lines[index] = line.replace(line.split("=")[1], f"'{job.inputs['focus_path']}'")
+                lines[index] = line.replace(line.split("=")[1], f"'{job.inputs['focus_path']}'")  # type: ignore
                 continue
 
             # Transform group
