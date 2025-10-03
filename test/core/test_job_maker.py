@@ -126,7 +126,7 @@ def test_create_rerun_job_original_job_not_found(mock_connect, faker):
     script = "print('not found')"
     experiment_number = faker.random.randint(1, 1000000)
 
-    with pytest.raises(JobRequestError, match="Cannot rerun job that does not exist."):
+    with pytest.raises(JobRequestError, match=r"Cannot rerun job that does not exist."):
         job_maker.create_rerun_job(
             job_id=job_id,
             runner_image=runner_image,
