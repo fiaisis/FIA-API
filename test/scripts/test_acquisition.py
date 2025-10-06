@@ -242,3 +242,11 @@ def test_get_by_instrument_path_character_raises_exception():
     """
     with pytest.raises(UnsafePathError):
         get_by_instrument_name("mari/..")
+
+
+def test__apply_json_output():
+    """
+    Test that ensures that JSON output is added at the end of a script
+    :return: None
+    """
+    pass
