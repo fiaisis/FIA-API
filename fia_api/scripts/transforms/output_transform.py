@@ -4,7 +4,7 @@ from fia_api.scripts.transforms.transform import Transform
 
 
 class OutputTransform(Transform):
-    def apply(self, script: PreScript, job: Job) -> str:
+    def apply(self, script: PreScript, _: Job) -> None:
         """
         The aim is to force whatever the script that is passed to also output to stdinput a json string that consists of
         3 values, status of the run (status), status message, and output files.
@@ -16,5 +16,4 @@ class OutputTransform(Transform):
             "print(json.dumps({'status': 'Successful', 'status_message':"
             "'','output_files': output, 'stacktrace': ''}))\n"
         )
-        script_string = str(script)
-        return script_string + "\n" + script_addon
+        script.value = script.value + "\n" + script_addon
