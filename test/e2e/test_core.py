@@ -1327,7 +1327,3 @@ def test_download_zip_all_missing_returns_404(mock_post, mock_get_experiments):
         "5001/does_not_exist_1.nxspe",
         "5001/does_not_exist_2.nxspe",
     }
-
-
-def test_json_output_transform_occurs():
-
