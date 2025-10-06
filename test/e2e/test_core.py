@@ -1162,7 +1162,7 @@ def test_json_output_added_to_autoreduced_script():
                 headers=API_KEY_HEADER,
             )
             assert response.status_code == HTTPStatus.CREATED
-            assert script_addon in response.json()["script"]
+            assert response.json()["script"].endswith(script_addon)
         finally:
             session.execute(delete(Job).where(Job.id == response.json()["job_id"]))
             session.commit()
