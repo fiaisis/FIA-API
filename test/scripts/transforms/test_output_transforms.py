@@ -8,7 +8,7 @@ SCRIPT = """# import os
 print(hello, world)
 """
 
-def test_output_transform(script):
+def test_output_transform():
   """
   """
   script_addon = (
