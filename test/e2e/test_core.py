@@ -1133,14 +1133,14 @@ def test_post_autoreduction_run_exists():
             session.execute(delete(Job).where(Job.id == response.json()["job_id"]))
             session.commit()
 
-        
+
 def test_json_output_added_to_autoreduced_script():
     script_addon = (
-            "import json\n"
-            "\n"
-            "print(json.dumps({'status': 'Successful', 'status_message':"
-            "'','output_files': output, 'stacktrace': ''}))\n"
-        )
+        "import json\n"
+        "\n"
+        "print(json.dumps({'status': 'Successful', 'status_message':"
+        "'','output_files': output, 'stacktrace': ''}))\n"
+    )
     with SESSION() as session:
         try:
             run = session.execute(select(Run).where(Run.id == 5001).limit(1)).scalar()  # noqa: PLR2004
