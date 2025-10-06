@@ -127,5 +127,5 @@ def get_script_for_job(instrument: str, job: Job) -> PreScript:
     mantid_transform = MantidTransform()
     mantid_transform.apply(script, job)
     output_transform = OutputTransform()
-    output_transform.apply(script=script, job=job)
+    output_transform.apply(script, job)
     return script
