@@ -1,11 +1,8 @@
-from xml.etree.ElementTree import tostring
-from fia_api.core.models import Job
-from fia_api.scripts.transforms.transform import Transform
 from fia_api.scripts.pre_script import PreScript
+from fia_api.scripts.transforms.transform import Transform
 
 
 class OutputTransform(Transform):
-
     def apply(self, script: PreScript) -> str:
         """
         The aim is to force whatever the script that is passed to also output to stdinput a json string that consists of
