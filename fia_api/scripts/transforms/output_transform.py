@@ -18,4 +18,5 @@ class OutputTransform(Transform):
             "print(json.dumps({'status': 'Successful', 'status_message':"
             "'','output_files': output, 'stacktrace': ''}))\n"
         )
-        return script + "\n" + script_addon
+        script_string = str(script)
+        return script_string + "\n" + script_addon
