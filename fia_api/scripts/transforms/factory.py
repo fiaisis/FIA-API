@@ -6,6 +6,7 @@ from fia_api.scripts.transforms.enginx_transform import EnginxTransform
 from fia_api.scripts.transforms.iris_transform import IrisTransform
 from fia_api.scripts.transforms.mari_transforms import MariTransform
 from fia_api.scripts.transforms.osiris_transform import OsirisTransform
+from fia_api.scripts.transforms.output_transform import OutputTransform
 from fia_api.scripts.transforms.sans_transform import SansTransform
 from fia_api.scripts.transforms.test_transforms import TestTransform
 from fia_api.scripts.transforms.tosca_transform import ToscaTransform
@@ -37,6 +38,8 @@ def get_transform_for_instrument(instrument: str) -> Transform:  # noqa: PLR0911
             return VesuvioTransform()
         case "enginx":
             return EnginxTransform()
+        case "output":
+            return OutputTransform()
         case "test":
             return TestTransform()
         case _:
