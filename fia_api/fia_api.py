@@ -7,6 +7,11 @@ import sys
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from starlette.middleware.cors import CORSMiddleware
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchExportSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from fia_api.core.exceptions import (
     AuthError,
@@ -35,6 +40,15 @@ from fia_api.routers.jobs import JobsRouter
 from fia_api.routers.live_data import LiveDataRouter
 
 
+OTEL_EXPORTER_OTLP_ENDPOINT = str(os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "monitoring-prod-alloy-receiver.monitoring-system.svc.cluster.local:4318"))
+os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = OTEL_EXPORTER_OTLP_ENDPOINT
+if os.environ["OTEL_SERVICE_NAME"] is None:
+    os.environ["OTEL_SERVICE_NAME"] = "FIA-API"
+if os.environ["OTEL_TRACES_SAMPLER"] is None:
+    os.environ["OTEL_TRACES_SAMPLER"] = "always_on"
+if os.environ["OTEL_ENVIRONMENT"] is None:
+    os.environ["OTEL_ENVIRONMENT"] = "staging"
+
 class EndpointFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         return record.getMessage().find("/healthz") == -1 and record.getMessage().find("/ready") == -1
@@ -49,7 +63,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
 
-DEV_MODE = bool(os.environ.get("DEV_MODE", False))  # noqa: PLW1508
+# Initialize OpenTelemetry
+trace.set_tracer_provider(TracerProvider())
+tracer = trace.get_tracer(__name__)
+
+# Set up OTLP exporter
+otlp_exporter = OTLPSpanExporter(endpoint=OTEL_EXPORTER_OTLP_ENDPOINT)
+span_processor = BatchExportSpanProcessor(otlp_exporter)
+trace.get_tracer_provider().add_span_processor(span_processor)
 
 app = FastAPI(title="FIA API", root_path="/" if DEV_MODE else "/api")
 
@@ -63,6 +84,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Instrument FastAPI with OpenTelemetry
+FastAPIInstrumentor.instrument_app(app, "healthz")
 
 app.include_router(ExtrasRouter)
 app.include_router(InstrumentRouter)
