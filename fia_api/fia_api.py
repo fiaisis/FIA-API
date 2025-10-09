@@ -40,13 +40,14 @@ from fia_api.routers.jobs import JobsRouter
 from fia_api.routers.live_data import LiveDataRouter
 
 
+DEV_MODE = bool(os.environ.get("DEV_MODE", False))  # noqa: PLW1508
 OTEL_EXPORTER_OTLP_ENDPOINT = str(os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "monitoring-prod-alloy-receiver.monitoring-system.svc.cluster.local:4318"))
 os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = OTEL_EXPORTER_OTLP_ENDPOINT
-if os.environ["OTEL_SERVICE_NAME"] is None:
+if "OTEL_SERVICE_NAME" not in os.environ:
     os.environ["OTEL_SERVICE_NAME"] = "FIA-API"
-if os.environ["OTEL_TRACES_SAMPLER"] is None:
+if "OTEL_TRACES_SAMPLER" not in os.environ:
     os.environ["OTEL_TRACES_SAMPLER"] = "always_on"
-if os.environ["OTEL_ENVIRONMENT"] is None:
+if "OTEL_ENVIRONMENT" not in os.environ:
     os.environ["OTEL_ENVIRONMENT"] = "staging"
 
 class EndpointFilter(logging.Filter):
