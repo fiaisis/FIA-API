@@ -9,4 +9,4 @@ RUN apt-get update \
     && python -m pip install --upgrade pip \
     && python -m pip install --no-cache-dir .
 
-CMD ["uvicorn", "fia_api.fia_api:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["opentelemetry-instrument", "uvicorn", "fia_api.fia_api:app", "--host", "0.0.0.0", "--port", "80"]
