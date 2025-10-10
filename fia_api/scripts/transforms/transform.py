@@ -23,7 +23,7 @@ class Transform(ABC):
         Apply the transform on the given script
         :param script: PreScript - the script to transform
         :param job: Job the job entity
-        :return: str (in case of json output) or None
+        :return: None
         """
 
 
