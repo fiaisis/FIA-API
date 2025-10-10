@@ -18,7 +18,7 @@ class Transform(ABC):
     """Transform applies a string manipulation on a given script depending on the implementation"""
 
     @abstractmethod
-    def apply(self, script: PreScript, job: Job) -> str | None:
+    def apply(self, script: PreScript, job: Job) -> None:
         """
         Apply the transform on the given script
         :param script: PreScript - the script to transform
