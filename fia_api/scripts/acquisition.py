@@ -13,6 +13,7 @@ from fia_api.core.utility import forbid_path_characters
 from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.factory import get_transform_for_instrument
 from fia_api.scripts.transforms.mantid_transform import MantidTransform
+from fia_api.scripts.transforms.output_transform import OutputTransform
 
 logger = logging.getLogger(__name__)
 
@@ -125,4 +126,6 @@ def get_script_for_job(instrument: str, job: Job) -> PreScript:
     transform.apply(script, job)
     mantid_transform = MantidTransform()
     mantid_transform.apply(script, job)
+    output_transform = OutputTransform()
+    output_transform.apply(script, job)
     return script

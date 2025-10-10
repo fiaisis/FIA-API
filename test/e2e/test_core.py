@@ -1134,6 +1134,40 @@ def test_post_autoreduction_run_exists():
             session.commit()
 
 
+def test_json_output_added_to_autoreduced_script():
+    script_addon = (
+        "import json\n"
+        "\n"
+        "print(json.dumps({'status': 'Successful', 'status_message':"
+        "'','output_files': output, 'stacktrace': ''}))\n"
+    )
+    with SESSION() as session:
+        try:
+            run = session.execute(select(Run).where(Run.id == 5001).limit(1)).scalar()  # noqa: PLR2004
+            response = client.post(
+                "/job/autoreduction",
+                json={
+                    "filename": run.filename,
+                    "rb_number": "12345",
+                    "instrument_name": "TEST",
+                    "users": "user1, user2",
+                    "title": "test experiment",
+                    "run_start": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
+                    "run_end": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
+                    "good_frames": 5,
+                    "raw_frames": 10,
+                    "additional_values": {"foo": "bar", "baz": 1},
+                    "runner_image": "test_runner_image",
+                },
+                headers=API_KEY_HEADER,
+            )
+            assert response.status_code == HTTPStatus.CREATED
+            assert response.json()["script"].endswith(script_addon)
+        finally:
+            session.execute(delete(Job).where(Job.id == response.json()["job_id"]))
+            session.commit()
+
+
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_invalid_user_perms(mock_post):
     """Test that a user trying to download a file that doesn't match their credentials returns a 403 status code."""
