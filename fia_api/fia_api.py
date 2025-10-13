@@ -34,7 +34,6 @@ from fia_api.routers.job_creation import JobCreationRouter
 from fia_api.routers.jobs import JobsRouter
 from fia_api.routers.live_data import LiveDataRouter
 
-
 DEV_MODE = bool(os.environ.get("DEV_MODE", False))  # noqa: PLW1508
 
 
