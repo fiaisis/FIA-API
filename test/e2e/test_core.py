@@ -671,11 +671,15 @@ def test_get_mantid_runners(mock_post):
         "sha256:6e5f2d070bb67742f354948d68f837a740874d230714eaa476d35ab6ad56caec": "6.9.1",
         "sha256:33ec46f0b3e36e5ddb83eeaf32389846c6e05358253c67a25819161693740f62": "6.10.0",
         "sha256:7f7c8deab696d2d567f412c924dac36cbfc52794cf0dd6b043d75c8a83acf6b7": "6.11.0",
+        "sha256:a30765d8750ff6bb6cfe5950b3fa6fbea43e559cd16bc3338f11b21e11e63a7e": "6.12.0",
+        "sha256:f3f169428aa62a340bd9a1382e4db8f0fb9b69a41d6edac1543e9a7accb5148a": "6.12.1",
+        "sha256:0676ed97dcd784dd802138e244f283d71a0f6712863345eb20143b6bcf8fb129": "6.13.0",
+        "sha256:3d5085cd4d8a9d0b87cb7ac69f9a929cce7ab0cfb474808d7fb87bb7040acc54": "6.13.1"
     }
     response = client.get("/jobs/runners", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.OK
-    for runner, name in expected_runners:
-        assert runner, name in response.json()
+    for name, runner in expected_runners:
+        assert name, runner in response.json()
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
