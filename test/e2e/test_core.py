@@ -665,7 +665,11 @@ def test_put_instrument_latest_run(mock_post):
 def test_get_mantid_runners(mock_post):
     """Test endpoint contains all the Mantid runners."""
     mock_post.return_value.status_code = HTTPStatus.OK
-    expected_runners = ["6.8.0", "6.9.0", "6.9.1", "6.10.0", "6.11.0"]
+    expected_runners = {"6.8.0": "sha256:7cb55a70ee776614189af8569b1d7e99dc57cdf5b704b628dab71dce2e22319d", 
+                        "6.9.0": "sha256:e44992cc15f8efcd565fd05065fbc80a7c7a5eab86f9cf1091c690179b85cd59",
+                        "6.9.1": "sha256:6e5f2d070bb67742f354948d68f837a740874d230714eaa476d35ab6ad56caec",
+                        "6.10.0": "sha256:33ec46f0b3e36e5ddb83eeaf32389846c6e05358253c67a25819161693740f62",
+                        "6.11.0": "sha256:7f7c8deab696d2d567f412c924dac36cbfc52794cf0dd6b043d75c8a83acf6b7"}
     response = client.get("/jobs/runners", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.OK
     for runner in expected_runners:
