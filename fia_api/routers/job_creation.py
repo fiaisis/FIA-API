@@ -70,7 +70,7 @@ async def make_simple_job(
 @JobCreationRouter.get("/jobs/runners", tags=["job creation"])
 async def get_mantid_runners(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-) -> dict:
+) -> dict[str, str]:
     """Return a list of Mantid versions if user is authenticated."""
     user = get_user_from_token(credentials.credentials)
 
