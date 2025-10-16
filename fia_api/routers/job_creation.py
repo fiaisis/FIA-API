@@ -79,6 +79,15 @@ async def get_mantid_runners(
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="User is not authorized to access this endpoint")
 
     data = get_packages(org="fiaisis", image_name="mantid")
-    
-    return dict(str(name): str(tag) for item in data for name, tag in item.get("name", {}), "metadata", {}).get("container", {}).get("tags", [])))
-    return [str(tag) for item in data for tag in item.get("metadata", {}).get("container", {}).get("tags", [])]
+    mantid_versions = {}
+    for item in data:
+        name = str(item.get("name", "")) 
+        tags = (
+            item.get("metadata", {})
+                .get("container", {})
+                .get("tags", [])
+        )
+        result = []
+        result[name] = str(tags[0])
+
+    return mantid_versions
