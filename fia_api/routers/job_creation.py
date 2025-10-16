@@ -82,11 +82,7 @@ async def get_mantid_runners(
     mantid_versions = {}
     for item in data:
         name = str(item.get("name", "")) 
-        tags = (
-            item.get("metadata", {})
-                .get("container", {})
-                .get("tags", [])
-        )
+        tags = item.get("metadata", {}).get("container", {}).get("tags", [])
         mantid_versions[name] = str(tags[0])
 
     return mantid_versions
