@@ -87,7 +87,6 @@ async def get_mantid_runners(
                 .get("container", {})
                 .get("tags", [])
         )
-        result = []
-        result[name] = str(tags[0])
+        mantid_versions[name] = str(tags[0])
 
     return mantid_versions
