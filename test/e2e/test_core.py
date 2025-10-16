@@ -674,8 +674,8 @@ def test_get_mantid_runners(mock_post):
     }
     response = client.get("/jobs/runners", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.OK
-    for runner in expected_runners:
-        assert runner in response.json()
+    for runner, name in expected_runners:
+        assert runner, name in response.json()
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
