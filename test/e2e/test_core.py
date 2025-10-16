@@ -674,7 +674,7 @@ def test_get_mantid_runners(mock_post):
         "sha256:a30765d8750ff6bb6cfe5950b3fa6fbea43e559cd16bc3338f11b21e11e63a7e": "6.12.0",
         "sha256:f3f169428aa62a340bd9a1382e4db8f0fb9b69a41d6edac1543e9a7accb5148a": "6.12.1",
         "sha256:0676ed97dcd784dd802138e244f283d71a0f6712863345eb20143b6bcf8fb129": "6.13.0",
-        "sha256:3d5085cd4d8a9d0b87cb7ac69f9a929cce7ab0cfb474808d7fb87bb7040acc54": "6.13.1"
+        "sha256:3d5085cd4d8a9d0b87cb7ac69f9a929cce7ab0cfb474808d7fb87bb7040acc54": "6.13.1",
     }
     response = client.get("/jobs/runners", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.OK
