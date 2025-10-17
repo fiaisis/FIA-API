@@ -83,9 +83,8 @@ async def get_mantid_runners(
     for item in data:
         name = str(item.get("name", ""))
         tags = item.get("metadata", {}).get("container", {}).get("tags", [])
-        if not tags: #if tags is an empty list
+        if not tags:  # if tags is an empty list
             continue
-        else:
-            mantid_versions[name] = str(tags[0])
+        mantid_versions[name] = str(tags[0])
 
     return mantid_versions
