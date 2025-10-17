@@ -665,7 +665,17 @@ def test_put_instrument_latest_run(mock_post):
 def test_get_mantid_runners(mock_post):
     """Test endpoint contains all the Mantid runners."""
     mock_post.return_value.status_code = HTTPStatus.OK
-    expected_runners = ["6.8.0", "6.9.0", "6.9.1", "6.10.0", "6.11.0"]
+    expected_runners = {
+        "sha256:7cb55a70ee776614189af8569b1d7e99dc57cdf5b704b628dab71dce2e22319d": "6.8.0",
+        "sha256:e44992cc15f8efcd565fd05065fbc80a7c7a5eab86f9cf1091c690179b85cd59": "6.9.0",
+        "sha256:6e5f2d070bb67742f354948d68f837a740874d230714eaa476d35ab6ad56caec": "6.9.1",
+        "sha256:33ec46f0b3e36e5ddb83eeaf32389846c6e05358253c67a25819161693740f62": "6.10.0",
+        "sha256:7f7c8deab696d2d567f412c924dac36cbfc52794cf0dd6b043d75c8a83acf6b7": "6.11.0",
+        "sha256:a30765d8750ff6bb6cfe5950b3fa6fbea43e559cd16bc3338f11b21e11e63a7e": "6.12.0",
+        "sha256:f3f169428aa62a340bd9a1382e4db8f0fb9b69a41d6edac1543e9a7accb5148a": "6.12.1",
+        "sha256:0676ed97dcd784dd802138e244f283d71a0f6712863345eb20143b6bcf8fb129": "6.13.0",
+        "sha256:3d5085cd4d8a9d0b87cb7ac69f9a929cce7ab0cfb474808d7fb87bb7040acc54": "6.13.1",
+    }
     response = client.get("/jobs/runners", headers=USER_HEADER)
     assert response.status_code == HTTPStatus.OK
     for runner in expected_runners:
@@ -1129,6 +1139,40 @@ def test_post_autoreduction_run_exists():
             assert response.json()["script"] in [
                 job.script.script if job.script is not None else None for job in run.jobs
             ]
+        finally:
+            session.execute(delete(Job).where(Job.id == response.json()["job_id"]))
+            session.commit()
+
+
+def test_json_output_added_to_autoreduced_script():
+    script_addon = (
+        "import json\n"
+        "\n"
+        "print(json.dumps({'status': 'Successful', 'status_message':"
+        "'','output_files': output, 'stacktrace': ''}))\n"
+    )
+    with SESSION() as session:
+        try:
+            run = session.execute(select(Run).where(Run.id == 5001).limit(1)).scalar()  # noqa: PLR2004
+            response = client.post(
+                "/job/autoreduction",
+                json={
+                    "filename": run.filename,
+                    "rb_number": "12345",
+                    "instrument_name": "TEST",
+                    "users": "user1, user2",
+                    "title": "test experiment",
+                    "run_start": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
+                    "run_end": str(datetime.datetime(2021, 1, 1, 12, 0, 0, tzinfo=datetime.UTC)),
+                    "good_frames": 5,
+                    "raw_frames": 10,
+                    "additional_values": {"foo": "bar", "baz": 1},
+                    "runner_image": "test_runner_image",
+                },
+                headers=API_KEY_HEADER,
+            )
+            assert response.status_code == HTTPStatus.CREATED
+            assert response.json()["script"].endswith(script_addon)
         finally:
             session.execute(delete(Job).where(Job.id == response.json()["job_id"]))
             session.commit()
