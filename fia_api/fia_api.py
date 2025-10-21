@@ -35,6 +35,9 @@ from fia_api.routers.jobs import JobsRouter
 from fia_api.routers.live_data import LiveDataRouter
 
 
+DEV_MODE = bool(os.environ.get("DEV_MODE", False))  # noqa: PLW1508
+
+
 class EndpointFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         return record.getMessage().find("/healthz") == -1 and record.getMessage().find("/ready") == -1
@@ -48,8 +51,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
-
-DEV_MODE = bool(os.environ.get("DEV_MODE", False))  # noqa: PLW1508
 
 app = FastAPI(title="FIA API", root_path="/" if DEV_MODE else "/api")
 
