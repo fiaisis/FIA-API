@@ -70,7 +70,7 @@ async def make_simple_job(
 @JobCreationRouter.get("/jobs/runners", tags=["job creation"])
 async def get_mantid_runners(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-) -> list[str]:
+) -> dict[str, str]:
     """Return a list of Mantid versions if user is authenticated."""
     user = get_user_from_token(credentials.credentials)
 
@@ -79,4 +79,12 @@ async def get_mantid_runners(
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="User is not authorized to access this endpoint")
 
     data = get_packages(org="fiaisis", image_name="mantid")
-    return [str(tag) for item in data for tag in item.get("metadata", {}).get("container", {}).get("tags", [])]
+    mantid_versions = {}
+    for item in data:
+        name = str(item.get("name", ""))
+        tags = item.get("metadata", {}).get("container", {}).get("tags", [])
+        if not tags:  # if tags is an empty list
+            continue
+        mantid_versions[name] = str(tags[0])
+
+    return mantid_versions
