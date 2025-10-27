@@ -75,6 +75,7 @@ class Repo(Generic[T]):
             except NoResultFound:
                 return None
             except MultipleResultsFound as exc:
+                logger.exception("Non unique record found for %s", spec.value)
                 raise NonUniqueRecordError() from exc
 
     def count(self, spec: Specification[T]) -> int:
