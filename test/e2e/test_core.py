@@ -587,5 +587,3 @@ def test_get_mari_jobs_as_user_false_and_as_staff(mock_post):
     response = client.get("/instrument/mari/jobs?limit=10&as_user=false", headers=STAFF_HEADER)
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()) > 1
-
-

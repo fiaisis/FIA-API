@@ -5,11 +5,11 @@ import pytest
 from fia_api.core.exceptions import MissingRecordError
 from fia_api.core.services.instrument import (
     get_latest_run_by_instrument_name,
+    get_live_data_script_by_instrument_name,
     get_specification_by_instrument_name,
     update_latest_run_for_instrument,
-    update_specification_for_instrument,
     update_live_data_script_for_instrument,
-    get_live_data_script_by_instrument_name,
+    update_specification_for_instrument,
 )
 
 
@@ -97,7 +97,6 @@ def test_update_latest_run_for_instrument_instrument_missing(mock_repo):
         mock_repo.find_one.return_value = None
         with pytest.raises(MissingRecordError):
             update_latest_run_for_instrument("mari", "MARI12345")
-
 
 
 @patch("fia_api.core.services.instrument._REPO")

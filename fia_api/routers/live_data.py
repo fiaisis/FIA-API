@@ -6,7 +6,6 @@ from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.exceptions import AuthError
-from fia_api.core.models import InstrumentString
 from fia_api.core.request_models import LiveDataScriptUpdateRequest
 from fia_api.core.services.instrument import (
     get_live_data_script_by_instrument_name,

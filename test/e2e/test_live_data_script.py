@@ -5,7 +5,6 @@ e2e for live data script fetching/editing
 from http import HTTPStatus
 from unittest.mock import patch
 
-import pytest
 from starlette.testclient import TestClient
 
 from fia_api.fia_api import app

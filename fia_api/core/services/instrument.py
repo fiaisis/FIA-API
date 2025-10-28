@@ -11,11 +11,13 @@ from fia_api.core.specifications.instrument import InstrumentSpecification
 
 _REPO: Repo[Instrument] = Repo()
 
+
 def get_instrument_by_name(instrument: str) -> Instrument:
     instrument = _REPO.find_one(InstrumentSpecification().by_name(instrument))
     if instrument is None:
         raise MissingRecordError("Instrument not found")
     return instrument
+
 
 def get_specification_by_instrument_name(instrument_name: str) -> JSONB | None:
     """

@@ -3,11 +3,10 @@ from http import HTTPStatus
 from unittest.mock import patch
 
 import pytest
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 
-from fia_api.core.models import Run, Job
+from fia_api.core.models import Job, Run
 from fia_api.core.repositories import SESSION
-
 from fia_api.core.responses import JobResponse
 from test.e2e.constants import API_KEY_HEADER, STAFF_HEADER, USER_HEADER
 from test.e2e.test_core import TEST_JOB, client
