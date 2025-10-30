@@ -8,8 +8,8 @@ from sqlalchemy import delete, select
 from fia_api.core.models import Job, Run
 from fia_api.core.repositories import SESSION
 from fia_api.core.responses import JobResponse
-from test.e2e.constants import API_KEY_HEADER, STAFF_HEADER, USER_HEADER
-from test.e2e.test_core import TEST_JOB, client
+from test.e2e.constants import API_KEY_HEADER, STAFF_HEADER, USER_HEADER, TEST_JOB
+from test.e2e.test_core import client
 
 
 @pytest.mark.usefixtures("_user_owned_data_setup")
