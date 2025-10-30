@@ -1,5 +1,6 @@
 import json
 from http import HTTPStatus
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -77,7 +78,7 @@ def test_post_rerun_job(producer_channel):
             "job_type": "rerun",
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
             "script": 'print("Hello World!")',
-            "filename": original_job.run.filename,
+            "filename": Path(original_job.run.filename).stem,
             "instrument": original_job.instrument.instrument_name,
         }
     ]
