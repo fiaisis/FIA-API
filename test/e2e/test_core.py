@@ -8,7 +8,7 @@ from starlette.testclient import TestClient
 
 from fia_api.fia_api import app
 
-from .constants import STAFF_HEADER, USER_HEADER, TEST_JOB, TEST_RUN
+from .constants import STAFF_HEADER, TEST_JOB, TEST_RUN, USER_HEADER
 
 client = TestClient(app)
 

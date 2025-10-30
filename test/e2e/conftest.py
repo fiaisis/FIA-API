@@ -6,8 +6,7 @@ import pytest
 from sqlalchemy.orm import make_transient
 
 from fia_api.core.repositories import SESSION
-from test.e2e.constants import TEST_SCRIPT, TEST_INSTRUMENT, TEST_RUN, TEST_JOB
-
+from test.e2e.constants import TEST_INSTRUMENT, TEST_JOB, TEST_RUN, TEST_SCRIPT
 from test.utils import setup_database
 
 setup = False

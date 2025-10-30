@@ -1,9 +1,10 @@
 """
 Module containing test constants.
 """
+
 import datetime
 
-from fia_api.core.models import JobOwner, Instrument, Script, Job, State, JobType, Run
+from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script, State
 
 USER_TOKEN = (
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"  # noqa: S105
