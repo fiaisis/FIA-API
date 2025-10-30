@@ -42,7 +42,7 @@ def test_get_job_filtered_on_exact_experiment_number(mock_post):
     expected_experiment_number = 0
     with SESSION() as session:
         job = session.scalar(
-            select(Job).join(JobOwner).where(JobOwner.experiment_number != None).limit(1)
+            select(Job).join(JobOwner).where(JobOwner.experiment_number is not None).limit(1)
         )  # not the first or the last job
         expected_experiment_number = job.owner.experiment_number
     mock_post.return_value.status_code = HTTPStatus.OK

@@ -12,8 +12,8 @@ from fia_api.core.specifications.instrument import InstrumentSpecification
 _REPO: Repo[Instrument] = Repo()
 
 
-def get_instrument_by_name(instrument: str) -> Instrument:
-    instrument = _REPO.find_one(InstrumentSpecification().by_name(instrument))
+def get_instrument_by_name(instrument_name: str) -> Instrument:
+    instrument = _REPO.find_one(InstrumentSpecification().by_name(instrument_name))
     if instrument is None:
         raise MissingRecordError("Instrument not found")
     return instrument
