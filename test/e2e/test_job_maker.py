@@ -65,14 +65,14 @@ def test_post_rerun_job(producer_channel):
     original_job = None
     with SESSION() as session:
         expected_id = session.execute(select(func.count()).select_from(Job)).scalar() + 1
-        original_job = session.scalar(select(Job).where(Job.id == 1).join(Job.run).join(Job.instrument))
+        original_job = session.scalar(select(Job).where(Job.id == 1).join(Job.owner).join(Job.run).join(Job.instrument))
     response = client.post("/job/rerun", json=rerun_body, headers=API_KEY_HEADER)
 
     message = consume_all_messages(producer_channel)
     assert response.status_code == HTTPStatus.OK
     assert message == [
         {
-            "rb_number": original_job.rb_number,
+            "rb_number": original_job.owner.experiment_number,
             "job_id": expected_id,
             "job_type": "rerun",
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
