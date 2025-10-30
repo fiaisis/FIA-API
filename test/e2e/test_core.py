@@ -4,9 +4,12 @@ from http import HTTPStatus
 from unittest.mock import patch
 
 import pytest
+from sqlalchemy import func, select
 from starlette.testclient import TestClient
 
+from fia_api.core.models import Instrument, Job, JobOwner, Run
 from fia_api.fia_api import app
+from utils.db_generator import SESSION
 
 from .constants import STAFF_HEADER, TEST_JOB, TEST_RUN, USER_HEADER
 
@@ -36,10 +39,15 @@ def test_get_all_job_for_staff(mock_post):
 
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_get_job_filtered_on_exact_experiment_number(mock_post):
-    expected_experiment_number = 818853
+    expected_experiment_number = 0
+    with SESSION() as session:
+        job = session.scalar(
+            select(Job).join(JobOwner).where(JobOwner.experiment_number != None).limit(1)
+        )  # not the first or the last job
+        expected_experiment_number = job.owner.experiment_number
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get(
-        '/jobs?include_run=true&filters={"experiment_number_in": [818853]}',
+        f'/jobs?include_run=true&filters={{"experiment_number_in": [{expected_experiment_number}]}}',
         headers=STAFF_HEADER,
     )
     data = response.json()
@@ -50,7 +58,9 @@ def test_get_job_filtered_on_exact_experiment_number(mock_post):
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_count_jobs_with_filters(mock_post):
     """Test count with filter"""
-    expected_count = 4813
+    expected_count = 0
+    with SESSION() as session:
+        expected_count = session.scalar(select(func.count()).select_from(Job).join(Run).where(Run.title.icontains("n")))
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get('/jobs/count?filters={"title":"n"}')
     assert response.json()["count"] == expected_count
@@ -59,7 +69,17 @@ def test_count_jobs_with_filters(mock_post):
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_count_jobs_by_instrument_with_filter(mock_post):
     """Test count by instrument with filter"""
-    expected_count = 118
+    expected_count = 0
+    with SESSION() as session:
+        expected_count = session.scalar(
+            select(func.count())
+            .select_from(Job)
+            .join(Run)
+            .join(Instrument)
+            .where(Run.title.icontains("n"))
+            .where(Instrument.instrument_name == "MARI")
+        )
+
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get('/instrument/MARI/jobs/count?filters={"title":"n"}')
     assert response.json()["count"] == expected_count
