@@ -78,7 +78,7 @@ def test_post_rerun_job(producer_channel):
             "job_type": "rerun",
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
             "script": 'print("Hello World!")',
-            "filename": Path(original_job.run.filename).stem,
+            "filename": str(Path(original_job.run.filename).stem),
             "instrument": original_job.instrument.instrument_name,
         }
     ]
