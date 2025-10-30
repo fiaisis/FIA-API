@@ -1,5 +1,6 @@
 import json
 from http import HTTPStatus
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -62,21 +63,23 @@ def test_post_rerun_job(producer_channel):
         "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
         "script": 'print("Hello World!")',
     }
+    original_job = None
     with SESSION() as session:
         expected_id = session.execute(select(func.count()).select_from(Job)).scalar() + 1
+        original_job = session.scalar(select(Job).where(Job.id == 1).join(Job.owner).join(Job.run).join(Job.instrument))
     response = client.post("/job/rerun", json=rerun_body, headers=API_KEY_HEADER)
 
     message = consume_all_messages(producer_channel)
     assert response.status_code == HTTPStatus.OK
     assert message == [
         {
-            "rb_number": 818853,
+            "rb_number": original_job.owner.experiment_number,
             "job_id": expected_id,
             "job_type": "rerun",
             "runner_image": "ghcr.io/fiaisis/cool-runner@sha256:1234",
             "script": 'print("Hello World!")',
-            "filename": "NILE767455",
-            "instrument": "NILE",
+            "filename": str(Path(original_job.run.filename).stem),
+            "instrument": original_job.instrument.instrument_name,
         }
     ]
 

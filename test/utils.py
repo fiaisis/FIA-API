@@ -83,6 +83,7 @@ class FIAProvider(BaseProvider):
             nb_elements=faker.pyint(min_value=1, max_value=10), value_types=[str, int, bool, float]
         )
         instrument.latest_run = str(faker.pyint(min_value=10000, max_value=100000))
+        instrument.live_data_script = faker.text()
         return instrument
 
     def run(self, instrument: Instrument, faker: Faker) -> Run:
@@ -163,7 +164,7 @@ class FIAProvider(BaseProvider):
         return job
 
 
-TEST_INSTRUMENT = Instrument(instrument_name="TEST", specification={})
+TEST_INSTRUMENT = Instrument(instrument_name="TEST", specification={}, live_data_script="print('Hello World')")
 TEST_JOB_OWNER = JobOwner(experiment_number=1820497)
 TEST_JOB = Job(
     inputs={
@@ -210,6 +211,7 @@ def setup_database(faker: Faker) -> None:
             instrument_.instrument_name = instrument
             instrument_.specification = fia_faker.instrument(faker).specification
             instrument_.latest_run = fia_faker.instrument(faker).latest_run
+            instrument_.live_data_script = fia_faker.instrument(faker).live_data_script
             instruments.append(instrument_)
         for _ in range(5000):
             # The following looks like a hack. This is because we can't use the builtin random.choice as when the tests

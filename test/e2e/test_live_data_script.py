@@ -5,7 +5,6 @@ e2e for live data script fetching/editing
 from http import HTTPStatus
 from unittest.mock import patch
 
-import pytest
 from starlette.testclient import TestClient
 
 from fia_api.fia_api import app
@@ -17,7 +16,6 @@ client = TestClient(app)
 
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_live_data_script_updating_and_fetching(mock_post, faker):
-    pytest.skip("This test is failing due to an issue with GH Actions secret not being loaded")
     mock_post.return_value.status_code = HTTPStatus.OK
     script_line_1 = faker.text()
     script_line_2 = faker.text()

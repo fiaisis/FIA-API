@@ -6,28 +6,30 @@ from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.exceptions import AuthError
-from fia_api.core.models import InstrumentString
 from fia_api.core.request_models import LiveDataScriptUpdateRequest
-from fia_api.scripts.live_data import LiveDataScript
+from fia_api.core.services.instrument import (
+    get_live_data_script_by_instrument_name,
+    update_live_data_script_for_instrument,
+)
 
 LiveDataRouter = APIRouter(tags=["live-data"])
 jwt_api_security = JWTAPIBearer()
 
 
 @LiveDataRouter.get("/live-data/{instrument}/script")
-async def get_instrument_script(instrument: InstrumentString) -> str:
+async def get_instrument_script(instrument: str) -> str | None:
     """
     Given an instrument string, return the live data script for that instrument
     \f
     :param instrument: The instrument string
-    :return: The live data script
+    :return: The live data script or None
     """
-    return LiveDataScript(instrument).value
+    return get_live_data_script_by_instrument_name(instrument.upper())
 
 
 @LiveDataRouter.put("/live-data/{instrument}/script")
 async def update_instrument_script(
-    instrument: InstrumentString,
+    instrument: str,
     script_request: LiveDataScriptUpdateRequest,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
 ) -> Literal["ok"]:
@@ -43,5 +45,5 @@ async def update_instrument_script(
     if user.role != "staff":
         raise AuthError("Only Staff can update Live Data Scripts")
 
-    LiveDataScript(instrument).update(script_request.value)
+    update_live_data_script_for_instrument(instrument.upper(), script_request.value)
     return "ok"
