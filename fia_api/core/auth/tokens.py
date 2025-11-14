@@ -80,7 +80,7 @@ class JWTAPIBearer(HTTPBearer):
         """
         logger.info("Checking if JWT access token is valid")
         try:
-            response = requests.post(f"{AUTH_URL}/api/jwt/checkToken", json={"token": access_token}, timeout=30)
+            response = requests.post(f"{AUTH_URL}/verify", json={"token": access_token}, timeout=30)
             if response.status_code == HTTPStatus.OK:
                 logger.info("JWT was valid")
                 return True
