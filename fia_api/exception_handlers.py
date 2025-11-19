@@ -159,3 +159,9 @@ async def service_unavailable_handler(_: Request, exc: Exception) -> JSONRespons
     """Handler for health.health_router.get"""
 
     return JSONResponse(status_code=HTTPStatus.SERVICE_UNAVAILABLE, content=f"Service Unavailable, {exc}")
+
+
+async def user_permission_err_handler(_: Request, __: Exception) -> JSONResponse:
+    """Handler for user permissions errors"""
+
+    return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content=f"This operation is only allowed for staff")

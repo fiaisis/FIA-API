@@ -13,7 +13,7 @@ from fia_api.core.utility import (
     find_file_user_number,
     request_path_check,
 )
-from fia_api.core.exceptions import BadRequestError
+from fia_api.core.exceptions import BadRequestError, UserPermissionError
 
 FindFileRouter = APIRouter(prefix="/find_file", tags=["files"])
 
@@ -40,7 +40,7 @@ async def find_file_get_instrument(
         experiment_numbers = get_experiments_for_user_number(user.user_number)
         if experiment_number not in experiment_numbers:
             # If not staff this is not allowed
-            raise PermissionError(status_code=HTTPStatus.FORBIDDEN, content="Experiment number not found in user's experiments")
+            raise UserPermissionError(status_code=HTTPStatus.FORBIDDEN, content="Experiment number not found in user's experiments")
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
     path = find_file_instrument(
         ceph_dir=ceph_dir, instrument=instrument, experiment_number=experiment_number, filename=filename
@@ -68,7 +68,7 @@ async def find_file_generic_experiment_number(
         experiment_numbers = get_experiments_for_user_number(user.user_number)
         if experiment_number not in experiment_numbers:
             # If not staff this is not allowed
-            raise PermissionError(status_code=HTTPStatus.FORBIDDEN)
+            raise UserPermissionError(status_code=HTTPStatus.FORBIDDEN)
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
     path = find_file_experiment_number(ceph_dir=ceph_dir, experiment_number=experiment_number, filename=filename)
     if path is None:
@@ -90,7 +90,7 @@ async def find_file_generic_user_number(
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff" and user_number != user.user_number:
         # If not staff and not the user of the file this is not allowed
-        raise PermissionError(status_code=HTTPStatus.FORBIDDEN, content="User is not staff, and/or experiment does not belong to User")
+        raise UserPermissionError(status_code=HTTPStatus.FORBIDDEN, content="User is not staff, and/or experiment does not belong to User")
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
     path = find_file_user_number(ceph_dir=ceph_dir, user_number=user_number, filename=filename)
     if path is None:

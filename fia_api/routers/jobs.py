@@ -32,6 +32,8 @@ from fia_api.core.utility import (
     find_file_user_number,
 )
 
+from fia_api.core.exceptions import UserPermissionError
+
 JobsRouter = APIRouter(tags=["jobs"])
 jwt_api_security = JWTAPIBearer()
 
@@ -202,7 +204,7 @@ async def update_job(
     """
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
-        raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
+        raise UserPermissionError(status_code=HTTPStatus.FORBIDDEN)
     return JobResponse.from_job(update_job_by_id(job_id, job))
 
 

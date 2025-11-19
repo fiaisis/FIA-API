@@ -39,17 +39,22 @@ class NoFilesAddedError(Exception):
         self.missing_files = missing_files
         super().__init__("None of the requested files could be found.")
 
+
 #exceptions for file_ops.py
 class UploadPermissionsError(Exception):
     """The appropriate permissions to access files has not been provided"""
 
+
 class ReadDirError(Exception):
     """There was an error returning the files"""
+
 
 class UploadFileError(Exception):
     """There was an error uploading the file"""
 
+
 #exceptions for utility.py
+
 
 class InvalidPathError(Exception):
     """Invalid path being accessed and file not found"""
@@ -71,3 +76,7 @@ class InvalidTokenError(Exception):
 
 class ServiceUnavailable(Exception):
     """Service unavailable"""
+
+
+class UserPermissionError(Exception):
+    """User does not have permission"""
