@@ -3,6 +3,7 @@
 import logging
 from http import HTTPStatus
 
+from fastapi import Response
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
@@ -105,3 +106,56 @@ async def no_files_added_handler(_: Request, exc: Exception) -> JSONResponse:
             "x-missing-files": ";".join(exc.missing_files),
         },
     )
+
+
+async def read_dir_err_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Handler for file_ops.read_dir()"""
+    
+    return JSONResponse(status_code=500, content=f"There was an error returning the files {exc}")
+
+
+async def upload_permissions_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Handler for file_ops.write_file_from_remote() permissions error"""
+
+    return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content=f"Permissions denied for the instrument folder {exc}")
+
+
+async def upload_file_err_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Handler for file_ops.write_file_from_remote()"""
+    return JSONResponse(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content=f"There was an error uploading the file {exc}")    
+
+
+async def invalid_path_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Handler for utility.safe_check_filepath"""
+
+    return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content=f"Invalid path being access and file not found, {exc}")
+
+
+async def get_packages_handler(response: Response, _: Exception) -> JSONResponse:
+    """Handler for utility.get_packages()"""
+
+    return JSONResponse(status_code=response.status_code, content=f"Github API request failed with status code {response.status_code}: {response.text}")
+
+
+async def github_api_request_handler(response: Response, _: Exception) -> JSONResponse:
+    """Handler for GithubAPI requests that fail"""
+
+    return JSONResponse(status_code=response.status_code, content=f"Github API request failed with status code {response.status_code}: {response.text}")
+
+
+async def bad_request_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Handler for bad requests"""
+
+    return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content=f"A bad request was made, {exc}")
+
+
+async def invalid_token_handler(_: Request, __: Exception) -> JSONResponse:
+    """Handler for invalid/expired tokens or invalid API keys"""
+
+    return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content=f"Invalid or expired token, or invalid API key")
+
+
+async def service_unavailable_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Handler for health.health_router.get"""
+
+    return JSONResponse(status_code=HTTPStatus.SERVICE_UNAVAILABLE, content=f"Service Unavailable, {exc}")

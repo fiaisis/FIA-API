@@ -15,6 +15,7 @@ from fastapi import HTTPException
 
 from fia_api.core.models import Instrument, Job, JobOwner, Run
 from fia_api.core.specifications.base import Specification, T
+from fia_api.core.exceptions import BadRequestError
 
 logger = logging.getLogger(__name__)
 
@@ -163,7 +164,7 @@ def get_filter(key: str, value: Any) -> Filter:  # noqa: C901, PLR0911, PLR0912
     :param key: The key identifying the filter type (e.g., "instrument_in", "job_state", "job_type").
     :param value: The value to initialize the filter with, specific to the filter type.
     :return: A specific filter instance based on the provided key.
-    :raises HTTPException: If the key does not match any known filter type.
+    :raises BadRequestError: If the key does not match any known filter type.
     """
     match key:
         case "instrument_in":
@@ -197,7 +198,7 @@ def get_filter(key: str, value: Any) -> Filter:  # noqa: C901, PLR0911, PLR0912
         case "experiment_number_after":
             return ExperimentNumberAfterFilter(value)
         case _:
-            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="bad filter provided")
+            raise BadRequestError(status_code=HTTPStatus.BAD_REQUEST, detail="bad filter provided")
 
 
 def apply_filters_to_spec(filters: Mapping[str, Any], spec: Specification[T]) -> Specification[T]:

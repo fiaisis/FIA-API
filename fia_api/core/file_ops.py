@@ -7,6 +7,12 @@ from pathlib import Path
 import anyio
 from fastapi import HTTPException, UploadFile
 
+from fia_api.core.exceptions import (
+    ReadDirError,
+    UploadPermissionsError,
+    UploadFileError
+)
+
 
 def read_dir(path: Path) -> list[str]:
     """
@@ -17,10 +23,7 @@ def read_dir(path: Path) -> list[str]:
     try:
         return os.listdir(path)  # noqa: PTH208
     except Exception as err:
-        raise HTTPException(
-            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=f"There was an error returning the files {err}, {type(err)}",
-        ) from err
+        raise ReadDirError(err)
 
 
 async def write_file_from_remote(remote_file: UploadFile, local_file: Path) -> None:
@@ -30,12 +33,6 @@ async def write_file_from_remote(remote_file: UploadFile, local_file: Path) -> N
         path = anyio.Path(local_file)
         await path.write_bytes(contents)
     except PermissionError as err:
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN,
-            detail=f"Permissions denied for the instrument folder {err}",
-        ) from err
+        raise UploadPermissionsError(err)
     except Exception as err:
-        raise HTTPException(
-            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail=f"There was an error uploading the file {err}, {type(err)}",
-        ) from err
+        raise UploadFileError(err)
