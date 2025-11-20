@@ -59,14 +59,12 @@ class JWTAPIBearer(HTTPBearer):
         try:
             token = credentials.credentials  # type: ignore # if credentials is None, it will raise here and be caught immediately
         except RuntimeError as exc:
-            raise InvalidTokenError(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token") from exc
+            raise InvalidTokenError("Invalid token or expired token") from exc
 
         if self._is_api_key_valid(token) or self._is_jwt_access_token_valid(token):
             return credentials
 
-        raise InvalidTokenError(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token, expired token or invalid API key"
-        )
+        raise InvalidTokenError("Invalid token, expired token or invalid API key")
 
     @staticmethod
     def _is_jwt_access_token_valid(access_token: str) -> bool:

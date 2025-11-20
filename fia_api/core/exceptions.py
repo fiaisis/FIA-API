@@ -1,6 +1,9 @@
 """Custom Exceptions"""
 
 
+from fastapi import Response
+
+
 class DatabaseError(Exception):
     """Database specific error"""
 
@@ -63,6 +66,10 @@ class InvalidPathError(Exception):
 class GithubAPIRequestError(Exception):
     """Github API request failed with status code"""
 
+    def __init__(self, ghresponse: Response):
+        self.ghresponse = ghresponse
+        super().__init__(f"GitHub API request failed with status code {ghresponse.status_code}: {ghresponse.text}")
+
 
 class BadRequestError(Exception):
     """Bad request was made"""
@@ -80,3 +87,7 @@ class ServiceUnavailable(Exception):
 
 class UserPermissionError(Exception):
     """User does not have permission"""
+
+
+class JobOwnerError(Exception):
+    """Job has no owner"""

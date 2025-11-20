@@ -57,7 +57,7 @@ def safe_check_filepath(filepath: Path, base_path: Path) -> None:
     try:
         filepath.resolve(strict=True)
         if not filepath.is_relative_to(base_path):
-            raise InvalidPathError(status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed.")
+            raise InvalidPathError("Invalid path being accessed.")
     except FileNotFoundError as err:
         # pathlibs is_file and is_dir do not work on non existent paths
         if "." in filepath.name:
@@ -75,8 +75,7 @@ def get_packages(org: str, image_name: str) -> Any:
     )
     if response.status_code != HTTPStatus.OK:
         raise GithubAPIRequestError(
-            status_code=response.status_code,
-            detail=f"GitHub API request failed with status code {response.status_code}: {response.text}",
+            f"GitHub API request failed with status code {response.status_code}: {response.text}",
         )
     return response.json()
 
@@ -90,7 +89,7 @@ def safe_check_filepath_plotting(filepath: Path, base_path: str) -> None:
     """
     filepath.resolve(strict=True)
     if not filepath.is_relative_to(base_path):
-        raise InvalidPathError(status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed.")
+        raise InvalidPathError("Invalid path being accessed.")
 
 
 def find_file_instrument(ceph_dir: str, instrument: str, experiment_number: int, filename: str) -> Path | None:
@@ -153,7 +152,7 @@ def _safe_find_file_in_dir(dir_path: Path, base_path: str, filename: str) -> Pat
     try:
         safe_check_filepath_plotting(filepath=dir_path, base_path=base_path)
     except OSError:
-        raise InvalidPathError(status_code=HTTPStatus.FORBIDDEN, detail="Invalid path being accessed.") from None
+        raise InvalidPathError("Invalid path being accessed.") from None
 
     if dir_path.exists():
         found_paths = list(dir_path.rglob(filename))
@@ -171,7 +170,7 @@ def request_path_check(path: Path, base_dir: str) -> Path:
     :return: Path without the base_dir
     """
     if path is None:
-        raise BadRequestError(status_code=HTTPStatus.BAD_REQUEST)
+        raise BadRequestError("Invalid or nonexistent path")
     # Remove the base_dir
     if path.is_relative_to(base_dir):
         path = path.relative_to(base_dir)

@@ -20,4 +20,4 @@ async def ready() -> Literal["ok"]:
         test_connection()
         return "ok"
     except Exception as e:
-        raise ServiceUnavailable(exc=e)
+        raise ServiceUnavailable(e)

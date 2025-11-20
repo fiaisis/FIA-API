@@ -20,7 +20,7 @@ async def missing_record_handler(_: Request, __: Exception) -> JSONResponse:
     :return: JSONResponse with 404
     """
     return JSONResponse(
-        status_code=404,
+        status_code=HTTPStatus.NOT_FOUND,
         content={"message": "Resource not found"},
     )
 
@@ -111,7 +111,7 @@ async def no_files_added_handler(_: Request, exc: Exception) -> JSONResponse:
 async def read_dir_err_handler(_: Request, exc: Exception) -> JSONResponse:
     """Handler for file_ops.read_dir()"""
     
-    return JSONResponse(status_code=500, content=f"There was an error returning the files {exc}")
+    return JSONResponse(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content=f"There was an error returning the files {exc}")
 
 
 async def upload_permissions_handler(_: Request, exc: Exception) -> JSONResponse:
@@ -131,16 +131,10 @@ async def invalid_path_handler(_: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content=f"Invalid path being access and file not found, {exc}")
 
 
-async def get_packages_handler(response: Response, _: Exception) -> JSONResponse:
-    """Handler for utility.get_packages()"""
-
-    return JSONResponse(status_code=response.status_code, content=f"Github API request failed with status code {response.status_code}: {response.text}")
-
-
-async def github_api_request_handler(response: Response, _: Exception) -> JSONResponse:
+async def github_api_request_handler(_: Response, __: Exception) -> JSONResponse:
     """Handler for GithubAPI requests that fail"""
 
-    return JSONResponse(status_code=response.status_code, content=f"Github API request failed with status code {response.status_code}: {response.text}")
+    return JSONResponse(status_code=HTTPStatus.FAILED_DEPENDENCY, content=f"Github API request failed ")
 
 
 async def bad_request_handler(_: Request, exc: Exception) -> JSONResponse:
@@ -165,3 +159,8 @@ async def user_permission_err_handler(_: Request, __: Exception) -> JSONResponse
     """Handler for user permissions errors"""
 
     return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content=f"This operation is only allowed for staff")
+
+async def job_owner_err_handler(_: Request, __: Exception) -> JSONResponse:
+    """Handler for JobOwnerErr"""
+
+    return JSONResponse(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content="Job has no owner")

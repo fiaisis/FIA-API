@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import os
-from http import HTTPStatus
 from pathlib import Path
 
 import anyio
-from fastapi import HTTPException, UploadFile
+from fastapi import UploadFile
 
 from fia_api.core.exceptions import (
     ReadDirError,

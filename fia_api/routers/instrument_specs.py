@@ -28,7 +28,7 @@ async def get_instrument_specification(
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         # If not staff this is not allowed
-        raise UserPermissionError(status_code=HTTPStatus.FORBIDDEN)
+        raise UserPermissionError("User not authorised for this action")
     return get_specification_by_instrument_name(instrument_name.upper())
 
 
@@ -48,6 +48,6 @@ async def update_instrument_specification(
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         # If not staff this is not allowed
-        raise UserPermissionError(status_code=HTTPStatus.FORBIDDEN)
+        raise UserPermissionError("User not authorised for this action")
     update_specification_for_instrument(instrument_name.upper(), specification)
     return specification

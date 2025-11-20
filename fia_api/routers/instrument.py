@@ -26,7 +26,7 @@ async def get_instrument_latest_run(
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         # If not staff this is not allowed
-        raise UserPermissionError(status_code=HTTPStatus.FORBIDDEN)
+        raise UserPermissionError("User not authorised for this action")
     latest_run = get_latest_run_by_instrument_name(instrument.upper())
     return {"latest_run": latest_run}
 
@@ -47,6 +47,6 @@ async def update_instrument_latest_run(
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         # If not staff this is not allowed
-        raise UserPermissionError(status_code=HTTPStatus.FORBIDDEN)
+        raise UserPermissionError("User not authorised for this action")
     update_latest_run_for_instrument(instrument.upper(), latest_run["latest_run"])
     return {"latest_run": latest_run["latest_run"]}

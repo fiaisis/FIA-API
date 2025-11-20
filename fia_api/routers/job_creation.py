@@ -36,7 +36,7 @@ async def make_rerun_job(
         experiment_numbers = get_experiments_for_user_number(user.user_number)
         if experiment_number not in experiment_numbers:
             # If not staff this is not allowed
-            raise UserPermissionError(status_code=HTTPStatus.FORBIDDEN)
+            raise UserPermissionError("User not authorised for this action")
     return job_maker.create_rerun_job(  # type: ignore # Despite returning int, mypy believes this returns any
         job_id=rerun_job.job_id,
         runner_image=rerun_job.runner_image,
@@ -62,7 +62,7 @@ async def make_simple_job(
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         # If not staff this is not allowed
-        raise UserPermissionError(status_code=HTTPStatus.FORBIDDEN)
+        raise UserPermissionError("User not authorised for this action")
     return job_maker.create_simple_job(  # type: ignore # Despite returning int, mypy believes this returns any
         runner_image=simple_job.runner_image, script=simple_job.script, user_number=user.user_number
     )
@@ -77,7 +77,7 @@ async def get_mantid_runners(
 
     if user.role is None or user.user_number is None:
         # Must be logged in to do this
-        raise UserPermissionError(status_code=HTTPStatus.FORBIDDEN, detail="User is not authorized to access this endpoint")
+        raise UserPermissionError("User is not authorized to access this endpoint")
 
     data = get_packages(org="fiaisis", image_name="mantid")
     mantid_versions = {}

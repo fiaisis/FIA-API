@@ -11,8 +11,6 @@ from collections.abc import Mapping
 from http import HTTPStatus
 from typing import Any
 
-from fastapi import HTTPException
-
 from fia_api.core.models import Instrument, Job, JobOwner, Run
 from fia_api.core.specifications.base import Specification, T
 from fia_api.core.exceptions import BadRequestError
@@ -198,7 +196,7 @@ def get_filter(key: str, value: Any) -> Filter:  # noqa: C901, PLR0911, PLR0912
         case "experiment_number_after":
             return ExperimentNumberAfterFilter(value)
         case _:
-            raise BadRequestError(status_code=HTTPStatus.BAD_REQUEST, detail="bad filter provided")
+            raise BadRequestError("bad filter provided")
 
 
 def apply_filters_to_spec(filters: Mapping[str, Any], spec: Specification[T]) -> Specification[T]:
