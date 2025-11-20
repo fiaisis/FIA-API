@@ -8,12 +8,12 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, Query, Response
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.exceptions import MissingRecordError, NoFilesAddedError, UserPermissionError, JobOwnerError
+from fia_api.core.exceptions import JobOwnerError, MissingRecordError, NoFilesAddedError, UserPermissionError
 from fia_api.core.models import JobType
 from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
 from fia_api.core.responses import AutoreductionResponse, CountResponse, JobResponse, JobWithRunResponse
@@ -31,7 +31,6 @@ from fia_api.core.utility import (
     find_file_instrument,
     find_file_user_number,
 )
-
 
 JobsRouter = APIRouter(tags=["jobs"])
 jwt_api_security = JWTAPIBearer()

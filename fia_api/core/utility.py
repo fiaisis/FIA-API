@@ -13,7 +13,7 @@ from typing import Any, TypeVar, cast
 
 import requests
 
-from fia_api.core.exceptions import UnsafePathError, InvalidPathError, BadRequestError, GithubAPIRequestError
+from fia_api.core.exceptions import BadRequestError, GithubAPIRequestError, InvalidPathError, UnsafePathError
 
 FuncT = TypeVar("FuncT", bound=Callable[[str], Any])
 
@@ -63,7 +63,7 @@ def safe_check_filepath(filepath: Path, base_path: Path) -> None:
         if "." in filepath.name:
             safe_check_filepath(filepath.parent, base_path)
         else:
-            raise InvalidPathError(err)
+            raise InvalidPathError(err) from err
 
 
 def get_packages(org: str, image_name: str) -> Any:

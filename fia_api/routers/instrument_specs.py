@@ -1,4 +1,3 @@
-from http import HTTPStatus
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
@@ -6,8 +5,8 @@ from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.dialects.postgresql import JSONB
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.services.instrument import get_specification_by_instrument_name, update_specification_for_instrument
 from fia_api.core.exceptions import UserPermissionError
+from fia_api.core.services.instrument import get_specification_by_instrument_name, update_specification_for_instrument
 
 InstrumentSpecRouter = APIRouter()
 jwt_api_security = JWTAPIBearer()

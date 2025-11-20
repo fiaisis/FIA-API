@@ -1,4 +1,3 @@
-from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -6,10 +5,10 @@ from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
+from fia_api.core.exceptions import UserPermissionError
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.services.job import RerunJob, SimpleJob, get_experiment_number_for_job_id, job_maker
 from fia_api.core.utility import get_packages
-from fia_api.core.exceptions import UserPermissionError
 
 JobCreationRouter = APIRouter()
 jwt_api_security = JWTAPIBearer()

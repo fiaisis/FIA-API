@@ -6,7 +6,7 @@ from typing import Literal
 
 import jwt
 import requests
-from fastapi import Request, status
+from fastapi import Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from fia_api.core.auth import AUTH_URL

@@ -8,12 +8,11 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
-from http import HTTPStatus
 from typing import Any
 
+from fia_api.core.exceptions import BadRequestError
 from fia_api.core.models import Instrument, Job, JobOwner, Run
 from fia_api.core.specifications.base import Specification, T
-from fia_api.core.exceptions import BadRequestError
 
 logger = logging.getLogger(__name__)
 

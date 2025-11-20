@@ -1,13 +1,11 @@
-from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.services.instrument import get_latest_run_by_instrument_name, update_latest_run_for_instrument
 from fia_api.core.exceptions import UserPermissionError
-
+from fia_api.core.services.instrument import get_latest_run_by_instrument_name, update_latest_run_for_instrument
 
 InstrumentRouter = APIRouter(prefix="/instrument")
 jwt_api_security = JWTAPIBearer()

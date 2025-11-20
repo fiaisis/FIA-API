@@ -1,5 +1,4 @@
 import os
-from http import HTTPStatus
 from pathlib import Path
 from typing import Annotated
 
@@ -7,10 +6,10 @@ from fastapi import APIRouter, Depends, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
+from fia_api.core.exceptions import UserPermissionError
 from fia_api.core.file_ops import read_dir, write_file_from_remote
 from fia_api.core.models import InstrumentString
 from fia_api.core.utility import safe_check_filepath
-from fia_api.core.exceptions import UserPermissionError
 
 ExtrasRouter = APIRouter(prefix="/extras", tags=["files"])
 

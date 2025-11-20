@@ -81,7 +81,7 @@ class InvalidTokenError(Exception):
     """Invalid or expired token or invalid API key"""
 
 
-class ServiceUnavailable(Exception):
+class ServiceUnavailableError(Exception):
     """Service unavailable"""
 
 

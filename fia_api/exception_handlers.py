@@ -140,7 +140,7 @@ async def invalid_path_handler(_: Request, exc: Exception) -> JSONResponse:
 async def github_api_request_handler(_: Response, __: Exception) -> JSONResponse:
     """Handler for GithubAPI requests that fail"""
 
-    return JSONResponse(status_code=HTTPStatus.FAILED_DEPENDENCY, content=f"Github API request failed ")
+    return JSONResponse(status_code=HTTPStatus.FAILED_DEPENDENCY, content="Github API request failed ")
 
 
 async def bad_request_handler(_: Request, exc: Exception) -> JSONResponse:
@@ -152,7 +152,7 @@ async def bad_request_handler(_: Request, exc: Exception) -> JSONResponse:
 async def invalid_token_handler(_: Request, __: Exception) -> JSONResponse:
     """Handler for invalid/expired tokens or invalid API keys"""
 
-    return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content=f"Invalid or expired token, or invalid API key")
+    return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content="Invalid or expired token, or invalid API key")
 
 
 async def service_unavailable_handler(_: Request, exc: Exception) -> JSONResponse:
@@ -164,7 +164,7 @@ async def service_unavailable_handler(_: Request, exc: Exception) -> JSONRespons
 async def user_permission_err_handler(_: Request, __: Exception) -> JSONResponse:
     """Handler for user permissions errors"""
 
-    return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content=f"This operation is only allowed for staff")
+    return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content="This operation is only allowed for staff")
 
 
 async def job_owner_err_handler(_: Request, __: Exception) -> JSONResponse:
