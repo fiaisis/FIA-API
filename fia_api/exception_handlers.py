@@ -110,8 +110,10 @@ async def no_files_added_handler(_: Request, exc: Exception) -> JSONResponse:
 
 async def read_dir_err_handler(_: Request, exc: Exception) -> JSONResponse:
     """Handler for file_ops.read_dir()"""
-    
-    return JSONResponse(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content=f"There was an error returning the files {exc}")
+
+    return JSONResponse(
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content=f"There was an error returning the files {exc}"
+    )
 
 
 async def upload_permissions_handler(_: Request, exc: Exception) -> JSONResponse:
@@ -122,13 +124,17 @@ async def upload_permissions_handler(_: Request, exc: Exception) -> JSONResponse
 
 async def upload_file_err_handler(_: Request, exc: Exception) -> JSONResponse:
     """Handler for file_ops.write_file_from_remote()"""
-    return JSONResponse(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content=f"There was an error uploading the file {exc}")    
+    return JSONResponse(
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content=f"There was an error uploading the file {exc}"
+    )
 
 
 async def invalid_path_handler(_: Request, exc: Exception) -> JSONResponse:
     """Handler for utility.safe_check_filepath"""
 
-    return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content=f"Invalid path being access and file not found, {exc}")
+    return JSONResponse(
+        status_code=HTTPStatus.FORBIDDEN, content=f"Invalid path being access and file not found, {exc}"
+    )
 
 
 async def github_api_request_handler(_: Response, __: Exception) -> JSONResponse:
@@ -159,6 +165,7 @@ async def user_permission_err_handler(_: Request, __: Exception) -> JSONResponse
     """Handler for user permissions errors"""
 
     return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content=f"This operation is only allowed for staff")
+
 
 async def job_owner_err_handler(_: Request, __: Exception) -> JSONResponse:
     """Handler for JobOwnerErr"""

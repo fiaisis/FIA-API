@@ -22,7 +22,7 @@ from fia_api.core.exceptions import (
     GithubAPIRequestError,
     BadRequestError,
     InvalidTokenError,
-    UserPermissionError
+    UserPermissionError,
 )
 from fia_api.exception_handlers import (
     authentication_error_handler,
@@ -39,7 +39,7 @@ from fia_api.exception_handlers import (
     github_api_request_handler,
     bad_request_handler,
     invalid_token_handler,
-    user_permission_err_handler
+    user_permission_err_handler,
 )
 from fia_api.routers.extras import ExtrasRouter
 from fia_api.routers.find_file import FindFileRouter

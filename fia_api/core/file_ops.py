@@ -6,11 +6,7 @@ from pathlib import Path
 import anyio
 from fastapi import UploadFile
 
-from fia_api.core.exceptions import (
-    ReadDirError,
-    UploadPermissionsError,
-    UploadFileError
-)
+from fia_api.core.exceptions import ReadDirError, UploadPermissionsError, UploadFileError
 
 
 def read_dir(path: Path) -> list[str]:

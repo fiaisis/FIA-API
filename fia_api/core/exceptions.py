@@ -1,6 +1,5 @@
 """Custom Exceptions"""
 
-
 from fastapi import Response
 
 
@@ -43,7 +42,7 @@ class NoFilesAddedError(Exception):
         super().__init__("None of the requested files could be found.")
 
 
-#exceptions for file_ops.py
+# exceptions for file_ops.py
 class UploadPermissionsError(Exception):
     """The appropriate permissions to access files has not been provided"""
 
@@ -56,7 +55,7 @@ class UploadFileError(Exception):
     """There was an error uploading the file"""
 
 
-#exceptions for utility.py
+# exceptions for utility.py
 
 
 class InvalidPathError(Exception):
@@ -75,7 +74,8 @@ class BadRequestError(Exception):
     """Bad request was made"""
 
 
-#exceptions for tokens.py
+# exceptions for tokens.py
+
 
 class InvalidTokenError(Exception):
     """Invalid or expired token or invalid API key"""
