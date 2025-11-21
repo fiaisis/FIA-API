@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout project
-        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v3.5.0
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v3.5.0
 
       - name: Set up python
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v4.5.0
@@ -53,7 +53,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
 
       - name: Set up Python
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
@@ -107,7 +107,7 @@ jobs:
           RABBITMQ_PASSWORD: guest
     steps:
       - name: Check out repository
-        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
 
       - name: Set up Python
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
@@ -152,7 +152,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
 
       - name: Verify Issue
         run: echo "${{ secrets.SCRIPT_WRITE_OTKEN}}"
