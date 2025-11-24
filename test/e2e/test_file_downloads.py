@@ -156,7 +156,7 @@ def test_download_file_missing_filepath(mock_post, mock_get_experiments, mock_ge
     response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
 
     assert response.status_code == HTTPStatus.NOT_FOUND
-    assert "Not found" in response.text
+    assert "Not Found" in response.text
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
