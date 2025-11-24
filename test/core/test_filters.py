@@ -1,7 +1,6 @@
 import pytest
-from fastapi import HTTPException
-from fia_api.core.exceptions import BadRequestError
 
+from fia_api.core.exceptions import BadRequestError
 from fia_api.core.specifications.filters import (
     ExperimentNumberAfterFilter,
     ExperimentNumberBeforeFilter,

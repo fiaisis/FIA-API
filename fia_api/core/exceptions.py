@@ -1,7 +1,5 @@
 """Custom Exceptions"""
 
-from fastapi import Response
-
 
 class DatabaseError(Exception):
     """Database specific error"""

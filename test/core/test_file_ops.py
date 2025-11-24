@@ -1,16 +1,14 @@
 import io
 import random
-from http import HTTPStatus
 from unittest.mock import AsyncMock, MagicMock
 
 import fastapi.exceptions
 import pytest
-from fastapi import HTTPException
 from fastapi.datastructures import Headers
 from starlette.datastructures import UploadFile
 
+from fia_api.core.exceptions import UploadFileError, UploadPermissionsError
 from fia_api.core.file_ops import read_dir, write_file_from_remote
-from fia_api.core.exceptions import (UploadFileError, UploadPermissionsError)
 
 
 @pytest.fixture(autouse=True)
@@ -111,7 +109,7 @@ async def test_write_files_handles_permission_error(tmp_path, mock_file):
     # Patch anyio.Path
     with pytest.MonkeyPatch().context() as m:
         m.setattr("anyio.Path", lambda path: mock_path)
-        with pytest.raises(UploadPermissionsError) as exc_info:
+        with pytest.raises(UploadPermissionsError):
             await write_file_from_remote(mock_remote_file, tmp_path / "permissionerror" / mock_file[0])
         # Exception assertion
         assert pytest.raises(UploadPermissionsError)

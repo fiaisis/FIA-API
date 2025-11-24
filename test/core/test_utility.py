@@ -11,7 +11,7 @@ from unittest.mock import patch
 import pytest
 from fastapi import HTTPException
 
-from fia_api.core.exceptions import UnsafePathError, InvalidPathError, GithubAPIRequestError
+from fia_api.core.exceptions import GithubAPIRequestError, InvalidPathError, UnsafePathError
 from fia_api.core.utility import (
     GITHUB_PACKAGE_TOKEN,
     filter_script_for_tokens,
@@ -183,11 +183,8 @@ def test_get_packages_error():
     with patch("fia_api.core.utility.requests.get") as mock_get:
         mock_get.return_value.status_code = HTTPStatus.NOT_FOUND
 
-
-
         with pytest.raises(GithubAPIRequestError):
             get_packages(org="fiaisis", image_name="mantid")
-
 
         # Verify the request was made with the correct URL and headers
         mock_get.assert_called_once_with(
@@ -205,7 +202,7 @@ def test_get_packages_forbidden_invalid_token():
         mock_get.return_value.status_code = HTTPStatus.FORBIDDEN
 
         with patch("fia_api.core.utility.GITHUB_PACKAGE_TOKEN", invalid_token):
-            with pytest.raises(GithubAPIRequestError) as excinfo:
+            with pytest.raises(GithubAPIRequestError):
                 get_packages(org="fiaisis", image_name="mantid")
 
             # Verify the request was made with the incorrect token
