@@ -65,9 +65,9 @@ class InvalidPathError(Exception):
 class GithubAPIRequestError(Exception):
     """Github API request failed with status code"""
 
-    def __init__(self, ghresponse: Response):
-        self.ghresponse = ghresponse
-        super().__init__(f"GitHub API request failed with status code {ghresponse.status_code}: {ghresponse.text}")
+    def __init__(self, status_code) -> None:
+        self.status_code = status_code
+        super().__init__(f"GitHub API request failed with status code {status_code}")
 
 
 class BadRequestError(Exception):

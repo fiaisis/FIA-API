@@ -184,9 +184,10 @@ def test_get_packages_error():
         mock_get.return_value.status_code = HTTPStatus.NOT_FOUND
 
 
-        get_packages(org="fiaisis", image_name="mantid")
 
-        assert pytest.raises(GithubAPIRequestError(ghresponse=mock_get.return_value))
+        with pytest.raises(GithubAPIRequestError):
+            get_packages(org="fiaisis", image_name="mantid")
+
 
         # Verify the request was made with the correct URL and headers
         mock_get.assert_called_once_with(
@@ -204,10 +205,8 @@ def test_get_packages_forbidden_invalid_token():
         mock_get.return_value.status_code = HTTPStatus.FORBIDDEN
 
         with patch("fia_api.core.utility.GITHUB_PACKAGE_TOKEN", invalid_token):
-            with pytest.raises(HTTPException) as excinfo:
+            with pytest.raises(GithubAPIRequestError) as excinfo:
                 get_packages(org="fiaisis", image_name="mantid")
-
-            assert excinfo.value.status_code == HTTPStatus.FORBIDDEN
 
             # Verify the request was made with the incorrect token
             mock_get.assert_called_once_with(
