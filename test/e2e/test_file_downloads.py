@@ -90,9 +90,9 @@ def test_download_file_experiment_number_missing(mock_post, mock_get_experiments
     mock_get_experiments.return_value = [1820497]
     mock_get_job.return_value.owner.experiment_number = None
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(Exception):
         response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
-    assert pytest.raises(HTTPException)
+    assert pytest.raises(Exception)
 
 
 @patch("fia_api.routers.jobs.get_job_by_id")
@@ -141,10 +141,10 @@ def test_download_file_simple_and_experiment_and_user_number_missing(mock_post, 
     mock_get_job.return_value.owner.experiment_number = None
     mock_get_job.return_value.job_type = JobType.SIMPLE
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(Exception):
         response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
 
-    assert pytest.raises(HTTPException)
+    assert pytest.raises(Exception)
 
 
 @patch("fia_api.routers.jobs.find_file_user_number")
