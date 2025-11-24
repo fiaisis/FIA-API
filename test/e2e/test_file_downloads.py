@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from fia_api.core.models import JobType
-from fia_api.core.exceptions import (InvalidPathError)
+from fia_api.core.exceptions import (InvalidPathError, JobOwnerError)
 from test.e2e.constants import STAFF_HEADER, USER_HEADER
 from test.e2e.test_core import client
 
@@ -70,9 +70,8 @@ def test_download_file_no_owner(mock_post, mock_get_experiments, mock_get_job):
     mock_get_experiments.return_value = [1820497]
     mock_get_job.return_value.owner = None
     response = client.get("/job/5001/filename/test.nxspe", headers=STAFF_HEADER)
-
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-    assert "Job has no owner" in response.text
+    
+    assert pytest.raises(JobOwnerError)
 
 
 @patch("fia_api.routers.jobs.get_job_by_id")
