@@ -1,13 +1,14 @@
 import io
 import os
 import zipfile
-import pytest
 from http import HTTPStatus
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
+from fia_api.core.exceptions import InvalidPathError
 from fia_api.core.models import JobType
-from fia_api.core.exceptions import (InvalidPathError)
 from test.e2e.constants import STAFF_HEADER, USER_HEADER
 from test.e2e.test_core import client
 
