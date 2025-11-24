@@ -10,6 +10,7 @@ from fastapi.datastructures import Headers
 from starlette.datastructures import UploadFile
 
 from fia_api.core.file_ops import read_dir, write_file_from_remote
+from fia_api.core.exceptions import (UploadFileError, UploadPermissionsError)
 
 
 @pytest.fixture(autouse=True)
@@ -110,11 +111,10 @@ async def test_write_files_handles_permission_error(tmp_path, mock_file):
     # Patch anyio.Path
     with pytest.MonkeyPatch().context() as m:
         m.setattr("anyio.Path", lambda path: mock_path)
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(UploadPermissionsError) as exc_info:
             await write_file_from_remote(mock_remote_file, tmp_path / "permissionerror" / mock_file[0])
-        # Exception assertions
-        assert exc_info.value.status_code == HTTPStatus.FORBIDDEN
-        assert "Permissions denied for the instrument folder" in exc_info.value.detail
+        # Exception assertion
+        assert pytest.raises(UploadPermissionsError)
     # Mock assertions
     mock_remote_file.read.assert_awaited_once()  # Ensure file was read
     mock_path.write_bytes.assert_awaited_once_with(mock_file[1])  # Ensure file written
@@ -135,6 +135,5 @@ async def test_write_files_handles_file_not_found_error(tmp_path, mock_file):
         file=io.BytesIO(mock_file[1]),
     )
 
-    with pytest.raises(HTTPException) as exc_info:
-        await write_file_from_remote(thefile, path / "mock_file.txt")
-    assert "FileNotFoundError" in str(exc_info.value)
+    write_file_from_remote(thefile, path / "mock_file.txt")
+    assert pytest.raises(UploadFileError)

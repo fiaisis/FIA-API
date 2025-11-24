@@ -1,5 +1,6 @@
 import pytest
 from fastapi import HTTPException
+from fia_api.core.exceptions import BadRequestError
 
 from fia_api.core.specifications.filters import (
     ExperimentNumberAfterFilter,
@@ -26,7 +27,7 @@ def test_get_filter_invalid_key():
     Test the behavior of get_filter function when provided with an invalid key.
     Ensure it raises an HTTPException.
     """
-    with pytest.raises(HTTPException):
+    with pytest.raises(BadRequestError):
         get_filter("invalid_key", "test")
 
 
