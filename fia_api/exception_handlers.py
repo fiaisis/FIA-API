@@ -3,7 +3,6 @@
 import logging
 from http import HTTPStatus
 
-from fastapi import Response
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
