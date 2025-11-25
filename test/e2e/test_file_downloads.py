@@ -90,8 +90,8 @@ def test_download_file_experiment_number_missing(mock_post, mock_get_experiments
     mock_get_experiments.return_value = [1820497]
     mock_get_job.return_value.owner.experiment_number = None
 
-    with pytest.raises(MissingRecordError):
-        response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+    response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
+    assert response.status_code == HTTPStatus.OK
     assert pytest.raises(MissingRecordError)
 
 
@@ -143,7 +143,7 @@ def test_download_file_simple_and_experiment_and_user_number_missing(mock_post, 
 
     response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
 
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
     assert pytest.raises(MissingRecordError)
 
