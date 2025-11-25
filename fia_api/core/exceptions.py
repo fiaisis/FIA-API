@@ -1,7 +1,5 @@
 """Custom Exceptions"""
 
-from http import HTTPStatus
-
 
 class DatabaseError(Exception):
     """Database specific error"""
