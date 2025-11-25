@@ -15,6 +15,7 @@ from fia_api.core.exceptions import (
     GithubAPIRequestError,
     InvalidPathError,
     InvalidTokenError,
+    JobOwnerError,
     JobRequestError,
     MissingRecordError,
     MissingScriptError,
@@ -33,6 +34,7 @@ from fia_api.exception_handlers import (
     github_api_request_handler,
     invalid_path_handler,
     invalid_token_handler,
+    job_owner_err_handler,
     missing_record_handler,
     missing_script_handler,
     no_files_added_handler,
@@ -107,3 +109,4 @@ app.add_exception_handler(BadRequestError, bad_request_handler)
 app.add_exception_handler(InvalidTokenError, invalid_token_handler)
 app.add_exception_handler(UserPermissionError, user_permission_err_handler)
 app.add_exception_handler(DataIntegrityError, data_integrity_handler)
+app.add_exception_handler(JobOwnerError, job_owner_err_handler)
