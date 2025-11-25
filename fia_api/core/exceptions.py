@@ -1,7 +1,6 @@
 """Custom Exceptions"""
 
 
-
 class DatabaseError(Exception):
     """Database specific error"""
 
