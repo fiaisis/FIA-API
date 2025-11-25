@@ -132,7 +132,7 @@ def test_download_file_simple_and_experiment_number_missing(mock_post, mock_get_
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_file_simple_and_experiment_and_user_number_missing(mock_post, mock_get_experiments, mock_get_job):
-    """Test that an internal server error is returned when the job type is 'SIMPLE' and there is no experiment number
+    """Test that an missing record error is returned when the job type is 'SIMPLE' and there is no experiment number
     and user number."""
     os.environ["CEPH_DIR"] = str((Path(__file__).parent / ".." / "test_ceph").resolve())
     mock_post.return_value.status_code = HTTPStatus.OK
@@ -141,10 +141,10 @@ def test_download_file_simple_and_experiment_and_user_number_missing(mock_post, 
     mock_get_job.return_value.owner.experiment_number = None
     mock_get_job.return_value.job_type = JobType.SIMPLE
 
-    with pytest.raises(Exception):
+    with pytest.raises(MissingRecordError):
         response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
 
-    assert pytest.raises(Exception)
+    assert pytest.raises(MissingRecordError)
 
 
 @patch("fia_api.routers.jobs.find_file_user_number")
