@@ -1,6 +1,5 @@
 """Custom Exceptions"""
 
-
 from http import HTTPStatus
 
 

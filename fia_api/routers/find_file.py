@@ -1,5 +1,4 @@
 import os
-from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
