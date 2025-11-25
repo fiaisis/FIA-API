@@ -71,9 +71,10 @@ def test_download_file_no_owner(mock_post, mock_get_experiments, mock_get_job):
     mock_get_experiments.return_value = [1820497]
     mock_get_job.return_value.owner = None
 
-    with pytest.raises(JobOwnerError):
-        response = client.get("/job/5001/filename/test.nxspe", headers=STAFF_HEADER)
-        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    response = client.get("/job/5001/filename/test.nxspe", headers=STAFF_HEADER)
+    
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     assert pytest.raises(JobOwnerError)
 
 
