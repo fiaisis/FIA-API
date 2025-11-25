@@ -137,7 +137,7 @@ async def invalid_path_handler(_: Request, exc: Exception) -> JSONResponse:
     )
 
 
-async def github_api_request_handler(_: Response, __: Exception) -> JSONResponse:
+async def github_api_request_handler(_: Request, __: Exception) -> JSONResponse:
     """Handler for GithubAPI requests that fail"""
 
     return JSONResponse(status_code=HTTPStatus.FAILED_DEPENDENCY, content="Github API request failed ")

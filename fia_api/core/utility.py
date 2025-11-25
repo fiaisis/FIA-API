@@ -74,9 +74,7 @@ def get_packages(org: str, image_name: str) -> Any:
         timeout=10,
     )
     if response.status_code != HTTPStatus.OK:
-        raise GithubAPIRequestError(
-            f"GitHub API request failed with status code {response.status_code}: {response.text}",
-        )
+        raise GithubAPIRequestError(response.status_code)
     return response.json()
 
 
