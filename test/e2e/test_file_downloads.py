@@ -7,9 +7,8 @@ from unittest.mock import patch
 
 import pytest
 
-
+from fia_api.core.exceptions import DataIntegrityError, InvalidPathError, JobOwnerError
 from fia_api.core.models import JobType
-from fia_api.core.exceptions import InvalidPathError, JobOwnerError, MissingRecordError, DataIntegrityError
 from test.e2e.constants import STAFF_HEADER, USER_HEADER
 from test.e2e.test_core import client
 
@@ -74,7 +73,7 @@ def test_download_file_no_owner(mock_post, mock_get_experiments, mock_get_job):
 
     with pytest.raises(JobOwnerError):
         response = client.get("/job/5001/filename/test.nxspe", headers=STAFF_HEADER)
-    
+
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     assert pytest.raises(JobOwnerError)
 
