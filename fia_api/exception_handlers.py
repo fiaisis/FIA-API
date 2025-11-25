@@ -171,3 +171,16 @@ async def job_owner_err_handler(_: Request, __: Exception) -> JSONResponse:
     """Handler for JobOwnerErr"""
 
     return JSONResponse(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content="Job has no owner")
+
+
+async def data_integrity_handler(_: Request, __: Exception) -> JSONResponse:
+    """
+    Automatically return a 500 when a DataIntegrityError is raised
+    :param _:
+    :param __:
+    :return: JSONResponse with 500
+    """
+    return JSONResponse(
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+        content={"message": "Record missing experiment, instrument, or user number"},
+    )

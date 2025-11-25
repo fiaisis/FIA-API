@@ -23,6 +23,7 @@ from fia_api.core.exceptions import (
     UploadFileError,
     UploadPermissionsError,
     UserPermissionError,
+    DataIntegrityError,
 )
 from fia_api.exception_handlers import (
     authentication_error_handler,
@@ -40,6 +41,7 @@ from fia_api.exception_handlers import (
     upload_permissions_handler,
     user_permission_err_handler,
     validation_exception_handler,
+    data_integrity_handler,
 )
 from fia_api.routers.extras import ExtrasRouter
 from fia_api.routers.find_file import FindFileRouter
@@ -104,3 +106,4 @@ app.add_exception_handler(GithubAPIRequestError, github_api_request_handler)
 app.add_exception_handler(BadRequestError, bad_request_handler)
 app.add_exception_handler(InvalidTokenError, invalid_token_handler)
 app.add_exception_handler(UserPermissionError, user_permission_err_handler)
+app.add_exception_handler(DataIntegrityError, data_integrity_handler)

@@ -13,7 +13,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.exceptions import JobOwnerError, MissingRecordError, NoFilesAddedError, UserPermissionError
+from fia_api.core.exceptions import DataIntegrityError, JobOwnerError, MissingRecordError, NoFilesAddedError, UserPermissionError
 from fia_api.core.models import JobType
 from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
 from fia_api.core.responses import AutoreductionResponse, CountResponse, JobResponse, JobWithRunResponse
@@ -242,9 +242,9 @@ async def download_file(
 
     if job.job_type != JobType.SIMPLE:
         if job.owner.experiment_number is None:
-            raise MissingRecordError("Experiment number not found in scenario where it should be expected.")
+            raise DataIntegrityError("Experiment number not found in scenario where it should be expected.")
         if job.instrument is None:
-            raise MissingRecordError("Instrument not found in scenario where it should be expected.")
+            raise DataIntegrityError("Instrument not found in scenario where it should be expected.")
         filepath = find_file_instrument(
             ceph_dir=ceph_dir,
             instrument=job.instrument.instrument_name,
@@ -259,7 +259,7 @@ async def download_file(
         )
     else:
         if job.owner.user_number is None:
-            raise MissingRecordError("User number not found in scenario where it should be expected.")
+            raise DataIntegrityError("User number not found in scenario where it should be expected.")
         filepath = find_file_user_number(
             ceph_dir=ceph_dir,
             user_number=int(job.owner.user_number),

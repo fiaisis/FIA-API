@@ -89,3 +89,7 @@ class UserPermissionError(Exception):
 
 class JobOwnerError(Exception):
     """Job has no owner"""
+
+
+class DataIntegrityError(Exception):
+    """Experiment, Instrument, or User number missing for record, data is corrupted in some way."""

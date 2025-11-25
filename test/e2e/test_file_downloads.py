@@ -5,12 +5,11 @@ from http import HTTPStatus
 from pathlib import Path
 from unittest.mock import patch
 
-from fastapi import HTTPException
 import pytest
 
 
 from fia_api.core.models import JobType
-from fia_api.core.exceptions import InvalidPathError, JobOwnerError, MissingRecordError, JobRequestError
+from fia_api.core.exceptions import InvalidPathError, JobOwnerError, MissingRecordError, DataIntegrityError
 from test.e2e.constants import STAFF_HEADER, USER_HEADER
 from test.e2e.test_core import client
 
@@ -91,8 +90,8 @@ def test_download_file_experiment_number_missing(mock_post, mock_get_experiments
     mock_get_job.return_value.owner.experiment_number = None
 
     response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
-    #assert response.status_code == HTTPStatus.NOT_FOUND
-    assert pytest.raises(MissingRecordError)
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert pytest.raises(DataIntegrityError)
 
 
 @patch("fia_api.routers.jobs.get_job_by_id")
@@ -143,9 +142,9 @@ def test_download_file_simple_and_experiment_and_user_number_missing(mock_post, 
 
     response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe", headers=STAFF_HEADER)
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
-    assert pytest.raises(MissingRecordError)
+    assert pytest.raises(DataIntegrityError)
 
 
 @patch("fia_api.routers.jobs.find_file_user_number")
