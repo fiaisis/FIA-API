@@ -68,7 +68,7 @@ async def find_file_generic_experiment_number(
         experiment_numbers = get_experiments_for_user_number(user.user_number)
         if experiment_number not in experiment_numbers:
             # If not staff this is not allowed
-            raise UserPermissionError(status_code=HTTPStatus.FORBIDDEN)
+            raise UserPermissionError("User does not have permission")
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
     path = find_file_experiment_number(ceph_dir=ceph_dir, experiment_number=experiment_number, filename=filename)
     if path is None:
