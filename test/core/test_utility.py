@@ -23,7 +23,6 @@ from fia_api.core.utility import (
     safe_check_filepath,
     safe_check_filepath_plotting,
 )
-from fia_api.exception_handlers import github_api_request_handler
 
 CEPH_DIR = Path(TemporaryDirectory().name)
 
@@ -216,17 +215,16 @@ def test_get_packages_forbidden_invalid_token():
 
 def test_github_api_request_error():
     """Test that GithubAPIRequestError returns a correct JSONResponse"""
-    invalid_token = "invalid_token_value" # noqa: S105
+    invalid_token = "invalid_token_value"  # noqa: S105
 
-    with patch("fia_api.exception_handlers.github_api_request_handler") as mock_exc_handler:
-        with patch("fia_api.core.utility.GITHUB_PACKAGE_TOKEN", invalid_token):
-        
-            with pytest.raises(GithubAPIRequestError) as exc_info:
-                get_packages(org="fiaisis", image_name="mantid")
-        
-            assert exc_info.value.args[0] == "GitHub API request failed with status code 401"
-                #mock_exc_handler.assert_called()
-            
+    with (
+        patch("fia_api.exception_handlers.github_api_request_handler"),
+        patch("fia_api.core.utility.GITHUB_PACKAGE_TOKEN", invalid_token),
+    ):
+        with pytest.raises(GithubAPIRequestError) as exc_info:
+            get_packages(org="fiaisis", image_name="mantid")
+
+        assert exc_info.value.args[0] == "GitHub API request failed with status code 401"
 
 
 @pytest.mark.parametrize(

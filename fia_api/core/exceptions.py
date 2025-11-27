@@ -66,7 +66,6 @@ class BadRequestError(Exception):
     """Bad request was made"""
 
 
-
 class DataIntegrityError(Exception):
     """Experiment, Instrument, or User number missing for record, data is missing or corrupted."""
 

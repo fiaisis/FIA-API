@@ -13,7 +13,7 @@ from typing import Any, TypeVar, cast
 
 import requests
 
-from fia_api.core.exceptions import AuthError, MissingRecordError, GithubAPIRequestError, UnsafePathError
+from fia_api.core.exceptions import AuthError, GithubAPIRequestError, MissingRecordError, UnsafePathError
 
 FuncT = TypeVar("FuncT", bound=Callable[[str], Any])
 
