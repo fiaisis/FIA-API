@@ -3,7 +3,6 @@ from typing import Literal
 
 from fastapi import APIRouter, HTTPException
 
-from fia_api.core.exceptions import ServiceUnavailableError
 from fia_api.core.repositories import test_connection
 
 health_router = APIRouter()
