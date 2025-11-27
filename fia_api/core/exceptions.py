@@ -41,8 +41,6 @@ class NoFilesAddedError(Exception):
 
 
 # exceptions for file_ops.py
-class UploadPermissionsError(Exception):
-    """The appropriate permissions to access files has not been provided"""
 
 
 class ReadDirError(Exception):
@@ -54,10 +52,6 @@ class UploadFileError(Exception):
 
 
 # exceptions for utility.py
-
-
-class InvalidPathError(Exception):
-    """Invalid path being accessed and file not found"""
 
 
 class GithubAPIRequestError(Exception):
@@ -72,24 +66,10 @@ class BadRequestError(Exception):
     """Bad request was made"""
 
 
-# exceptions for tokens.py
-
-
-class InvalidTokenError(Exception):
-    """Invalid or expired token or invalid API key"""
-
-
-class ServiceUnavailableError(Exception):
-    """Service unavailable"""
-
-
-class UserPermissionError(Exception):
-    """User does not have permission"""
-
-
-class JobOwnerError(Exception):
-    """Job has no owner"""
-
 
 class DataIntegrityError(Exception):
-    """Experiment, Instrument, or User number missing for record, data is corrupted in some way."""
+    """Experiment, Instrument, or User number missing for record, data is missing or corrupted."""
+
+
+class JobOwnerError(DataIntegrityError):
+    """Job has no owner"""

@@ -13,8 +13,6 @@ from fia_api.core.exceptions import (
     BadRequestError,
     DataIntegrityError,
     GithubAPIRequestError,
-    InvalidPathError,
-    InvalidTokenError,
     JobOwnerError,
     JobRequestError,
     MissingRecordError,
@@ -23,8 +21,6 @@ from fia_api.core.exceptions import (
     ReadDirError,
     UnsafePathError,
     UploadFileError,
-    UploadPermissionsError,
-    UserPermissionError,
 )
 from fia_api.exception_handlers import (
     authentication_error_handler,
@@ -32,8 +28,6 @@ from fia_api.exception_handlers import (
     bad_request_handler,
     data_integrity_handler,
     github_api_request_handler,
-    invalid_path_handler,
-    invalid_token_handler,
     job_owner_err_handler,
     missing_record_handler,
     missing_script_handler,
@@ -41,8 +35,6 @@ from fia_api.exception_handlers import (
     read_dir_err_handler,
     unsafe_path_handler,
     upload_file_err_handler,
-    upload_permissions_handler,
-    user_permission_err_handler,
     validation_exception_handler,
 )
 from fia_api.routers.extras import ExtrasRouter
@@ -102,11 +94,7 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(NoFilesAddedError, no_files_added_handler)
 app.add_exception_handler(ReadDirError, read_dir_err_handler)
 app.add_exception_handler(UploadFileError, upload_file_err_handler)
-app.add_exception_handler(UploadPermissionsError, upload_permissions_handler)
-app.add_exception_handler(InvalidPathError, invalid_path_handler)
 app.add_exception_handler(GithubAPIRequestError, github_api_request_handler)
 app.add_exception_handler(BadRequestError, bad_request_handler)
-app.add_exception_handler(InvalidTokenError, invalid_token_handler)
-app.add_exception_handler(UserPermissionError, user_permission_err_handler)
 app.add_exception_handler(DataIntegrityError, data_integrity_handler)
 app.add_exception_handler(JobOwnerError, job_owner_err_handler)

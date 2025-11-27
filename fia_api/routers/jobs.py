@@ -14,11 +14,11 @@ from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.exceptions import (
+    AuthError,
     DataIntegrityError,
     JobOwnerError,
     MissingRecordError,
     NoFilesAddedError,
-    UserPermissionError,
 )
 from fia_api.core.models import JobType
 from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
@@ -208,7 +208,7 @@ async def update_job(
     """
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
-        raise UserPermissionError("User not authorised for this action")
+        raise AuthError("User not authorised for this action")
     return JobResponse.from_job(update_job_by_id(job_id, job))
 
 
@@ -360,7 +360,7 @@ async def create_autoreduction(
     """
     user = get_user_from_token(credentials.credentials)
     if user.user_number != -1:  # API Key user has psuedo user number of -1
-        raise UserPermissionError()
+        raise AuthError()
     job = create_autoreduction_job(job_request)
     response.status_code = HTTPStatus.CREATED
     return AutoreductionResponse(job_id=job.id, script=job.script.script)  # type: ignore

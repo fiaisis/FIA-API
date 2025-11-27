@@ -1,6 +1,7 @@
+from http import HTTPStatus
 from typing import Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from fia_api.core.exceptions import ServiceUnavailableError
 from fia_api.core.repositories import test_connection
@@ -20,4 +21,4 @@ async def ready() -> Literal["ok"]:
         test_connection()
         return "ok"
     except Exception as err:
-        raise ServiceUnavailableError(err) from err
+        raise HTTPException(status_code=HTTPStatus.SERVICE_UNAVAILABLE) from err

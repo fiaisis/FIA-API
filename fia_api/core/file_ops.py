@@ -6,7 +6,7 @@ from pathlib import Path
 import anyio
 from fastapi import UploadFile
 
-from fia_api.core.exceptions import ReadDirError, UploadFileError, UploadPermissionsError
+from fia_api.core.exceptions import AuthError, ReadDirError, UploadFileError
 
 
 def read_dir(path: Path) -> list[str]:
@@ -28,6 +28,6 @@ async def write_file_from_remote(remote_file: UploadFile, local_file: Path) -> N
         path = anyio.Path(local_file)
         await path.write_bytes(contents)
     except PermissionError as err:
-        raise UploadPermissionsError(err) from err
+        raise AuthError(err) from err
     except Exception as err:
         raise UploadFileError(err) from err

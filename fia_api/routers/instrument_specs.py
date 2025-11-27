@@ -5,7 +5,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.dialects.postgresql import JSONB
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.exceptions import UserPermissionError
+from fia_api.core.exceptions import AuthError
 from fia_api.core.services.instrument import get_specification_by_instrument_name, update_specification_for_instrument
 
 InstrumentSpecRouter = APIRouter()
@@ -27,7 +27,7 @@ async def get_instrument_specification(
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         # If not staff this is not allowed
-        raise UserPermissionError("User not authorised for this action")
+        raise AuthError("User not authorised for this action")
     return get_specification_by_instrument_name(instrument_name.upper())
 
 
@@ -47,6 +47,6 @@ async def update_instrument_specification(
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         # If not staff this is not allowed
-        raise UserPermissionError("User not authorised for this action")
+        raise AuthError("User not authorised for this action")
     update_specification_for_instrument(instrument_name.upper(), specification)
     return specification

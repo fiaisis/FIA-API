@@ -115,24 +115,10 @@ async def read_dir_err_handler(_: Request, exc: Exception) -> JSONResponse:
     )
 
 
-async def upload_permissions_handler(_: Request, exc: Exception) -> JSONResponse:
-    """Handler for file_ops.write_file_from_remote() permissions error"""
-
-    return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content=f"Permissions denied for the instrument folder {exc}")
-
-
 async def upload_file_err_handler(_: Request, exc: Exception) -> JSONResponse:
     """Handler for file_ops.write_file_from_remote()"""
     return JSONResponse(
         status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content=f"There was an error uploading the file {exc}"
-    )
-
-
-async def invalid_path_handler(_: Request, exc: Exception) -> JSONResponse:
-    """Handler for utility.safe_check_filepath"""
-
-    return JSONResponse(
-        status_code=HTTPStatus.FORBIDDEN, content=f"Invalid path being access and file not found, {exc}"
     )
 
 
@@ -148,22 +134,10 @@ async def bad_request_handler(_: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content=f"A bad request was made, {exc}")
 
 
-async def invalid_token_handler(_: Request, __: Exception) -> JSONResponse:
-    """Handler for invalid/expired tokens or invalid API keys"""
-
-    return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content="Invalid or expired token, or invalid API key")
-
-
 async def service_unavailable_handler(_: Request, exc: Exception) -> JSONResponse:
     """Handler for health.health_router.get"""
 
     return JSONResponse(status_code=HTTPStatus.SERVICE_UNAVAILABLE, content=f"Service Unavailable, {exc}")
-
-
-async def user_permission_err_handler(_: Request, __: Exception) -> JSONResponse:
-    """Handler for user permissions errors"""
-
-    return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content="This operation is only allowed for staff")
 
 
 async def job_owner_err_handler(_: Request, __: Exception) -> JSONResponse:

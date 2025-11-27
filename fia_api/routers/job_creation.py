@@ -5,7 +5,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.exceptions import UserPermissionError
+from fia_api.core.exceptions import AuthError
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.services.job import RerunJob, SimpleJob, get_experiment_number_for_job_id, job_maker
 from fia_api.core.utility import get_packages
@@ -35,7 +35,7 @@ async def make_rerun_job(
         experiment_numbers = get_experiments_for_user_number(user.user_number)
         if experiment_number not in experiment_numbers:
             # If not staff this is not allowed
-            raise UserPermissionError("User not authorised for this action")
+            raise AuthError("User not authorised for this action")
     return job_maker.create_rerun_job(  # type: ignore # Despite returning int, mypy believes this returns any
         job_id=rerun_job.job_id,
         runner_image=rerun_job.runner_image,
@@ -61,7 +61,7 @@ async def make_simple_job(
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         # If not staff this is not allowed
-        raise UserPermissionError("User not authorised for this action")
+        raise AuthError("User not authorised for this action")
     return job_maker.create_simple_job(  # type: ignore # Despite returning int, mypy believes this returns any
         runner_image=simple_job.runner_image, script=simple_job.script, user_number=user.user_number
     )
@@ -76,7 +76,7 @@ async def get_mantid_runners(
 
     if user.role is None or user.user_number is None:
         # Must be logged in to do this
-        raise UserPermissionError("User is not authorized to access this endpoint")
+        raise AuthError("User is not authorized to access this endpoint")
 
     data = get_packages(org="fiaisis", image_name="mantid")
     mantid_versions = {}
