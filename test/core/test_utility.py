@@ -111,7 +111,6 @@ def test_non_relative_file_path(tmp_path):
     file_path.mkdir(parents=True, exist_ok=True)
     with pytest.raises(AuthError) as exc_info:
         safe_check_filepath(file_path, base_path)
-    assert exc_info.errisinstance(AuthError)
     assert "Invalid path being accessed" in exc_info.exconly()
     assert "and file not found" not in exc_info.exconly()
 
@@ -122,7 +121,6 @@ def test_non_existing_file_path(tmp_path):
     file_path = tmp_path / "non_relative_folder" / "file.txt"
     with pytest.raises(AuthError) as exc_info:
         safe_check_filepath(file_path, base_path)
-    assert exc_info.errisinstance(AuthError)
 
 
 # Potentially redundant test as the previous test eventually hits this case
@@ -135,7 +133,6 @@ def test_non_existing_folder_path(tmp_path):
     file_path = tmp_path / "non_relative_folder"
     with pytest.raises(AuthError) as exc_info:
         safe_check_filepath(file_path, base_path)
-    assert exc_info.errisinstance(AuthError)
 
 
 def test_get_packages():

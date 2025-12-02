@@ -111,8 +111,6 @@ async def test_write_files_handles_permission_error(tmp_path, mock_file):
         m.setattr("anyio.Path", lambda path: mock_path)
         with pytest.raises(AuthError):
             await write_file_from_remote(mock_remote_file, tmp_path / "permissionerror" / mock_file[0])
-        # Exception assertion
-        assert pytest.raises(AuthError)
     # Mock assertions
     mock_remote_file.read.assert_awaited_once()  # Ensure file was read
     mock_path.write_bytes.assert_awaited_once_with(mock_file[1])  # Ensure file written
