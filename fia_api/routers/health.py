@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException
@@ -18,5 +19,5 @@ async def ready() -> Literal["ok"]:
     try:
         test_connection()
         return "ok"
-    except Exception as e:
-        raise HTTPException(status_code=503) from e
+    except Exception as err:
+        raise HTTPException(status_code=HTTPStatus.SERVICE_UNAVAILABLE) from err

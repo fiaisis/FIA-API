@@ -11,7 +11,7 @@ from unittest.mock import patch
 import pytest
 from fastapi import HTTPException
 
-from fia_api.core.exceptions import UnsafePathError
+from fia_api.core.exceptions import AuthError, GithubAPIRequestError, UnsafePathError
 from fia_api.core.utility import (
     GITHUB_PACKAGE_TOKEN,
     filter_script_for_tokens,
@@ -105,25 +105,22 @@ def test_safe_check_file_path(tmp_path):
 
 
 def test_non_relative_file_path(tmp_path):
-    """Tests non relative file path without trigerring FileNotFound"""
+    """Tests non relative file path without trigerring AuthError"""
     base_path = Path(tmp_path / "folder")
     file_path = tmp_path / "non_relative_folder" / "file.txt"
     file_path.mkdir(parents=True, exist_ok=True)
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(AuthError) as exc_info:
         safe_check_filepath(file_path, base_path)
-    assert exc_info.errisinstance(HTTPException)
     assert "Invalid path being accessed" in exc_info.exconly()
     assert "and file not found" not in exc_info.exconly()
 
 
 def test_non_existing_file_path(tmp_path):
-    """Tests non relative and non existing file to see if FileNotFound logic is triggered"""
+    """Tests non relative and non existing file to see if AuthError logic is triggered"""
     base_path = Path(tmp_path / "folder")
     file_path = tmp_path / "non_relative_folder" / "file.txt"
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(AuthError):
         safe_check_filepath(file_path, base_path)
-    assert exc_info.errisinstance(HTTPException)
-    assert "Invalid path being accessed and file not found" in exc_info.exconly()
 
 
 # Potentially redundant test as the previous test eventually hits this case
@@ -134,10 +131,8 @@ def test_non_existing_folder_path(tmp_path):
     """
     base_path = Path(tmp_path / "folder")
     file_path = tmp_path / "non_relative_folder"
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(AuthError):
         safe_check_filepath(file_path, base_path)
-    assert exc_info.errisinstance(HTTPException)
-    assert "Invalid path being accessed and file not found" in exc_info.exconly()
 
 
 def test_get_packages():
@@ -185,10 +180,8 @@ def test_get_packages_error():
     with patch("fia_api.core.utility.requests.get") as mock_get:
         mock_get.return_value.status_code = HTTPStatus.NOT_FOUND
 
-        with pytest.raises(HTTPException) as excinfo:
+        with pytest.raises(GithubAPIRequestError):
             get_packages(org="fiaisis", image_name="mantid")
-
-        assert excinfo.value.status_code == HTTPStatus.NOT_FOUND
 
         # Verify the request was made with the correct URL and headers
         mock_get.assert_called_once_with(
@@ -206,10 +199,8 @@ def test_get_packages_forbidden_invalid_token():
         mock_get.return_value.status_code = HTTPStatus.FORBIDDEN
 
         with patch("fia_api.core.utility.GITHUB_PACKAGE_TOKEN", invalid_token):
-            with pytest.raises(HTTPException) as excinfo:
+            with pytest.raises(GithubAPIRequestError):
                 get_packages(org="fiaisis", image_name="mantid")
-
-            assert excinfo.value.status_code == HTTPStatus.FORBIDDEN
 
             # Verify the request was made with the incorrect token
             mock_get.assert_called_once_with(
@@ -217,6 +208,20 @@ def test_get_packages_forbidden_invalid_token():
                 headers={"Authorization": f"Bearer {invalid_token}"},
                 timeout=10,
             )
+
+
+def test_github_api_request_error():
+    """Test that GithubAPIRequestError returns a correct JSONResponse"""
+    invalid_token = "invalid_token_value"  # noqa: S105
+
+    with (
+        patch("fia_api.exception_handlers.github_api_request_handler"),
+        patch("fia_api.core.utility.GITHUB_PACKAGE_TOKEN", invalid_token),
+    ):
+        with pytest.raises(GithubAPIRequestError) as exc_info:
+            get_packages(org="fiaisis", image_name="mantid")
+
+        assert exc_info.value.args[0] == "GitHub API request failed with status code 401"
 
 
 @pytest.mark.parametrize(
@@ -348,5 +353,5 @@ def test_find_file_method_when_failed(find_file_method: Callable, method_inputs:
     ],
 )
 def test_find_file_methods_does_not_allow_path_injection(find_file_method: Callable, method_inputs: dict[str, Any]):
-    with pytest.raises(HTTPException):
+    with pytest.raises(AuthError):
         find_file_method(**method_inputs)

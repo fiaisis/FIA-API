@@ -38,3 +38,37 @@ class NoFilesAddedError(Exception):
     def __init__(self, missing_files: list[str]) -> None:
         self.missing_files = missing_files
         super().__init__("None of the requested files could be found.")
+
+
+# exceptions for file_ops.py
+
+
+class ReadDirError(Exception):
+    """There was an error returning the files"""
+
+
+class UploadFileError(Exception):
+    """There was an error uploading the file"""
+
+
+# exceptions for utility.py
+
+
+class GithubAPIRequestError(Exception):
+    """Github API request failed with status code"""
+
+    def __init__(self, status_code: int) -> None:
+        self.status_code = status_code
+        super().__init__(f"GitHub API request failed with status code {status_code}")
+
+
+class BadRequestError(Exception):
+    """Bad request was made"""
+
+
+class DataIntegrityError(Exception):
+    """Experiment, Instrument, or User number missing for record, data is missing or corrupted."""
+
+
+class JobOwnerError(DataIntegrityError):
+    """Job has no owner"""

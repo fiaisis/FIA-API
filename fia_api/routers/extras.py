@@ -1,12 +1,12 @@
 import os
-from http import HTTPStatus
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
+from fia_api.core.exceptions import AuthError
 from fia_api.core.file_ops import read_dir, write_file_from_remote
 from fia_api.core.models import InstrumentString
 from fia_api.core.utility import safe_check_filepath
@@ -27,7 +27,7 @@ async def get_extras_top_level_folders(
     """
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
-        raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
+        raise AuthError("User not authorised for this action")
     root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
     safe_check_filepath(root_directory, root_directory)
     return read_dir(root_directory)
@@ -46,7 +46,7 @@ async def get_subfolder_files_list(
     """
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
-        raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
+        raise AuthError("User not authorised for this action")
     root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
     subdir_path = root_directory / subdir
     safe_check_filepath(subdir_path, root_directory)
@@ -73,7 +73,7 @@ async def upload_file_to_instrument_folder(
     """
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
-        raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
+        raise AuthError("User not authorised for this action")
     # the file path does not exist yet, so do checks with parent directory
     root_directory = Path(os.environ.get("EXTRAS_DIRECTORY", "/extras"))
     file_directory = root_directory / instrument / filename

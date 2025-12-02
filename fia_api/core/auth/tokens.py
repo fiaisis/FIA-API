@@ -6,7 +6,7 @@ from typing import Literal
 
 import jwt
 import requests
-from fastapi import HTTPException, Request, status
+from fastapi import Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from fia_api.core.auth import AUTH_URL
@@ -51,7 +51,7 @@ class JWTAPIBearer(HTTPBearer):
         token also checks if the value received as a valid API Key.
         :param request: The FastAPI `Request` object.
         :return: The JWT access token if authentication is successful.
-        :raises HTTPException: If the supplied JWT access token or the API key is invalid or has expired.
+        :raises AuthError: If the supplied JWT access token or the API key is invalid or has expired.
         """
         if DEV_MODE:
             return HTTPAuthorizationCredentials(scheme="Bearer", credentials="foo")
@@ -59,14 +59,12 @@ class JWTAPIBearer(HTTPBearer):
         try:
             token = credentials.credentials  # type: ignore # if credentials is None, it will raise here and be caught immediately
         except RuntimeError as exc:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token") from exc
+            raise AuthError("Invalid token or expired token") from exc
 
         if self._is_api_key_valid(token) or self._is_jwt_access_token_valid(token):
             return credentials
 
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token, expired token or invalid API key"
-        )
+        raise AuthError("Invalid token, expired token or invalid API key")
 
     @staticmethod
     def _is_jwt_access_token_valid(access_token: str) -> bool:

@@ -29,7 +29,7 @@ def test_find_file_get_instrument_file_not_found(mock_post):
         "/find_file/instrument/MARI/experiment_number/20024?filename=MAR12345.nxspe", headers=STAFF_HEADER
     )
 
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -62,7 +62,7 @@ def test_find_file_generic_experiment_number_not_found(mock_post):
 
     response = client.get("/find_file/generic/experiment_number/20024?filename=MAR12345.nxspe", headers=STAFF_HEADER)
 
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -95,7 +95,7 @@ def test_find_file_generic_user_number_not_found(mock_post):
 
     response = client.get("/find_file/generic/user_number/20024?filename=MAR12345.nxspe", headers=STAFF_HEADER)
 
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 @patch("fia_api.core.auth.tokens.requests.post")

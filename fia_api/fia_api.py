@@ -10,19 +10,31 @@ from starlette.middleware.cors import CORSMiddleware
 
 from fia_api.core.exceptions import (
     AuthError,
+    BadRequestError,
+    DataIntegrityError,
+    GithubAPIRequestError,
+    JobOwnerError,
     JobRequestError,
     MissingRecordError,
     MissingScriptError,
     NoFilesAddedError,
+    ReadDirError,
     UnsafePathError,
+    UploadFileError,
 )
 from fia_api.exception_handlers import (
     authentication_error_handler,
     bad_job_request_handler,
+    bad_request_handler,
+    data_integrity_handler,
+    github_api_request_handler,
+    job_owner_err_handler,
     missing_record_handler,
     missing_script_handler,
     no_files_added_handler,
+    read_dir_err_handler,
     unsafe_path_handler,
+    upload_file_err_handler,
     validation_exception_handler,
 )
 from fia_api.routers.extras import ExtrasRouter
@@ -80,3 +92,9 @@ app.add_exception_handler(AuthError, authentication_error_handler)
 app.add_exception_handler(JobRequestError, bad_job_request_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(NoFilesAddedError, no_files_added_handler)
+app.add_exception_handler(ReadDirError, read_dir_err_handler)
+app.add_exception_handler(UploadFileError, upload_file_err_handler)
+app.add_exception_handler(GithubAPIRequestError, github_api_request_handler)
+app.add_exception_handler(BadRequestError, bad_request_handler)
+app.add_exception_handler(DataIntegrityError, data_integrity_handler)
+app.add_exception_handler(JobOwnerError, job_owner_err_handler)

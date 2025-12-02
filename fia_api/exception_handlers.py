@@ -19,7 +19,7 @@ async def missing_record_handler(_: Request, __: Exception) -> JSONResponse:
     :return: JSONResponse with 404
     """
     return JSONResponse(
-        status_code=404,
+        status_code=HTTPStatus.NOT_FOUND,
         content={"message": "Resource not found"},
     )
 
@@ -104,4 +104,50 @@ async def no_files_added_handler(_: Request, exc: Exception) -> JSONResponse:
             "x-missing-files-count": str(len(exc.missing_files)),
             "x-missing-files": ";".join(exc.missing_files),
         },
+    )
+
+
+async def read_dir_err_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Handler for file_ops.read_dir()"""
+
+    return JSONResponse(
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content=f"There was an error returning the files {exc}"
+    )
+
+
+async def upload_file_err_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Handler for file_ops.write_file_from_remote()"""
+    return JSONResponse(
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content=f"There was an error uploading the file {exc}"
+    )
+
+
+async def github_api_request_handler(_: Request, __: Exception) -> JSONResponse:
+    """Handler for GithubAPI requests that fail"""
+
+    return JSONResponse(status_code=HTTPStatus.FAILED_DEPENDENCY, content="Github API request failed ")
+
+
+async def bad_request_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Handler for bad requests"""
+
+    return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content=f"A bad request was made, {exc}")
+
+
+async def job_owner_err_handler(_: Request, __: Exception) -> JSONResponse:
+    """Handler for JobOwnerErr"""
+
+    return JSONResponse(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content="Job has no owner")
+
+
+async def data_integrity_handler(_: Request, __: Exception) -> JSONResponse:
+    """
+    Automatically return a 500 when a DataIntegrityError is raised
+    :param _:
+    :param __:
+    :return: JSONResponse with 500
+    """
+    return JSONResponse(
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+        content={"message": "Record missing experiment, instrument, or user number"},
     )

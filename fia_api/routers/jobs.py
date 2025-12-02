@@ -8,12 +8,18 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, Query, Response
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.exceptions import NoFilesAddedError
+from fia_api.core.exceptions import (
+    AuthError,
+    DataIntegrityError,
+    JobOwnerError,
+    MissingRecordError,
+    NoFilesAddedError,
+)
 from fia_api.core.models import JobType
 from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
 from fia_api.core.responses import AutoreductionResponse, CountResponse, JobResponse, JobWithRunResponse
@@ -202,7 +208,7 @@ async def update_job(
     """
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
-        raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
+        raise AuthError("User not authorised for this action")
     return JobResponse.from_job(update_job_by_id(job_id, job))
 
 
@@ -238,19 +244,13 @@ async def download_file(
     job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
 
     if job.owner is None:
-        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Job has no owner.")
+        raise JobOwnerError("Job has no owner.")
 
     if job.job_type != JobType.SIMPLE:
         if job.owner.experiment_number is None:
-            raise HTTPException(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                detail="Experiment number not found in scenario where it should be expected.",
-            )
+            raise DataIntegrityError("Experiment number not found in scenario where it should be expected.")
         if job.instrument is None:
-            raise HTTPException(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                detail="Instrument not found in scenario where it should be expected.",
-            )
+            raise DataIntegrityError("Instrument not found in scenario where it should be expected.")
         filepath = find_file_instrument(
             ceph_dir=ceph_dir,
             instrument=job.instrument.instrument_name,
@@ -265,10 +265,7 @@ async def download_file(
         )
     else:
         if job.owner.user_number is None:
-            raise HTTPException(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                detail="User number not found in scenario where it should be expected.",
-            )
+            raise DataIntegrityError("User number not found in scenario where it should be expected.")
         filepath = find_file_user_number(
             ceph_dir=ceph_dir,
             user_number=int(job.owner.user_number),
@@ -276,7 +273,7 @@ async def download_file(
         )
 
     if filepath is None:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="File not found.")
+        raise MissingRecordError("File not found.")
 
     return FileResponse(
         path=filepath,
@@ -363,7 +360,10 @@ async def create_autoreduction(
     """
     user = get_user_from_token(credentials.credentials)
     if user.user_number != -1:  # API Key user has psuedo user number of -1
-        raise HTTPException(status_code=HTTPStatus.FORBIDDEN)
+        raise AuthError(
+            f"User number: {user.user_number} attempted to create autoreduction - \
+                autoreduction only creatale via APIKey"
+        )
     job = create_autoreduction_job(job_request)
     response.status_code = HTTPStatus.CREATED
     return AutoreductionResponse(job_id=job.id, script=job.script.script)  # type: ignore
