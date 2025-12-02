@@ -134,12 +134,6 @@ async def bad_request_handler(_: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content=f"A bad request was made, {exc}")
 
 
-async def service_unavailable_handler(_: Request, exc: Exception) -> JSONResponse:
-    """Handler for health.health_router.get"""
-
-    return JSONResponse(status_code=HTTPStatus.SERVICE_UNAVAILABLE, content=f"Service Unavailable, {exc}")
-
-
 async def job_owner_err_handler(_: Request, __: Exception) -> JSONResponse:
     """Handler for JobOwnerErr"""
 
