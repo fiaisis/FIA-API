@@ -360,7 +360,10 @@ async def create_autoreduction(
     """
     user = get_user_from_token(credentials.credentials)
     if user.user_number != -1:  # API Key user has psuedo user number of -1
-        raise AuthError(f"User number: {user.user_number} attempted to create autoreduction - autoreduction only creatale via APIKey")
+        raise AuthError(
+            f"User number: {user.user_number} attempted to create autoreduction - \
+                autoreduction only creatale via APIKey"
+        )
     job = create_autoreduction_job(job_request)
     response.status_code = HTTPStatus.CREATED
     return AutoreductionResponse(job_id=job.id, script=job.script.script)  # type: ignore

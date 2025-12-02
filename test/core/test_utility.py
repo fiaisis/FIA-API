@@ -119,7 +119,7 @@ def test_non_existing_file_path(tmp_path):
     """Tests non relative and non existing file to see if AuthError logic is triggered"""
     base_path = Path(tmp_path / "folder")
     file_path = tmp_path / "non_relative_folder" / "file.txt"
-    with pytest.raises(AuthError) as exc_info:
+    with pytest.raises(AuthError):
         safe_check_filepath(file_path, base_path)
 
 
@@ -131,7 +131,7 @@ def test_non_existing_folder_path(tmp_path):
     """
     base_path = Path(tmp_path / "folder")
     file_path = tmp_path / "non_relative_folder"
-    with pytest.raises(AuthError) as exc_info:
+    with pytest.raises(AuthError):
         safe_check_filepath(file_path, base_path)
 
 
