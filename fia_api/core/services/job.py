@@ -2,12 +2,13 @@
 
 import os
 from collections.abc import Mapping, Sequence
+from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import BaseModel
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
-from fia_api.core.exceptions import AuthError, MissingRecordError
+from fia_api.core.exceptions import AuthError, DataIntegrityError, JobOwnerError, MissingRecordError
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import Repo
@@ -18,7 +19,7 @@ from fia_api.core.specifications.job import JobSpecification
 from fia_api.core.specifications.job_owner import JobOwnerSpecification
 from fia_api.core.specifications.run import RunSpecification
 from fia_api.core.specifications.script import ScriptSpecification
-from fia_api.core.utility import hash_script
+from fia_api.core.utility import find_file_experiment_number, find_file_instrument, find_file_user_number, hash_script
 from fia_api.scripts.acquisition import get_script_for_job
 
 
@@ -291,3 +292,92 @@ def create_autoreduction_job(job_request: AutoreductionRequest) -> Job:
         job.script_id = script.id
 
     return _JOB_REPO.add_one(job)
+
+
+def resolve_job_files(
+    job_files: dict[str, list[str]],
+    user,
+    ceph_dir: str,
+) -> tuple[list[tuple[int, str, str]], list[str]]:
+    resolved_files: list[tuple[int, str, str]] = []
+    missing_files: list[str] = []
+
+    for job_id_str, filenames in job_files.items():
+        job_id = int(job_id_str)
+        job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
+
+        if job.owner is None:
+            continue
+
+        for filename in filenames:
+            if job.job_type != JobType.SIMPLE and job.owner.experiment_number and job.instrument:
+                filepath = find_file_instrument(
+                    ceph_dir,
+                    job.instrument.instrument_name,
+                    int(job.owner.experiment_number),
+                    filename,
+                )
+            elif job.owner.experiment_number:
+                filepath = find_file_experiment_number(
+                    ceph_dir,
+                    int(job.owner.experiment_number),
+                    filename,
+                )
+            elif job.owner.user_number:
+                filepath = find_file_user_number(
+                    ceph_dir,
+                    int(job.owner.user_number),
+                    filename,
+                )
+            else:
+                filepath = None
+
+            if filepath and Path(filepath).is_file():
+                resolved_files.append((job_id, filename, filepath))
+            else:
+                missing_files.append(f"{job_id}/{filename}")
+
+    return resolved_files, missing_files
+
+
+def resolve_job_file_path(
+    job_id: int,
+    filename: str,
+    user,
+    ceph_dir: str,
+) -> str:
+    job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
+
+    if job.owner is None:
+        raise JobOwnerError("Job has no owner.")
+
+    if job.job_type != JobType.SIMPLE:
+        if job.owner.experiment_number is None:
+            raise DataIntegrityError("Experiment number not found in scenario where it should be expected.")
+        if job.instrument is None:
+            raise DataIntegrityError("Instrument not found in scenario where it should be expected.")
+        filepath = find_file_instrument(
+            ceph_dir=ceph_dir,
+            instrument=job.instrument.instrument_name,
+            experiment_number=int(job.owner.experiment_number),
+            filename=filename,
+        )
+    elif job.owner.experiment_number is not None:
+        filepath = find_file_experiment_number(
+            ceph_dir=ceph_dir,
+            experiment_number=int(job.owner.experiment_number),
+            filename=filename,
+        )
+    else:
+        if job.owner.user_number is None:
+            raise DataIntegrityError("User number not found in scenario where it should be expected.")
+        filepath = find_file_user_number(
+            ceph_dir=ceph_dir,
+            user_number=int(job.owner.user_number),
+            filename=filename,
+        )
+
+    if not filepath or not Path(filepath).is_file():
+        raise MissingRecordError("File not found.")
+
+    return str(filepath)
