@@ -349,7 +349,7 @@ def resolve_job_files(
 def resolve_job_file_path(
     job_id: int,
     filename: str,
-    user: User,
+    user,
     ceph_dir: str,
 ) -> str:
     job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
