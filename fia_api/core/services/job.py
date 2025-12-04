@@ -339,7 +339,7 @@ def resolve_job_files(
                 filepath = None
 
             if filepath and Path(filepath).is_file():
-                resolved_files.append((job_id, filename, filepath))
+                resolved_files.append((job_id, filename, str(filepath)))
             else:
                 missing_files.append(f"{job_id}/{filename}")
 
@@ -349,7 +349,7 @@ def resolve_job_files(
 def resolve_job_file_path(
     job_id: int,
     filename: str,
-    user,
+    user: User,
     ceph_dir: str,
 ) -> str:
     job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
