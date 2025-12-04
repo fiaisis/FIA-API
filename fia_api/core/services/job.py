@@ -19,7 +19,13 @@ from fia_api.core.specifications.job import JobSpecification
 from fia_api.core.specifications.job_owner import JobOwnerSpecification
 from fia_api.core.specifications.run import RunSpecification
 from fia_api.core.specifications.script import ScriptSpecification
-from fia_api.core.utility import find_file_experiment_number, find_file_instrument, find_file_user_number, hash_script
+from fia_api.core.utility import (
+    find_file_experiment_number,
+    find_file_instrument,
+    find_file_user_number,
+    get_packages,
+    hash_script,
+)
 from fia_api.scripts.acquisition import get_script_for_job
 
 
@@ -381,3 +387,20 @@ def resolve_job_file_path(
         raise MissingRecordError("File not found.")
 
     return str(filepath)
+
+
+def list_mantid_runners() -> dict[str, str]:
+    """
+    Service layer for get_mantid_runners.
+    Returns a list of mantid versions from GitHub.
+    """
+    data = get_packages(org="fiaisis", image_name="mantid")
+    mantid_versions: dict[str, str] = {}
+    for item in data:
+        name = str(item.get("name", ""))
+        tags = item.get("metadata", {}).get("container", {}).get("tags", [])
+        if not tags:  # if tags is an empty list
+            continue
+        mantid_versions[name] = str(tags[0])
+
+    return mantid_versions
