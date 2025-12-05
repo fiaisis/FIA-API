@@ -8,6 +8,7 @@ from typing import Any, Literal
 from pydantic import BaseModel
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
+from fia_api.core.auth.tokens import User
 from fia_api.core.exceptions import AuthError, DataIntegrityError, JobOwnerError, MissingRecordError
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script, State
@@ -26,7 +27,6 @@ from fia_api.core.utility import (
     get_packages,
     hash_script,
 )
-from fia_api.core.auth.tokens import User
 from fia_api.scripts.acquisition import get_script_for_job
 
 
