@@ -26,6 +26,7 @@ from fia_api.core.utility import (
     get_packages,
     hash_script,
 )
+from fia_api.core.auth.tokens import User
 from fia_api.scripts.acquisition import get_script_for_job
 
 
@@ -302,7 +303,7 @@ def create_autoreduction_job(job_request: AutoreductionRequest) -> Job:
 
 def resolve_job_files(
     job_files: dict[str, list[str]],
-    user,
+    user: User,
     ceph_dir: str,
 ) -> tuple[list[tuple[int, str, str]], list[str]]:
     resolved_files: list[tuple[int, str, str]] = []
@@ -349,7 +350,7 @@ def resolve_job_files(
 def resolve_job_file_path(
     job_id: int,
     filename: str,
-    user,
+    user: User,
     ceph_dir: str,
 ) -> str:
     job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)

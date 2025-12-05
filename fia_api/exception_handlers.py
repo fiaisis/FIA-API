@@ -32,7 +32,7 @@ async def bad_job_request_handler(_: Request, __: Exception) -> JSONResponse:
     :return: JSONResponse with 400
     """
     return JSONResponse(
-        status_code=400,
+        status_code=HTTPStatus.BAD_REQUEST,
         content={"message": "The job request was malformed and could not be processed"},
     )
 
@@ -45,7 +45,7 @@ async def missing_script_handler(_: Request, __: Exception) -> JSONResponse:
     :return:  JSONResponse with 404
     """
     return JSONResponse(
-        status_code=404,
+        status_code=HTTPStatus.NOT_FOUND,
         content={
             "message": "The script could not be found locally or on remote, it is likely the script does not exist"
         },
@@ -60,7 +60,7 @@ async def unsafe_path_handler(_: Request, __: Exception) -> JSONResponse:
     :return:
     """
     return JSONResponse(
-        status_code=400,
+        status_code=HTTPStatus.BAD_REQUEST,
         content={"message": "The given request contains bad characters"},
     )
 
@@ -72,7 +72,7 @@ async def authentication_error_handler(_: Request, __: Exception) -> JSONRespons
     :param __:
     :return:
     """
-    return JSONResponse(status_code=403, content={"message": "Forbidden"})
+    return JSONResponse(status_code=HTTPStatus.FORBIDDEN, content={"message": "Forbidden"})
 
 
 async def validation_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -94,7 +94,7 @@ async def no_files_added_handler(_: Request, exc: Exception) -> JSONResponse:
         exc, NoFilesAddedError
     )  # This assert can be removed and the type hint updated, if this PR gets merged: https://github.com/encode/starlette/pull/2403
     return JSONResponse(
-        status_code=404,
+        status_code=HTTPStatus.NOT_FOUND,
         content={
             "detail": "None of the requested files could be found.",
             "missing_files_count": len(exc.missing_files),
