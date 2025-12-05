@@ -57,7 +57,7 @@ def test_download_file_invalid_job(mock_post):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_job_by_id")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_file_no_owner(mock_post, mock_get_experiments, mock_get_job):
