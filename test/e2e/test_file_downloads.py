@@ -140,7 +140,7 @@ def test_download_file_simple_and_experiment_and_user_number_missing(mock_post, 
 
 
 @patch("fia_api.core.utility.find_file_user_number")
-@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_job_by_id")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_file_missing_filepath(mock_post, mock_get_experiments, mock_get_job, mock_find_file):
