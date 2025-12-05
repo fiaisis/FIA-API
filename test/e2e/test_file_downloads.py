@@ -73,7 +73,7 @@ def test_download_file_no_owner(mock_post, mock_get_experiments, mock_get_job):
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_job_by_id")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_file_experiment_number_missing(mock_post, mock_get_experiments, mock_get_job):
