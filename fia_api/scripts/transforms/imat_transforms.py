@@ -25,7 +25,7 @@ class IMATTransform(Transform):
         # If you get here in the future, try removing the following line and see if it passes with newer mypy.
         for index, line in enumerate(lines):
             if line.startswith("runno ="):
-                lines[index] = f'runno = {job.inputs["runno"]}'  # type: ignore
+                lines[index] = f"runno = {job.inputs['runno']}"  # type: ignore
                 continue
             if line.startswith("dataset_path = "):
                 lines[index] = f'dataset_path = Path("{job.inputs["images_dir"]}")'  # type: ignore
