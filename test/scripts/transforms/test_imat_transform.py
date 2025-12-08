@@ -7,7 +7,7 @@ from fia_api.scripts.transforms.imat_transforms import IMATTransform
 
 SCRIPT = """
 FILTERS = {f.__name__: f for f in load_filter_packages()}
-RECON_DEFAULT_SETTINGS = {'algorithm': 'FBP_CUDA', 'filter_name': 'ram-lak', 'cor': 1, 'tilt': 0, 'max_projection_angle': 360}
+RECON_DEFAULT_SETTINGS = {'algorithm': 'FBP_CUDA', 'filter_name': 'ram-lak', 'cor': 1, 'tilt': 0}
 DEBUG = False
 DEBUG_DIR = Path("/output/debug")
 
@@ -22,7 +22,7 @@ def test_iris_transform_spectroscopy():
     """Test spectroscopy transform"""
     expected_script = """
 FILTERS = {f.__name__: f for f in load_filter_packages()}
-RECON_DEFAULT_SETTINGS = {'algorithm': 'FBP_CUDA', 'filter_name': 'ram-lak', 'cor': 1, 'tilt': 0, 'max_projection_angle': 360}
+RECON_DEFAULT_SETTINGS = {'algorithm': 'FBP_CUDA', 'filter_name': 'ram-lak', 'cor': 1, 'tilt': 0}
 DEBUG = False
 DEBUG_DIR = Path("/output/debug")
 
