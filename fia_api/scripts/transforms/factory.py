@@ -3,6 +3,7 @@
 import logging
 
 from fia_api.scripts.transforms.enginx_transform import EnginxTransform
+from fia_api.scripts.transforms.imat_transforms import IMATTransform
 from fia_api.scripts.transforms.iris_transform import IrisTransform
 from fia_api.scripts.transforms.mari_transforms import MariTransform
 from fia_api.scripts.transforms.osiris_transform import OsirisTransform
@@ -37,6 +38,8 @@ def get_transform_for_instrument(instrument: str) -> Transform:  # noqa: PLR0911
             return VesuvioTransform()
         case "enginx":
             return EnginxTransform()
+        case "imat":
+            return IMATTransform()
         case "test":
             return TestTransform()
         case _:
