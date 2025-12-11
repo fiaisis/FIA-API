@@ -307,8 +307,11 @@ def resolve_job_files(
     ceph_dir: str,
 ) -> tuple[list[tuple[int, str, str]], list[str]]:
     """
-    Service layer for downoald_zip
-    returns a tuple of job_id int, filename string, and filepath string
+    Return a tuple of job_id int, filename string, and filepath string
+
+    :param job_files: dictionary to hold files for zipping and downloading
+    :param user: the user requesting files to be zipped and downloaded
+    :param ceph_dir: the base directory
     """
     resolved_files: list[tuple[int, str, str]] = []
     missing_files: list[str] = []
@@ -358,8 +361,12 @@ def resolve_job_file_path(
     ceph_dir: str,
 ) -> str:
     """
-    Service layer method for download_file
-    returns a string with the filepath leading to the passed filename
+    Return a string with the filepath leading to the passed filename
+
+    :param job_id: the id of the job requesting the file
+    :param filename: the name of the file to search for
+    :param user: the user requesting the file for download
+    :param ceph_dir: the base directory
     """
     job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
 
@@ -400,8 +407,8 @@ def resolve_job_file_path(
 
 def list_mantid_runners() -> dict[str, str]:
     """
-    Service layer for get_mantid_runners.
-    Returns a list of mantid versions from GitHub.
+    Get mantid runners from github packages.
+    Returns a dict of mantid versions and their corresponding git sha from GitHub.
     """
     data = get_packages(org="fiaisis", image_name="mantid")
     mantid_versions: dict[str, str] = {}
