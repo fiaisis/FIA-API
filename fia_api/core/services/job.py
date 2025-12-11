@@ -306,6 +306,10 @@ def resolve_job_files(
     user: User,
     ceph_dir: str,
 ) -> tuple[list[tuple[int, str, str]], list[str]]:
+    """
+    Service layer for downoald_zip
+    returns a tuple of job_id int, filename string, and filepath string
+    """
     resolved_files: list[tuple[int, str, str]] = []
     missing_files: list[str] = []
 
@@ -353,6 +357,10 @@ def resolve_job_file_path(
     user: User,
     ceph_dir: str,
 ) -> str:
+    """
+    Service layer method for download_file
+    returns a string with the filepath leading to the passed filename
+    """
     job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
 
     if job.owner is None:
