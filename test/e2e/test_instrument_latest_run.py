@@ -31,7 +31,7 @@ def test_get_instrument_latest_run_no_jwt_returns_403():
     :return:
     """
     response = client.get("/instrument/het/latest-run")
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -56,7 +56,7 @@ def test_get_instrument_latest_run_bad_jwt():
     :return:
     """
     response = client.get("/instrument/het/latest-run", headers={"Authorization": "foo"})
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @patch("fia_api.core.auth.tokens.requests.post")

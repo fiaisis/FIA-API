@@ -24,7 +24,7 @@ def test_get_job_by_id_no_token_results_in_http_forbidden():
     :return:
     """
     response = client.get("/job/123144324234234234")
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -289,7 +289,7 @@ def test_get_jobs_for_instrument_no_token_results_in_forbidden():
     :return: None
     """
     response = client.get("/instrument/test/jobs")
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 def test_get_jobs_for_instrument_jobs_exist_for_dev_mode():

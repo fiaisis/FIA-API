@@ -44,7 +44,7 @@ def test_download_file_unauthorized(mock_post, mock_get_experiments):
     mock_get_experiments.return_value = [1820497]
     response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe")
 
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -235,7 +235,7 @@ def test_download_zip_unauthorized(mock_post, mock_get_experiments):
     payload = {"5001": ["MAR29531_10.5meV_sa.nxspe"]}
     response = client.post("/job/download-zip", json=payload)
 
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
