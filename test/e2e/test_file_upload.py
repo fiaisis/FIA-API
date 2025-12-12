@@ -103,7 +103,7 @@ def test_read_extras_no_jwt_returns_forbidden(mock_post):
     mock_post.return_value.status_code = HTTPStatus.OK
 
     response = client.get("/extras")
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -148,7 +148,7 @@ def test_read_instrument_populated(mock_post):
 def test_read_instrument_fails_no_jwt(mock_post):
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get(f"/extras/{instrument_folders[2]}")
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -181,7 +181,7 @@ def test_file_upload_fails_with_forbidden_no_jwt(mock_post, mock_file):
     upload_url = f"/extras/{instrument_folders[3]}/{mock_file[0]}"
     response = client.post(upload_url, files=upload_file)
 
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @patch("fia_api.core.auth.tokens.requests.post")

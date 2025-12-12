@@ -31,7 +31,7 @@ def test_get_mantid_runners_no_api_key(mock_post):
     """Test endpoint returns forbidden if no API key supplied."""
     mock_post.return_value.status_code = HTTPStatus.FORBIDDEN
     response = client.get("/jobs/runners")
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -39,4 +39,4 @@ def test_get_mantid_runners_bad_jwt(mock_post):
     """Test endpoint returns forbidden if bad JWT supplied."""
     mock_post.return_value.status_code = HTTPStatus.FORBIDDEN
     response = client.get("/jobs/runners", headers={"Authorization": "foo"})
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED

@@ -39,7 +39,7 @@ def test_find_file_get_instrument_file_no_perms(mock_post):
 
     response = client.get("/find_file/instrument/MARI/experiment_number/20024?filename=MAR29531_10.5meV_sa.nxspe")
 
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -72,7 +72,7 @@ def test_find_file_generic_experiment_number_no_perms(mock_post):
 
     response = client.get("/find_file/generic/experiment_number/20024?filename=MAR29531_10.5meV_sa.nxspe")
 
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -105,4 +105,4 @@ def test_find_file_generic_user_number_no_perms(mock_post):
 
     response = client.get("/find_file/generic/user_number/20024?filename=MAR29531_10.5meV_sa.nxspe")
 
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
