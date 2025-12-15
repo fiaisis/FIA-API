@@ -1,6 +1,7 @@
 import os
 
 from sqlalchemy import NullPool, create_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 DB_USERNAME = os.environ.get("DB_USERNAME", "postgres")
@@ -15,8 +16,9 @@ ENGINE = create_engine(
 SESSION = sessionmaker(ENGINE)
 
 
-async def create_session():
+async def create_session() -> AsyncSession:
+    db = SESSION()
     try:
-        yield SESSION
+        yield db
     finally:
-        SESSION.close()
+        db.close()

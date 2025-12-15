@@ -44,8 +44,8 @@ class Repo(Generic[T]):
     that inherits from the base model class.
     """
 
-    def __init__(self) -> None:
-        self._session = SESSION
+    def __init__(self, session: Session) -> None:
+        self._session = session
 
     def find(self, spec: Specification[T]) -> Sequence[T]:
         """
@@ -54,9 +54,8 @@ class Repo(Generic[T]):
         :param spec: A specification defining the query criteria.
         :return: A sequence of entities of type T that match the specification.
         """
-        with self._session() as session:
-            query = spec.value
-            return session.execute(query).unique().scalars().all()
+        query = spec.value
+        return session.execute(query).unique().scalars().all()
 
     def find_one(self, spec: Specification[T]) -> T | None:
         """
@@ -69,14 +68,13 @@ class Repo(Generic[T]):
         :return: An entity of type T that matches the specification, or None if no entities are found.
         :raises NonUniqueRecordError: If more than one entity matches the specification.
         """
-        with self._session() as session:
-            try:
-                return session.execute(spec.value).unique().scalars().one()
-            except NoResultFound:
-                return None
-            except MultipleResultsFound as exc:
-                logger.exception("Non unique record found for %s", spec.value)
-                raise NonUniqueRecordError() from exc
+        try:
+            return session.execute(spec.value).unique().scalars().one()
+        except NoResultFound:
+            return None
+        except MultipleResultsFound as exc:
+            logger.exception("Non unique record found for %s", spec.value)
+            raise NonUniqueRecordError() from exc
 
     def count(self, spec: Specification[T]) -> int:
         """
@@ -85,10 +83,8 @@ class Repo(Generic[T]):
         :param spec: A specification defining the query criteria.
         :return: The count of entities of type T that match the specification.
         """
-        with self._session() as session:
-            # mypy does not like these, but they are valid.
-            result = session.execute(select(func.count()).select_from(spec.value))  # type: ignore
-            return result.scalar() if result else 0  # type: ignore
+        result = session.execute(select(func.count()).select_from(spec.value))  # type: ignore
+        return result.scalar() if result else 0  # type: ignore
 
     def update_one(self, entity: T) -> T:
         """
@@ -107,8 +103,7 @@ class Repo(Generic[T]):
         return self._store_entity(entity)
 
     def _store_entity(self, entity: T) -> T:
-        with self._session() as session:
-            session.add(entity)
-            session.commit()
-            session.refresh(entity)
+        self._session.add(entity)
+        self._session.commit()
+        self._session.refresh(entity)
         return entity
