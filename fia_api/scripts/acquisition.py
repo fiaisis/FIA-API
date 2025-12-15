@@ -124,8 +124,9 @@ def get_script_for_job(instrument: str, job: Job) -> PreScript:
     script = get_by_instrument_name(instrument)
     transform = get_transform_for_instrument(instrument)
     transform.apply(script, job)
-    mantid_transform = MantidTransform()
-    mantid_transform.apply(script, job)
+    if instrument.lower() != "imat":
+        mantid_transform = MantidTransform()
+        mantid_transform.apply(script, job)
     output_transform = OutputTransform()
     output_transform.apply(script, job)
     return script
