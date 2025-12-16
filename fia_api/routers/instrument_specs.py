@@ -3,6 +3,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Session
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.exceptions import AuthError
@@ -17,7 +18,7 @@ jwt_api_security = JWTAPIBearer()
     "/instrument/{instrument_name}/specification", tags=["instrument specifications"], response_model=None
 )
 async def get_instrument_specification(
-    instrument_name: str, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)], db: AsyncSession = Depends(get_db_session)
+    instrument_name: str, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)], db: Session = Depends(get_db_session)
 ) -> JSONB | None:
     """
     Return the specification for the given instrument
@@ -37,7 +38,7 @@ async def update_instrument_specification(
     instrument_name: str,
     specification: dict[str, Any],
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-    db: AsyncSession = Depends(get_db_session)
+    db: Session = Depends(get_db_session)
 ) -> dict[str, Any]:
     """
     Replace the current specification with the given specification for the given instrument
