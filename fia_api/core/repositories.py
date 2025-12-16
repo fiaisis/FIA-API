@@ -7,7 +7,7 @@ from typing import Generic, TypeVar
 
 from sqlalchemy import NullPool, create_engine, func, select
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 from fia_api.core.exceptions import NonUniqueRecordError
 from fia_api.core.models import Base
@@ -55,7 +55,8 @@ class Repo(Generic[T]):
         :return: A sequence of entities of type T that match the specification.
         """
         query = spec.value
-        return session.execute(query).unique().scalars().all()
+        result = await session.execute(query).unique().scalars().all()
+        return result
 
     def find_one(self, spec: Specification[T]) -> T | None:
         """
@@ -69,7 +70,8 @@ class Repo(Generic[T]):
         :raises NonUniqueRecordError: If more than one entity matches the specification.
         """
         try:
-            return session.execute(spec.value).unique().scalars().one()
+            result = await session.execute(spec.value).unique().scalars().one()
+            return result
         except NoResultFound:
             return None
         except MultipleResultsFound as exc:
@@ -83,7 +85,7 @@ class Repo(Generic[T]):
         :param spec: A specification defining the query criteria.
         :return: The count of entities of type T that match the specification.
         """
-        result = session.execute(select(func.count()).select_from(spec.value))  # type: ignore
+        result = await session.execute(select(func.count()).select_from(spec.value))  # type: ignore
         return result.scalar() if result else 0  # type: ignore
 
     def update_one(self, entity: T) -> T:
