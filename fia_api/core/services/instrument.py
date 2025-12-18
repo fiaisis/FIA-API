@@ -2,14 +2,13 @@
 
 from typing import Any
 
-from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Session
 
 from fia_api.core.exceptions import MissingRecordError
 from fia_api.core.models import Instrument
 from fia_api.core.repositories import Repo
 from fia_api.core.specifications.instrument import InstrumentSpecification
-
 
 
 def get_instrument_by_name(instrument_name: str, session: Session) -> Instrument:
