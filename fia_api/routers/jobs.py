@@ -11,7 +11,6 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
-
 from sqlalchemy.orm import Session
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
@@ -88,7 +87,6 @@ async def get_jobs(
     """
     user = get_user_from_token(credentials.credentials)
     filters = json.loads(filters) if filters else None
-    session = session
 
     if as_user:
         user_number = user.user_number
@@ -116,7 +114,7 @@ async def get_jobs(
 async def get_jobs_by_instrument(
     instrument: str,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-    session: Annotated[Session, Depends(get_db_session)]
+    session: Annotated[Session, Depends(get_db_session)],
     limit: int = 0,
     offset: int = 0,
     order_by: OrderField = "start",
@@ -146,7 +144,6 @@ async def get_jobs_by_instrument(
     filters = json.loads(filters) if filters else None
 
     instrument = instrument.upper()
-    session = session
 
     if as_user:
         user_number = user.user_number
@@ -185,14 +182,16 @@ async def count_jobs_for_instrument(
     :return: CountResponse containing the count
     """
     instrument = instrument.upper()
-    return CountResponse(count=count_jobs_by_instrument(instrument, session, filters=json.loads(filters) if filters else None))  # type: ignore
+    return CountResponse(
+        count=count_jobs_by_instrument(instrument, session, filters=json.loads(filters) if filters else None)
+    )  # type: ignore
 
 
 @JobsRouter.get("/job/{job_id}", tags=["jobs"])
 async def get_job(
     job_id: int,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-    session: Annotated[Session, Depends(get_db_session)]
+    session: Annotated[Session, Depends(get_db_session)],
 ) -> JobWithRunResponse:
     """
     Retrieve a job with nested run data, by iD.
@@ -203,7 +202,11 @@ async def get_job(
     :return: JobWithRunsResponse object
     """
     user = get_user_from_token(credentials.credentials)
-    job = get_job_by_id(job_id, session) if user.role == "staff" else get_job_by_id(job_id, session, user_number=user.user_number)
+    job = (
+        get_job_by_id(job_id, session)
+        if user.role == "staff"
+        else get_job_by_id(job_id, session, user_number=user.user_number)
+    )
     return JobWithRunResponse.from_job(job)
 
 
@@ -248,7 +251,7 @@ async def download_file(
     job_id: int,
     filename: str,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-    session: Annotated[Session, Depends(get_db_session)]
+    session: Annotated[Session, Depends(get_db_session)],
 ) -> FileResponse:
     """
     Find a file in the CEPH_DIR and return it as a FileResponse.
@@ -261,7 +264,11 @@ async def download_file(
     """
     user = get_user_from_token(credentials.credentials)
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
-    job = get_job_by_id(job_id, session) if user.role == "staff" else get_job_by_id(job_id, session, user_number=user.user_number)
+    job = (
+        get_job_by_id(job_id, session)
+        if user.role == "staff"
+        else get_job_by_id(job_id, session, user_number=user.user_number)
+    )
 
     if job.owner is None:
         raise JobOwnerError("Job has no owner.")
@@ -325,7 +332,11 @@ async def download_zip(
     with zipfile.ZipFile(zip_stream, "w", zipfile.ZIP_DEFLATED) as zipf:
         for job_id_str, filenames in job_files.items():
             job_id = int(job_id_str)
-            job = get_job_by_id(job_id, session) if user.role == "staff" else get_job_by_id(job_id, session, user_number=user.user_number)
+            job = (
+                get_job_by_id(job_id, session)
+                if user.role == "staff"
+                else get_job_by_id(job_id, session, user_number=user.user_number)
+            )
 
             if job.owner is None:
                 continue

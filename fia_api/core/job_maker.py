@@ -52,7 +52,7 @@ class JobMaker:
         db: Annotated[Session, Depends(get_db_session)],
     ):
         credentials = PlainCredentials(username=username, password=password)
-        self.session = db
+        session = db
         self._job_repo: Repo[Job] = Repo(session)
         self._owner_repo: Repo[JobOwner] = Repo(session)
         self._script_repo: Repo[Script] = Repo(session)
