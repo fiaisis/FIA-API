@@ -7,7 +7,7 @@ from typing import Generic, TypeVar
 
 from sqlalchemy import NullPool, create_engine, func, select
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from fia_api.core.exceptions import NonUniqueRecordError
 from fia_api.core.models import Base
@@ -29,9 +29,9 @@ ENGINE = create_engine(
 SESSION = sessionmaker(ENGINE)
 
 
-def test_connection() -> None:
+def test_connection(db: Session) -> None:
     """Test connection to database."""
-    with SESSION() as session:
+    with db as session:
         session.execute(select(1))
 
 
@@ -45,7 +45,7 @@ class Repo(Generic[T]):
     """
 
     def __init__(self, session: Session) -> None:
-        self._session = session
+        self.session = session
 
     def find(self, spec: Specification[T]) -> Sequence[T]:
         """
@@ -55,7 +55,7 @@ class Repo(Generic[T]):
         :return: A sequence of entities of type T that match the specification.
         """
         query = spec.value
-        return session.execute(query).unique().scalars().all()
+        return self.session.execute(query).unique().scalars().all()
 
     def find_one(self, spec: Specification[T]) -> T | None:
         """
@@ -69,8 +69,7 @@ class Repo(Generic[T]):
         :raises NonUniqueRecordError: If more than one entity matches the specification.
         """
         try:
-            result = session.execute(spec.value).unique().scalars().one()
-            return result
+            return self.session.execute(spec.value).unique().scalars().one()
         except NoResultFound:
             return None
         except MultipleResultsFound as exc:
@@ -84,7 +83,7 @@ class Repo(Generic[T]):
         :param spec: A specification defining the query criteria.
         :return: The count of entities of type T that match the specification.
         """
-        result = session.execute(select(func.count()).select_from(spec.value))  # type: ignore
+        result = self.session.execute(select(func.count()).select_from(spec.value))  # type: ignore
         return result.scalar() if result else 0  # type: ignore
 
     def update_one(self, entity: T) -> T:
@@ -104,7 +103,7 @@ class Repo(Generic[T]):
         return self._store_entity(entity)
 
     def _store_entity(self, entity: T) -> T:
-        self._session.add(entity)
-        self._session.commit()
-        self._session.refresh(entity)
+        self.session.add(entity)
+        self.session.commit()
+        self.session.refresh(entity)
         return entity
