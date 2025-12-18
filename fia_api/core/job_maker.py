@@ -5,15 +5,18 @@ import json
 import logging
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
+from fastapi import Depends
 from pika.adapters.blocking_connection import BlockingConnection  # type: ignore[import-untyped]
 from pika.connection import ConnectionParameters  # type: ignore[import-untyped]
 from pika.credentials import PlainCredentials  # type: ignore[import-untyped]
+from sqlalchemy.orm import Session
 
 from fia_api.core.exceptions import JobRequestError
 from fia_api.core.models import Job, JobOwner, JobType, Script, State
 from fia_api.core.repositories import Repo
+from fia_api.core.session import get_db_session
 from fia_api.core.specifications.job import JobSpecification
 from fia_api.core.specifications.job_owner import JobOwnerSpecification
 from fia_api.core.specifications.script import ScriptSpecification
@@ -40,11 +43,19 @@ def require_owner(func: Callable[..., Any]) -> Callable[..., Any]:
 
 
 class JobMaker:
-    def __init__(self, queue_host: str, username: str, password: str, queue_name: str):
+    def __init__(
+        self,
+        queue_host: str,
+        username: str,
+        password: str,
+        queue_name: str,
+        db: Annotated[Session, Depends(get_db_session)],
+    ):
         credentials = PlainCredentials(username=username, password=password)
-        self._job_repo: Repo[Job] = Repo()
-        self._owner_repo: Repo[JobOwner] = Repo()
-        self._script_repo: Repo[Script] = Repo()
+        self.session = db
+        self._job_repo: Repo[Job] = Repo(session)
+        self._owner_repo: Repo[JobOwner] = Repo(session)
+        self._script_repo: Repo[Script] = Repo(session)
         self.connection_parameters = ConnectionParameters(queue_host, 5672, credentials=credentials)
         self.queue_name = queue_name
         self.connection = None
