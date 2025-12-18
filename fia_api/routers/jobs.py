@@ -12,6 +12,8 @@ from fastapi import APIRouter, Depends, Query, Response
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
 
+from sqlalchemy.orm import Session
+
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.exceptions import (
     AuthError,
@@ -32,6 +34,7 @@ from fia_api.core.services.job import (
     get_job_by_instrument,
     update_job_by_id,
 )
+from fia_api.core.session import get_db_session
 from fia_api.core.utility import (
     find_file_experiment_number,
     find_file_instrument,
@@ -58,6 +61,7 @@ OrderField = Literal[
 @JobsRouter.get("/jobs", tags=["jobs"])
 async def get_jobs(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+    session: Annotated[Session, Depends(get_db_session)],
     limit: int = 0,
     offset: int = 0,
     order_by: OrderField = "start",
@@ -70,6 +74,7 @@ async def get_jobs(
     Retrieve all jobs.
     \f
     :param credentials: Dependency injected HTTPAuthorizationCredentials
+    :param session: The current session of the request
     :param limit: optional limit for the number of jobs returned (default is 0, which can be interpreted as
     no limit)
     :param offset: optional offset for the list of jobs (default is 0)
@@ -83,6 +88,7 @@ async def get_jobs(
     """
     user = get_user_from_token(credentials.credentials)
     filters = json.loads(filters) if filters else None
+    session = session
 
     if as_user:
         user_number = user.user_number
@@ -92,6 +98,7 @@ async def get_jobs(
         user_number = user.user_number
 
     jobs = get_all_jobs(
+        session,
         limit=limit,
         offset=offset,
         order_by=order_by,
@@ -109,6 +116,7 @@ async def get_jobs(
 async def get_jobs_by_instrument(
     instrument: str,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+    session: Annotated[Session, Depends(get_db_session)]
     limit: int = 0,
     offset: int = 0,
     order_by: OrderField = "start",
@@ -121,6 +129,7 @@ async def get_jobs_by_instrument(
     Retrieve a list of jobs for a given instrument.
     \f
     :param credentials: Dependency injected HTTPAuthorizationCredentials
+    :param session: The current session of the request
     :param instrument: the name of the instrument
     :param limit: optional limit for the number of jobs returned (default is 0, which can be interpreted as
     no limit)
@@ -137,6 +146,7 @@ async def get_jobs_by_instrument(
     filters = json.loads(filters) if filters else None
 
     instrument = instrument.upper()
+    session = session
 
     if as_user:
         user_number = user.user_number
@@ -147,6 +157,7 @@ async def get_jobs_by_instrument(
 
     jobs = get_job_by_instrument(
         instrument,
+        session,
         limit=limit,
         offset=offset,
         order_by=order_by,
@@ -163,6 +174,7 @@ async def get_jobs_by_instrument(
 @JobsRouter.get("/instrument/{instrument}/jobs/count", tags=["jobs"])
 async def count_jobs_for_instrument(
     instrument: str,
+    session: Annotated[Session, Depends(get_db_session)],
     filters: Annotated[str | None, Query(description="json string of filters")] = None,
 ) -> CountResponse:
     """
@@ -173,21 +185,25 @@ async def count_jobs_for_instrument(
     :return: CountResponse containing the count
     """
     instrument = instrument.upper()
-    return CountResponse(count=count_jobs_by_instrument(instrument, filters=json.loads(filters) if filters else None))  # type: ignore
+    return CountResponse(count=count_jobs_by_instrument(instrument, session, filters=json.loads(filters) if filters else None))  # type: ignore
 
 
 @JobsRouter.get("/job/{job_id}", tags=["jobs"])
 async def get_job(
-    job_id: int, credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)]
+    job_id: int,
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+    session: Annotated[Session, Depends(get_db_session)]
 ) -> JobWithRunResponse:
     """
     Retrieve a job with nested run data, by iD.
     \f
     :param job_id: the unique identifier of the job
+    :param credentials: Dependency Injected credentials
+    :param session: The current session of the request
     :return: JobWithRunsResponse object
     """
     user = get_user_from_token(credentials.credentials)
-    job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
+    job = get_job_by_id(job_id, session) if user.role == "staff" else get_job_by_id(job_id, session, user_number=user.user_number)
     return JobWithRunResponse.from_job(job)
 
 
@@ -196,6 +212,7 @@ async def update_job(
     job_id: int,
     job: PartialJobUpdateRequest,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+    session: Annotated[Session, Depends(get_db_session)],
 ) -> JobResponse:
     """
     Safely update the job of the given id with the new details provided. The update is safe as it prevents
@@ -209,11 +226,12 @@ async def update_job(
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         raise AuthError("User not authorised for this action")
-    return JobResponse.from_job(update_job_by_id(job_id, job))
+    return JobResponse.from_job(update_job_by_id(job_id, job, session))
 
 
 @JobsRouter.get("/jobs/count", tags=["jobs"])
 async def count_all_jobs(
+    session: Annotated[Session, Depends(get_db_session)],
     filters: Annotated[str | None, Query(description="json string of filters")] = None,
 ) -> CountResponse:
     """
@@ -222,7 +240,7 @@ async def count_all_jobs(
     :param filters: json string of filters
     :return: CountResponse containing the count
     """
-    return CountResponse(count=count_jobs(filters=json.loads(filters) if filters else None))
+    return CountResponse(count=count_jobs(session, filters=json.loads(filters) if filters else None))
 
 
 @JobsRouter.get("/job/{job_id}/filename/{filename}", tags=["jobs"])
@@ -230,6 +248,7 @@ async def download_file(
     job_id: int,
     filename: str,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+    session: Annotated[Session, Depends(get_db_session)]
 ) -> FileResponse:
     """
     Find a file in the CEPH_DIR and return it as a FileResponse.
@@ -237,11 +256,12 @@ async def download_file(
     :param job_id: the unique identifier of the job.
     :param filename: the name of the file to find.
     :param credentials: Dependency injected HTTPAuthorizationCredentials.
+    :param session: The current session of the request
     :return: FileResponse containing the file.
     """
     user = get_user_from_token(credentials.credentials)
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
-    job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
+    job = get_job_by_id(job_id, session) if user.role == "staff" else get_job_by_id(job_id, session, user_number=user.user_number)
 
     if job.owner is None:
         raise JobOwnerError("Job has no owner.")
@@ -286,6 +306,7 @@ async def download_file(
 async def download_zip(
     job_files: dict[str, list[str]],
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+    session: Annotated[Session, Depends(get_db_session)],
 ) -> StreamingResponse:
     """
     Zips and returns a set of files given job IDs and filenames.
@@ -304,7 +325,7 @@ async def download_zip(
     with zipfile.ZipFile(zip_stream, "w", zipfile.ZIP_DEFLATED) as zipf:
         for job_id_str, filenames in job_files.items():
             job_id = int(job_id_str)
-            job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
+            job = get_job_by_id(job_id, session) if user.role == "staff" else get_job_by_id(job_id, session, user_number=user.user_number)
 
             if job.owner is None:
                 continue
@@ -350,12 +371,15 @@ async def create_autoreduction(
     job_request: AutoreductionRequest,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
     response: Response,
+    session: Annotated[Session, Depends(get_db_session)],
 ) -> AutoreductionResponse:
     """
     Given an AutoreductionRequest, return an AutoreductionResponse containing the job id and the autoreduction script
     \f
     :param job_request: The AutoreductionRequest
     :param credentials: Dependency injected HTTPAuthorizationCredentials.
+    :param response: A Response object
+    :param session: The current session of the request
     :return:  The AutoreductionResponse
     """
     user = get_user_from_token(credentials.credentials)
@@ -364,6 +388,6 @@ async def create_autoreduction(
             f"User number: {user.user_number} attempted to create autoreduction - \
                 autoreduction only creatale via APIKey"
         )
-    job = create_autoreduction_job(job_request)
+    job = create_autoreduction_job(job_request, session)
     response.status_code = HTTPStatus.CREATED
     return AutoreductionResponse(job_id=job.id, script=job.script.script)  # type: ignore
