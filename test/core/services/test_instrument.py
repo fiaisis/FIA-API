@@ -13,13 +13,14 @@ from fia_api.core.services.instrument import (
 )
 
 
-@patch("fia_api.core.services.instrument._REPO")
+@patch("fia_api.core.services.instrument.Repo")
 @patch("fia_api.core.services.instrument.InstrumentSpecification")
 def test_get_specification_by_instrument_name(mock_spec, mock_repo):
     mock_instrument = Mock()
+    mock_session = Mock()
     mock_repo.find_one.return_value = mock_instrument
 
-    spec = get_specification_by_instrument_name("mari")
+    spec = get_specification_by_instrument_name("mari", mock_session)
 
     assert spec == mock_instrument.specification
     mock_spec.return_value.by_name.assert_called_once_with("mari")
