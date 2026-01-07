@@ -18,21 +18,31 @@ from fia_api.core.services.instrument import (
 def test_get_specification_by_instrument_name(mock_spec, mock_repo):
     mock_instrument = Mock()
     mock_session = Mock()
-    mock_repo.find_one.return_value = mock_instrument
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
+    mock_repo_instance.find_one.return_value = mock_instrument
+
+    mock_spec_instance = Mock()
+    mock_spec.return_value = mock_spec_instance
+    mock_spec_instance.by_name.return_value = mock_instrument.specification
 
     spec = get_specification_by_instrument_name("mari", mock_session)
 
     assert spec == mock_instrument.specification
-    mock_spec.return_value.by_name.assert_called_once_with("mari")
+    mock_repo.assert_called_once_with(mock_session)
+    mock_repo_instance.find_one.assert_called_once()
+    mock_spec_instance.by_name.assert_called_once_with("mari")
 
 
-@patch("fia_api.core.services.instrument._REPO")
+@patch("fia_api.core.services.instrument.Repo")
 def test_get_specification_by_instrument_name_instrument_missing(mock_repo):
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
+    mock_repo_instance.find_one.return_value = None
     with patch("fia_api.core.services.instrument.InstrumentSpecification"):
-        mock_repo.find_one.return_value = None
-
         with pytest.raises(MissingRecordError):
-            get_specification_by_instrument_name("mari")
+            get_specification_by_instrument_name(instrument_name="mari", session=mock_session)
 
 
 @patch("fia_api.core.services.instrument._REPO")
