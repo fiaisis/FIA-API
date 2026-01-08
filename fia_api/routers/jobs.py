@@ -5,7 +5,6 @@ import json
 import os
 import zipfile
 from http import HTTPStatus
-from pathlib import Path
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Query, Response
@@ -16,12 +15,8 @@ from sqlalchemy.orm import Session
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.exceptions import (
     AuthError,
-    DataIntegrityError,
-    JobOwnerError,
-    MissingRecordError,
     NoFilesAddedError,
 )
-from fia_api.core.models import JobType
 from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
 from fia_api.core.responses import AutoreductionResponse, CountResponse, JobResponse, JobWithRunResponse
 from fia_api.core.services.job import (
@@ -31,6 +26,8 @@ from fia_api.core.services.job import (
     get_all_jobs,
     get_job_by_id,
     get_job_by_instrument,
+    resolve_job_file_path,
+    resolve_job_files,
     update_job_by_id,
 )
 from fia_api.core.session import get_db_session
@@ -264,43 +261,13 @@ async def download_file(
     """
     user = get_user_from_token(credentials.credentials)
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
-    job = (
-        get_job_by_id(job_id, session)
-        if user.role == "staff"
-        else get_job_by_id(job_id, session, user_number=user.user_number)
+
+    filepath = resolve_job_file_path(
+        job_id=job_id,
+        filename=filename,
+        user=user,
+        ceph_dir=ceph_dir,
     )
-
-    if job.owner is None:
-        raise JobOwnerError("Job has no owner.")
-
-    if job.job_type != JobType.SIMPLE:
-        if job.owner.experiment_number is None:
-            raise DataIntegrityError("Experiment number not found in scenario where it should be expected.")
-        if job.instrument is None:
-            raise DataIntegrityError("Instrument not found in scenario where it should be expected.")
-        filepath = find_file_instrument(
-            ceph_dir=ceph_dir,
-            instrument=job.instrument.instrument_name,
-            experiment_number=int(job.owner.experiment_number),
-            filename=filename,
-        )
-    elif job.owner.experiment_number is not None:
-        filepath = find_file_experiment_number(
-            ceph_dir=ceph_dir,
-            experiment_number=int(job.owner.experiment_number),
-            filename=filename,
-        )
-    else:
-        if job.owner.user_number is None:
-            raise DataIntegrityError("User number not found in scenario where it should be expected.")
-        filepath = find_file_user_number(
-            ceph_dir=ceph_dir,
-            user_number=int(job.owner.user_number),
-            filename=filename,
-        )
-
-    if filepath is None:
-        raise MissingRecordError("File not found.")
 
     return FileResponse(
         path=filepath,
@@ -325,46 +292,17 @@ async def download_zip(
     user = get_user_from_token(credentials.credentials)
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
 
-    zip_stream = io.BytesIO()
-    missing_files: list[str] = []
-    no_file_added = True
+    resolved_files, missing_files = resolve_job_files(job_files, user, ceph_dir)
 
-    with zipfile.ZipFile(zip_stream, "w", zipfile.ZIP_DEFLATED) as zipf:
-        for job_id_str, filenames in job_files.items():
-            job_id = int(job_id_str)
-            job = (
-                get_job_by_id(job_id, session)
-                if user.role == "staff"
-                else get_job_by_id(job_id, session, user_number=user.user_number)
-            )
-
-            if job.owner is None:
-                continue
-
-            for filename in filenames:
-                if job.job_type != JobType.SIMPLE and job.owner.experiment_number and job.instrument:
-                    filepath = find_file_instrument(
-                        ceph_dir,
-                        job.instrument.instrument_name,
-                        int(job.owner.experiment_number),
-                        filename,
-                    )
-                elif job.owner.experiment_number:
-                    filepath = find_file_experiment_number(ceph_dir, int(job.owner.experiment_number), filename)
-                elif job.owner.user_number:
-                    filepath = find_file_user_number(ceph_dir, int(job.owner.user_number), filename)
-                else:
-                    filepath = None
-
-                if filepath and Path(filepath).is_file():
-                    arcname = f"{job_id}/{filename}"
-                    zipf.write(filepath, arcname=arcname)
-                    no_file_added = False
-                else:
-                    missing_files.append(f"{job_id}/{filename}")
-
-    if no_file_added:
+    if not resolved_files:
+        # signal which files were missing
         raise NoFilesAddedError(missing_files)
+
+    zip_stream = io.BytesIO()
+    with zipfile.ZipFile(zip_stream, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for job_id, filename, filepath in resolved_files:
+            arcname = f"{job_id}/{filename}"
+            zipf.write(filepath, arcname=arcname)
 
     zip_stream.seek(0)
     resp = StreamingResponse(zip_stream, media_type="application/zip")

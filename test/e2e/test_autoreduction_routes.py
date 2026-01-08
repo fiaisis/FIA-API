@@ -62,7 +62,7 @@ def test_update_job_fails_for_user(_):  # noqa: PT019
 @pytest.mark.usefixtures("_user_owned_data_setup")
 def test_update_job_fails_with_no_auth():
     response = client.patch("/job/1", json={"foo": "bar"})
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.usefixtures("_user_owned_data_setup")

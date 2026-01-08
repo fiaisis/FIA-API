@@ -8,9 +8,16 @@ from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.exceptions import AuthError
 from fia_api.core.job_maker import JobMaker
-from fia_api.core.services.job import RerunJob, SimpleJob, get_experiment_number_for_job_id, job_maker
 from fia_api.core.session import get_db_session
 from fia_api.core.utility import get_packages
+
+from fia_api.core.services.job import (
+    RerunJob,
+    SimpleJob,
+    get_experiment_number_for_job_id,
+    job_maker,
+    list_mantid_runners,
+)
 
 JobCreationRouter = APIRouter()
 jwt_api_security = JWTAPIBearer()
@@ -81,13 +88,4 @@ async def get_mantid_runners(
         # Must be logged in to do this
         raise AuthError("User is not authorized to access this endpoint")
 
-    data = get_packages(org="fiaisis", image_name="mantid")
-    mantid_versions = {}
-    for item in data:
-        name = str(item.get("name", ""))
-        tags = item.get("metadata", {}).get("container", {}).get("tags", [])
-        if not tags:  # if tags is an empty list
-            continue
-        mantid_versions[name] = str(tags[0])
-
-    return mantid_versions
+    return list_mantid_runners()

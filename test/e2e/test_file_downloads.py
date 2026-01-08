@@ -44,7 +44,7 @@ def test_download_file_unauthorized(mock_post, mock_get_experiments):
     mock_get_experiments.return_value = [1820497]
     response = client.get("/job/5001/filename/MAR29531_10.5meV_sa.nxspe")
 
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -57,7 +57,7 @@ def test_download_file_invalid_job(mock_post):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_job_by_id")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_file_no_owner(mock_post, mock_get_experiments, mock_get_job):
@@ -73,7 +73,7 @@ def test_download_file_no_owner(mock_post, mock_get_experiments, mock_get_job):
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_job_by_id")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_file_experiment_number_missing(mock_post, mock_get_experiments, mock_get_job):
@@ -121,7 +121,7 @@ def test_download_file_simple_and_experiment_number_missing(mock_post, mock_get_
     assert response.headers["content-type"] == "application/octet-stream"
 
 
-@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_job_by_id")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_file_simple_and_experiment_and_user_number_missing(mock_post, mock_get_experiments, mock_get_job):
@@ -139,8 +139,8 @@ def test_download_file_simple_and_experiment_and_user_number_missing(mock_post, 
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@patch("fia_api.routers.jobs.find_file_user_number")
-@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.find_file_user_number")
+@patch("fia_api.core.services.job.get_job_by_id")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_file_missing_filepath(mock_post, mock_get_experiments, mock_get_job, mock_find_file):
@@ -167,7 +167,7 @@ def test_download_invalid_user_perms(mock_post):
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-@patch("fia_api.routers.jobs.get_job_by_id")
+@patch("fia_api.core.services.job.get_job_by_id")
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_download_valid_user_perms(mock_post, mock_get_job):
     """Test that a user trying to download a file that does match their credentials returns a 200 status code."""
@@ -235,7 +235,7 @@ def test_download_zip_unauthorized(mock_post, mock_get_experiments):
     payload = {"5001": ["MAR29531_10.5meV_sa.nxspe"]}
     response = client.post("/job/download-zip", json=payload)
 
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
