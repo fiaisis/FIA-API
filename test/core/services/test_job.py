@@ -504,13 +504,14 @@ def test_run_not_exists_creates_instrument_owner_run_and_new_script(
     mock_owner_repo = Mock()
     mock_instrument_repo = Mock()
 
-    #These repo instances need to be in the order they are called from create_autoreduction_job
-    mock_repo_class.side_effect = [mock_run_repo,
-                                   mock_instrument_repo,
-                                   mock_owner_repo,
-                                   mock_script_repo,
-                                   mock_job_repo,
-                                   ]
+    # These repo instances need to be in the order they are called from create_autoreduction_job
+    mock_repo_class.side_effect = [
+        mock_run_repo,
+        mock_instrument_repo,
+        mock_owner_repo,
+        mock_script_repo,
+        mock_job_repo,
+    ]
 
     mock_run_repo.find_one.return_value = None
 

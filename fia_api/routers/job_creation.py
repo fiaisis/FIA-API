@@ -2,12 +2,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials
+from sqlalchemy.orm import Session
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.exceptions import AuthError
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.services.job import RerunJob, SimpleJob, get_experiment_number_for_job_id, job_maker
+from fia_api.core.session import get_db_session
 from fia_api.core.utility import get_packages
 
 JobCreationRouter = APIRouter()
@@ -19,6 +21,7 @@ async def make_rerun_job(
     rerun_job: RerunJob,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
     job_maker: Annotated[JobMaker, Depends(job_maker)],
+    session: Annotated[Session, Depends(get_db_session)],
 ) -> int:
     """
     Create a rerun job, returning the ID of the created job.
@@ -29,10 +32,10 @@ async def make_rerun_job(
     :return: The ID of the created job
     """
     user = get_user_from_token(credentials.credentials)
-    experiment_number = get_experiment_number_for_job_id(rerun_job.job_id)
+    experiment_number = get_experiment_number_for_job_id(rerun_job.job_id, session)
     # Forbidden if not staff, and experiment number not related to this user_number's experiment number
     if user.role != "staff":
-        experiment_numbers = get_experiments_for_user_number(user.user_number)
+        experiment_numbers = get_experiments_for_user_number(user.user_number, session)
         if experiment_number not in experiment_numbers:
             # If not staff this is not allowed
             raise AuthError("User not authorised for this action")

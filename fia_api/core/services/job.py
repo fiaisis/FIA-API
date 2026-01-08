@@ -25,14 +25,18 @@ from fia_api.core.utility import hash_script
 from fia_api.scripts.acquisition import get_script_for_job
 
 
-def job_maker() -> JobMaker:
+def job_maker(session: Annotated[Session, Depends(get_db_session)]) -> JobMaker:
     """Creates a JobMaker and returns it using env vars"""
     queue_host = os.environ.get("QUEUE_HOST", "localhost")
     queue_name = os.environ.get("EGRESS_QUEUE_NAME", "scheduled-jobs")
     producer_username = os.environ.get("QUEUE_USER", "guest")
     producer_password = os.environ.get("QUEUE_PASSWORD", "guest")
     return JobMaker(
-        queue_host=queue_host, queue_name=queue_name, username=producer_username, password=producer_password
+        queue_host=queue_host,
+        queue_name=queue_name,
+        username=producer_username,
+        password=producer_password,
+        db=session,
     )
 
 
