@@ -10,7 +10,8 @@ from fia_api.core.job_maker import JobMaker
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
 def test_send_message(broker):
-    job_maker = JobMaker("", "", "", "")
+    mock_session = mock.Mock()
+    job_maker = JobMaker("", "", "", "", mock_session)
     job_maker.channel = mock.MagicMock()
     custom_message = str(mock.MagicMock())
 
@@ -24,7 +25,8 @@ def test_send_message(broker):
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
 def test_create_rerun_job_no_run(mock_connect, faker):
-    job_maker = JobMaker("", "", "", "test_queue")
+    mock_session = mock.Mock()
+    job_maker = JobMaker("", "", "", "test_queue", mock_session)
     job_maker._send_message = mock.MagicMock()
     original_job = mock.MagicMock()
     original_job.run = None
@@ -52,7 +54,8 @@ def test_create_rerun_job_no_run(mock_connect, faker):
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
 def test_create_rerun_job_with_run(mock_connect, faker):
-    job_maker = JobMaker("", "", "", "test_queue")
+    mock_session = mock.Mock()
+    job_maker = JobMaker("", "", "", "test_queue", mock_session)
     job_maker._send_message = mock.MagicMock()
     dummy_run = mock.MagicMock()
     dummy_run.filename = "run_file.txt"
@@ -99,8 +102,9 @@ def test_create_rerun_job_with_run(mock_connect, faker):
 
 
 def test_create_rerun_job_require_owner(faker):
+    mock_session = mock.Mock()
     with mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker"):
-        job_maker = JobMaker("", "", "", "test_queue")
+        job_maker = JobMaker("", "", "", "test_queue", mock_session)
     job_maker._send_message = mock.MagicMock()
     job_id = faker.random.randint(1, 10000)
     runner_image = "runner_img"
@@ -117,7 +121,8 @@ def test_create_rerun_job_require_owner(faker):
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
 def test_create_rerun_job_original_job_not_found(mock_connect, faker):
-    job_maker = JobMaker("", "", "", "test_queue")
+    mock_session = mock.Mock()
+    job_maker = JobMaker("", "", "", "test_queue", mock_session)
     job_maker._send_message = mock.MagicMock()
     job_maker._job_repo.find_one = mock.MagicMock(return_value=None)
 
@@ -137,7 +142,8 @@ def test_create_rerun_job_original_job_not_found(mock_connect, faker):
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
 def test_create_simple_job_success(mock_connect, faker):
-    job_maker = JobMaker("", "", "", "test_queue")
+    mock_session = mock.Mock()
+    job_maker = JobMaker("", "", "", "test_queue", mock_session)
     job_maker._send_message = mock.MagicMock()
     job_maker._owner_repo.find_one = mock.MagicMock(return_value=None)
     job_maker._script_repo.find_one = mock.MagicMock(return_value=None)
@@ -170,8 +176,9 @@ def test_create_simple_job_success(mock_connect, faker):
 
 
 def test_create_simple_job_require_owner():
+    mock_session = mock.Mock()
     with mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker"):
-        job_maker = JobMaker("", "", "", "test_queue")
+        job_maker = JobMaker("", "", "", "test_queue", mock_session)
     job_maker._send_message = mock.MagicMock()
     runner_image = "simple_runner"
     script = "print('error')"
