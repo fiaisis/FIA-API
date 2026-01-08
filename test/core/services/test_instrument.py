@@ -40,9 +40,8 @@ def test_get_specification_by_instrument_name_instrument_missing(mock_repo):
     mock_repo_instance = Mock()
     mock_repo.return_value = mock_repo_instance
     mock_repo_instance.find_one.return_value = None
-    with patch("fia_api.core.services.instrument.InstrumentSpecification"):
-        with pytest.raises(MissingRecordError):
-            get_specification_by_instrument_name(instrument_name="mari", session=mock_session)
+    with patch("fia_api.core.services.instrument.InstrumentSpecification"), pytest.raises(MissingRecordError):
+        get_specification_by_instrument_name(instrument_name="mari", session=mock_session)
 
 
 @patch("fia_api.core.services.instrument.Repo")
