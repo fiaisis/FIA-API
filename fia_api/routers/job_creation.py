@@ -35,7 +35,7 @@ async def make_rerun_job(
     experiment_number = get_experiment_number_for_job_id(rerun_job.job_id, session)
     # Forbidden if not staff, and experiment number not related to this user_number's experiment number
     if user.role != "staff":
-        experiment_numbers = get_experiments_for_user_number(user.user_number, session)
+        experiment_numbers = get_experiments_for_user_number(user.user_number)
         if experiment_number not in experiment_numbers:
             # If not staff this is not allowed
             raise AuthError("User not authorised for this action")
