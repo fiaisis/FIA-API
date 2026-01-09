@@ -2,8 +2,8 @@
 
 import os
 from collections.abc import Mapping, Sequence
-from typing import Annotated, Any, Literal
 from pathlib import Path
+from typing import Annotated, Any, Literal
 
 from fastapi import Depends
 from pydantic import BaseModel
