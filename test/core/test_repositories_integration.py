@@ -6,9 +6,9 @@ with a live db connection
 """
 
 import datetime
+from typing import Annotated
 from unittest import mock
 from unittest.mock import Mock
-from typing import Annotated
 
 import pytest
 from fastapi import Depends
@@ -17,8 +17,8 @@ from sqlalchemy.orm import Session
 
 from fia_api.core.models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import ENGINE, SESSION, Repo, test_connection
-from fia_api.core.specifications.job import JobSpecification
 from fia_api.core.session import get_db_session
+from fia_api.core.specifications.job import JobSpecification
 
 TEST_JOB_OWNER = JobOwner(experiment_number=1)
 TEST_JOB_OWNER_2 = JobOwner(experiment_number=2)
