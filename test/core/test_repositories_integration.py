@@ -10,11 +10,14 @@ from unittest import mock
 from unittest.mock import Mock
 
 import pytest
+from fastapi import Depends
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from fia_api.core.models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import ENGINE, SESSION, Repo, test_connection
 from fia_api.core.specifications.job import JobSpecification
+from fia_api.core.session import get_db_session
 
 TEST_JOB_OWNER = JobOwner(experiment_number=1)
 TEST_JOB_OWNER_2 = JobOwner(experiment_number=2)
@@ -113,33 +116,30 @@ def _setup() -> None:
 
 
 @pytest.fixture
-def job_repo() -> Repo[Job]:
+def job_repo(session: Annotated[Session, Depends(get_db_session)]) -> Repo[Job]:
     """
     JobRepo fixture
     :return: JobRepo
     """
-    mock_session = Mock()
-    return Repo(mock_session)
+    return Repo(session)
 
 
 @pytest.fixture
-def run_repo() -> Repo[Run]:
+def run_repo(session: Annotated[Session, Depends(get_db_session)]) -> Repo[Run]:
     """
     RunRepo fixture
     :return: RunRepo
     """
-    mock_session = Mock()
-    return Repo(mock_session)
+    return Repo(session)
 
 
 @pytest.fixture
-def owner_repo() -> Repo[JobOwner]:
+def owner_repo(session: Annotated[Session, Depends(get_db_session)]) -> Repo[JobOwner]:
     """
     JobOwnerRepo fixture.
     :return: JobOwnerRepo
     """
-    mock_session = Mock()
-    return Repo(mock_session)
+    return Repo(session)
 
 
 @pytest.mark.parametrize(
