@@ -118,7 +118,8 @@ def job_repo() -> Repo[Job]:
     JobRepo fixture
     :return: JobRepo
     """
-    return Repo()
+    mock_session = Mock()
+    return Repo(mock_session)
 
 
 @pytest.fixture
@@ -127,7 +128,8 @@ def run_repo() -> Repo[Run]:
     RunRepo fixture
     :return: RunRepo
     """
-    return Repo()
+    mock_session = Mock()
+    return Repo(mock_session)
 
 
 @pytest.fixture
@@ -136,7 +138,8 @@ def owner_repo() -> Repo[JobOwner]:
     JobOwnerRepo fixture.
     :return: JobOwnerRepo
     """
-    return Repo()
+    mock_session = Mock()
+    return Repo(mock_session)
 
 
 @pytest.mark.parametrize(
