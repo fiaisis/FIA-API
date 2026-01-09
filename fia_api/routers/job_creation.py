@@ -8,9 +8,6 @@ from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.exceptions import AuthError
 from fia_api.core.job_maker import JobMaker
-from fia_api.core.session import get_db_session
-from fia_api.core.utility import get_packages
-
 from fia_api.core.services.job import (
     RerunJob,
     SimpleJob,
@@ -18,6 +15,7 @@ from fia_api.core.services.job import (
     job_maker,
     list_mantid_runners,
 )
+from fia_api.core.session import get_db_session
 
 JobCreationRouter = APIRouter()
 jwt_api_security = JWTAPIBearer()

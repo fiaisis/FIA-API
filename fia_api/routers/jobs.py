@@ -31,11 +31,6 @@ from fia_api.core.services.job import (
     update_job_by_id,
 )
 from fia_api.core.session import get_db_session
-from fia_api.core.utility import (
-    find_file_experiment_number,
-    find_file_instrument,
-    find_file_user_number,
-)
 
 JobsRouter = APIRouter(tags=["jobs"])
 jwt_api_security = JWTAPIBearer()
