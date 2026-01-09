@@ -6,14 +6,18 @@ with a live db connection
 """
 
 import datetime
+from typing import Annotated
 from unittest import mock
 from unittest.mock import Mock
 
 import pytest
+from fastapi import Depends
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from fia_api.core.models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import ENGINE, SESSION, Repo, test_connection
+from fia_api.core.session import get_db_session
 from fia_api.core.specifications.job import JobSpecification
 
 TEST_JOB_OWNER = JobOwner(experiment_number=1)
@@ -113,30 +117,30 @@ def _setup() -> None:
 
 
 @pytest.fixture
-def job_repo() -> Repo[Job]:
+def job_repo(session: Annotated[Session, Depends(get_db_session)]) -> Repo[Job]:
     """
     JobRepo fixture
     :return: JobRepo
     """
-    return Repo()
+    return Repo(session)
 
 
 @pytest.fixture
-def run_repo() -> Repo[Run]:
+def run_repo(session: Annotated[Session, Depends(get_db_session)]) -> Repo[Run]:
     """
     RunRepo fixture
     :return: RunRepo
     """
-    return Repo()
+    return Repo(session)
 
 
 @pytest.fixture
-def owner_repo() -> Repo[JobOwner]:
+def owner_repo(session: Annotated[Session, Depends(get_db_session)]) -> Repo[JobOwner]:
     """
     JobOwnerRepo fixture.
     :return: JobOwnerRepo
     """
-    return Repo()
+    return Repo(session)
 
 
 @pytest.mark.parametrize(
@@ -182,7 +186,7 @@ def test_test_connection_raises_httpexception(mock_select, mock_session):
     mock_session_object = Mock()
     mock_session.return_value.__enter__.return_value = mock_session_object
 
-    test_connection()
+    test_connection(mock_session)
     mock_session_object.execute.assert_called_once_with(mock_select.return_value)
 
 
