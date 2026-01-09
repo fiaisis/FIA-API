@@ -334,3 +334,126 @@ def create_autoreduction_job(
         job.script_id = script.id
     job_repo: Repo[Job] = Repo(session)
     return job_repo.add_one(job)
+
+
+def resolve_job_files(
+    job_files: dict[str, list[str]],
+    user: User,
+    ceph_dir: str,
+    session: Annotated[Session, Depends(get_db_session)] 
+) -> tuple[list[tuple[int, str, str]], list[str]]:
+    """
+    Return a tuple of job_id int, filename string, and filepath string
+
+    :param job_files: dictionary to hold files for zipping and downloading
+    :param user: the user requesting files to be zipped and downloaded
+    :param ceph_dir: the base directory
+    """
+    resolved_files: list[tuple[int, str, str]] = []
+    missing_files: list[str] = []
+
+    for job_id_str, filenames in job_files.items():
+        job_id = int(job_id_str)
+        job = get_job_by_id(job_id, session) if user.role == "staff" else get_job_by_id(job_id, session, user_number=user.user_number)
+
+        if job.owner is None:
+            continue
+
+        for filename in filenames:
+            if job.job_type != JobType.SIMPLE and job.owner.experiment_number and job.instrument:
+                filepath = find_file_instrument(
+                    ceph_dir,
+                    job.instrument.instrument_name,
+                    int(job.owner.experiment_number),
+                    filename,
+                )
+            elif job.owner.experiment_number:
+                filepath = find_file_experiment_number(
+                    ceph_dir,
+                    int(job.owner.experiment_number),
+                    filename,
+                )
+            elif job.owner.user_number:
+                filepath = find_file_user_number(
+                    ceph_dir,
+                    int(job.owner.user_number),
+                    filename,
+                )
+            else:
+                filepath = None
+
+            if filepath and Path(filepath).is_file():
+                resolved_files.append((job_id, filename, str(filepath)))
+            else:
+                missing_files.append(f"{job_id}/{filename}")
+
+    return resolved_files, missing_files
+
+
+def resolve_job_file_path(
+    job_id: int,
+    filename: str,
+    user: User,
+    ceph_dir: str,
+    session: Annotated[Session, Depends(get_db_session)]
+) -> str:
+    """
+    Return a string with the filepath leading to the passed filename
+
+    :param job_id: the id of the job requesting the file
+    :param filename: the name of the file to search for
+    :param user: the user requesting the file for download
+    :param ceph_dir: the base directory
+    """
+    job = get_job_by_id(job_id, session) if user.role == "staff" else get_job_by_id(job_id, session, user_number=user.user_number)
+
+    if job.owner is None:
+        raise JobOwnerError("Job has no owner.")
+
+    if job.job_type != JobType.SIMPLE:
+        if job.owner.experiment_number is None:
+            raise DataIntegrityError("Experiment number not found in scenario where it should be expected.")
+        if job.instrument is None:
+            raise DataIntegrityError("Instrument not found in scenario where it should be expected.")
+        filepath = find_file_instrument(
+            ceph_dir=ceph_dir,
+            instrument=job.instrument.instrument_name,
+            experiment_number=int(job.owner.experiment_number),
+            filename=filename,
+        )
+    elif job.owner.experiment_number is not None:
+        filepath = find_file_experiment_number(
+            ceph_dir=ceph_dir,
+            experiment_number=int(job.owner.experiment_number),
+            filename=filename,
+        )
+    else:
+        if job.owner.user_number is None:
+            raise DataIntegrityError("User number not found in scenario where it should be expected.")
+        filepath = find_file_user_number(
+            ceph_dir=ceph_dir,
+            user_number=int(job.owner.user_number),
+            filename=filename,
+        )
+
+    if not filepath or not Path(filepath).is_file():
+        raise MissingRecordError("File not found.")
+
+    return str(filepath)
+
+
+def list_mantid_runners() -> dict[str, str]:
+    """
+    Get mantid runners from github packages.
+    Returns a dict of mantid versions and their corresponding git sha from GitHub.
+    """
+    data = get_packages(org="fiaisis", image_name="mantid")
+    mantid_versions: dict[str, str] = {}
+    for item in data:
+        name = str(item.get("name", ""))
+        tags = item.get("metadata", {}).get("container", {}).get("tags", [])
+        if not tags:  # if tags is an empty list
+            continue
+        mantid_versions[name] = str(tags[0])
+
+    return mantid_versions

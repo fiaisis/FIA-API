@@ -267,6 +267,7 @@ async def download_file(
         filename=filename,
         user=user,
         ceph_dir=ceph_dir,
+        session=session
     )
 
     return FileResponse(
@@ -292,7 +293,7 @@ async def download_zip(
     user = get_user_from_token(credentials.credentials)
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
 
-    resolved_files, missing_files = resolve_job_files(job_files, user, ceph_dir)
+    resolved_files, missing_files = resolve_job_files(job_files, user, ceph_dir, session)
 
     if not resolved_files:
         # signal which files were missing
