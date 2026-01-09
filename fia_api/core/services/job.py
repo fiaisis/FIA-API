@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
+from fia_api.core.auth.tokens import User
 from fia_api.core.exceptions import AuthError, MissingRecordError
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script, State
