@@ -8,6 +8,7 @@ with a live db connection
 import datetime
 from unittest import mock
 from unittest.mock import Mock
+from typing import Annotated
 
 import pytest
 from fastapi import Depends
