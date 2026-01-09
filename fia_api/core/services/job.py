@@ -3,6 +3,7 @@
 import os
 from collections.abc import Mapping, Sequence
 from typing import Annotated, Any, Literal
+from pathlib import Path
 
 from fastapi import Depends
 from pydantic import BaseModel
@@ -335,10 +336,7 @@ def create_autoreduction_job(
 
 
 def resolve_job_files(
-    job_files: dict[str, list[str]],
-    user: User,
-    ceph_dir: str,
-    session: Annotated[Session, Depends(get_db_session)] 
+    job_files: dict[str, list[str]], user: User, ceph_dir: str, session: Annotated[Session, Depends(get_db_session)]
 ) -> tuple[list[tuple[int, str, str]], list[str]]:
     """
     Return a tuple of job_id int, filename string, and filepath string
@@ -352,7 +350,11 @@ def resolve_job_files(
 
     for job_id_str, filenames in job_files.items():
         job_id = int(job_id_str)
-        job = get_job_by_id(job_id, session) if user.role == "staff" else get_job_by_id(job_id, session, user_number=user.user_number)
+        job = (
+            get_job_by_id(job_id, session)
+            if user.role == "staff"
+            else get_job_by_id(job_id, session, user_number=user.user_number)
+        )
 
         if job.owner is None:
             continue
@@ -389,11 +391,7 @@ def resolve_job_files(
 
 
 def resolve_job_file_path(
-    job_id: int,
-    filename: str,
-    user: User,
-    ceph_dir: str,
-    session: Annotated[Session, Depends(get_db_session)]
+    job_id: int, filename: str, user: User, ceph_dir: str, session: Annotated[Session, Depends(get_db_session)]
 ) -> str:
     """
     Return a string with the filepath leading to the passed filename
@@ -403,7 +401,11 @@ def resolve_job_file_path(
     :param user: the user requesting the file for download
     :param ceph_dir: the base directory
     """
-    job = get_job_by_id(job_id, session) if user.role == "staff" else get_job_by_id(job_id, session, user_number=user.user_number)
+    job = (
+        get_job_by_id(job_id, session)
+        if user.role == "staff"
+        else get_job_by_id(job_id, session, user_number=user.user_number)
+    )
 
     if job.owner is None:
         raise JobOwnerError("Job has no owner.")

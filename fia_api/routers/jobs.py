@@ -257,13 +257,7 @@ async def download_file(
     user = get_user_from_token(credentials.credentials)
     ceph_dir = os.environ.get("CEPH_DIR", "/ceph")
 
-    filepath = resolve_job_file_path(
-        job_id=job_id,
-        filename=filename,
-        user=user,
-        ceph_dir=ceph_dir,
-        session=session
-    )
+    filepath = resolve_job_file_path(job_id=job_id, filename=filename, user=user, ceph_dir=ceph_dir, session=session)
 
     return FileResponse(
         path=filepath,
