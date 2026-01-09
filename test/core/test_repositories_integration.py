@@ -186,7 +186,7 @@ def test_test_connection_raises_httpexception(mock_select, mock_session):
     mock_session_object = Mock()
     mock_session.return_value.__enter__.return_value = mock_session_object
 
-    test_connection()
+    test_connection(mock_session)
     mock_session_object.execute.assert_called_once_with(mock_select.return_value)
 
 
