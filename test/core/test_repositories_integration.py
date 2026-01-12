@@ -161,8 +161,8 @@ def session(engine) -> Generator[Session, None, None]:
     Session fixture
     :return: Session object
     """
-    SessionLocal = sessionmaker(bind=engine, class_=Session)
-    db = SessionLocal()
+    sessionlocal = sessionmaker(bind=engine, class_=Session)
+    db = sessionlocal()
     try:
         yield db
     finally:
