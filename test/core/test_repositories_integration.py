@@ -8,7 +8,7 @@ with a live db connection
 import os
 import datetime
 from typing import Generator
-from unittest import mock
+from unittest import MagicMock, mock
 from unittest.mock import Mock
 
 import pytest
@@ -208,7 +208,7 @@ def test_jobs_by_instrument_sort_by_job_field(job_repo):
 @mock.patch("fia_api.core.repositories.select")
 def test_ensure_db_connection_raises_httpexception(mock_select):
     """Test exception raised when runtime error occurs"""
-    mock_session_object = Mock()
+    mock_session_object = MagicMock()
     mock_session_object.__enter__.return_value = mock_session_object
 
     ensure_db_connection(mock_session_object)
