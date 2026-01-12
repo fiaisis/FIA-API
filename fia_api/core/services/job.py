@@ -175,7 +175,7 @@ def get_job_by_id(
 
 
 def count_jobs_by_instrument(
-    instrument: str, session: Annotated[Session, Depends(get_db_session)], filters: Mapping[str, Any]
+    instrument: str, session: Annotated[Session, Depends(get_db_session)], filters: Mapping[str, Any] | None
 ) -> int:
     """
     Given an instrument name, count the jobs for that instrument
