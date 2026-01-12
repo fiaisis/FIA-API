@@ -5,20 +5,19 @@ Tests designed to test every specification with it's respective repo
 with a live db connection
 """
 
-import os
 import datetime
-from typing import Generator
+import os
+from collections.abc import Generator
 from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
-from sqlalchemy import select, create_engine, NullPool
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy import NullPool, create_engine, select
+from sqlalchemy.orm import Session, sessionmaker
 
 from fia_api.core.models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import ENGINE, SESSION, Repo, ensure_db_connection
 from fia_api.core.specifications.job import JobSpecification
-
 
 DB_USERNAME = os.environ.get("DB_USERNAME", "postgres")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "password")
@@ -149,7 +148,7 @@ def owner_repo(session: Session) -> Repo[JobOwner]:
 
 @pytest.fixture(scope="session")
 def engine():
-    engine = create_engine(DB_URL, poolclass=NullPool) # Test DB URL, what is this???
+    engine = create_engine(DB_URL, poolclass=NullPool)  # Test DB URL, what is this???
     Base.metadata.create_all(engine)
     yield engine
     Base.metadata.drop_all(engine)
