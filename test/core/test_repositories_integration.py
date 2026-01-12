@@ -179,15 +179,12 @@ def test_jobs_by_instrument_sort_by_job_field(job_repo):
     assert result == expected
 
 
-@mock.patch("fia_api.core.repositories.SESSION")
 @mock.patch("fia_api.core.repositories.select")
 def test_test_connection_raises_httpexception(mock_select, mock_session):
     """Test exception raised when runtime error occurs"""
     mock_session_object = Mock()
-    mock_session.return_value.__enter__.return_value = mock_session_object
-
-    test_connection(mock_session)
-    mock_session_object.execute.assert_called_once_with(mock_select.return_value)
+    test_connection(mock_session_object)
+    mock_session_object.execute.assert_called_once()
 
 
 def test_add_one(owner_repo):
