@@ -176,7 +176,7 @@ async def count_jobs_for_instrument(
     instrument = instrument.upper()
     return CountResponse(
         count=count_jobs_by_instrument(instrument, session, filters=json.loads(filters) if filters else None)
-    )  # type: ignore
+    )
 
 
 @JobsRouter.get("/job/{job_id}", tags=["jobs"])
