@@ -180,7 +180,7 @@ def test_jobs_by_instrument_sort_by_job_field(job_repo):
 
 
 @mock.patch("fia_api.core.repositories.select")
-def test_test_connection_raises_httpexception(mock_select, mock_session):
+def test_test_connection_raises_httpexception(mock_select):
     """Test exception raised when runtime error occurs"""
     mock_session_object = Mock()
     test_connection(mock_session_object)
