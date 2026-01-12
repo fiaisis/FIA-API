@@ -8,8 +8,8 @@ with a live db connection
 import os
 import datetime
 from typing import Generator
-from unittest import MagicMock, mock
-from unittest.mock import Mock
+from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
 from sqlalchemy import select, create_engine, NullPool
