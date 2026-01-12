@@ -29,7 +29,7 @@ ENGINE = create_engine(
 SESSION = sessionmaker(ENGINE)
 
 
-def test_connection(db: Session) -> None:
+def ensure_db_connection(db: Session) -> None:
     """Test connection to database."""
     with db as session:
         session.execute(select(1))

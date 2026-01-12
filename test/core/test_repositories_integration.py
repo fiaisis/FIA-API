@@ -16,7 +16,7 @@ from sqlalchemy import select, create_engine, NullPool
 from sqlalchemy.orm import sessionmaker, Session
 
 from fia_api.core.models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
-from fia_api.core.repositories import ENGINE, SESSION, Repo, test_connection
+from fia_api.core.repositories import ENGINE, SESSION, Repo, ensure_db_connection
 from fia_api.core.specifications.job import JobSpecification
 
 
@@ -206,11 +206,14 @@ def test_jobs_by_instrument_sort_by_job_field(job_repo):
 
 
 @mock.patch("fia_api.core.repositories.select")
-def test_test_connection_raises_httpexception(mock_select):
+def test_ensure_db_connection_raises_httpexception(mock_select):
     """Test exception raised when runtime error occurs"""
     mock_session_object = Mock()
-    test_connection(mock_session_object)
-    mock_session_object.execute.assert_called_once()
+    mock_session_object.__enter__.return_value = mock_session_object
+
+    ensure_db_connection(mock_session_object)
+
+    mock_session_object.execute.assert_called_once_with(mock_select.return_value)
 
 
 def test_add_one(owner_repo):
@@ -225,3 +228,8 @@ def test_add_one(owner_repo):
             .one()
         )
         assert job_owner.experiment_number == experiment_number
+
+
+def test_ensure_db_connection_with_real_session(session):
+    """Test the ensure_db_connection method from repositories.py"""
+    ensure_db_connection(session)

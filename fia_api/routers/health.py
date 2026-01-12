@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from fia_api.core.repositories import test_connection
+from fia_api.core.repositories import ensure_db_connection
 from fia_api.core.session import get_db_session
 
 health_router = APIRouter()
@@ -19,7 +19,7 @@ async def get() -> Literal["ok"]:
 @health_router.get("/ready", tags=["health"])
 async def ready(db: Annotated[Session, Depends(get_db_session)]) -> Literal["ok"]:
     try:
-        test_connection(db)
+        ensure_db_connection(db)
         return "ok"
     except Exception as err:
         raise HTTPException(status_code=HTTPStatus.SERVICE_UNAVAILABLE) from err
