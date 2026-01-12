@@ -5,21 +5,25 @@ Tests designed to test every specification with it's respective repo
 with a live db connection
 """
 
+import os
 import datetime
-from typing import Annotated
+from typing import Generator
 from unittest import mock
 from unittest.mock import Mock
 
 import pytest
-from fastapi import Depends
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import select, create_engine, NullPool
+from sqlalchemy.orm import sessionmaker, Session
 
 from fia_api.core.models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import ENGINE, SESSION, Repo, test_connection
-from fia_api.core.session import get_db_session
 from fia_api.core.specifications.job import JobSpecification
 
+
+DB_USERNAME = os.environ.get("DB_USERNAME", "postgres")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "password")
+DB_IP = os.environ.get("DB_IP", "localhost")
+DB_URL = f"postgresql+psycopg2://{DB_USERNAME}:{DB_PASSWORD}@{DB_IP}:5432/fia"
 TEST_JOB_OWNER = JobOwner(experiment_number=1)
 TEST_JOB_OWNER_2 = JobOwner(experiment_number=2)
 TEST_INSTRUMENT_1 = Instrument(instrument_name="instrument 1", latest_run=1, specification={"foo": "bar"})
@@ -117,7 +121,7 @@ def _setup() -> None:
 
 
 @pytest.fixture
-def job_repo(session: Annotated[Session, Depends(get_db_session)]) -> Repo[Job]:
+def job_repo(session: Session) -> Repo[Job]:
     """
     JobRepo fixture
     :return: JobRepo
@@ -126,7 +130,7 @@ def job_repo(session: Annotated[Session, Depends(get_db_session)]) -> Repo[Job]:
 
 
 @pytest.fixture
-def run_repo(session: Annotated[Session, Depends(get_db_session)]) -> Repo[Run]:
+def run_repo(session: Session) -> Repo[Run]:
     """
     RunRepo fixture
     :return: RunRepo
@@ -135,12 +139,34 @@ def run_repo(session: Annotated[Session, Depends(get_db_session)]) -> Repo[Run]:
 
 
 @pytest.fixture
-def owner_repo(session: Annotated[Session, Depends(get_db_session)]) -> Repo[JobOwner]:
+def owner_repo(session: Session) -> Repo[JobOwner]:
     """
     JobOwnerRepo fixture.
     :return: JobOwnerRepo
     """
     return Repo(session)
+
+
+@pytest.fixture(scope="session")
+def engine():
+    engine = create_engine(DB_URL, poolclass=NullPool) # Test DB URL, what is this???
+    Base.metadata.create_all(engine)
+    yield engine
+    Base.metadata.drop_all(engine)
+
+
+@pytest.fixture
+def session(engine) -> Generator[Session, None, None]:
+    """
+    Session fixture
+    :return: Session object
+    """
+    SessionLocal = sessionmaker(bind=engine, class_=Session)
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 @pytest.mark.parametrize(
