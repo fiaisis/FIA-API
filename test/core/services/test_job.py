@@ -619,28 +619,3 @@ def test_create_autoreduction_job_uses_single_session(mock_repo_class, mock_get_
 
     assert len(set(seen_sessions)) == 1
     assert seen_sessions[0] == id(mock_session)
-
-    """
-    returned_job = Mock()
-    mock_job_repo.add_one.return_value = returned_job
-
-    result = create_autoreduction_job(req, mock_session)
-    assert result is returned_job
-
-    mock_run_repo.find_one.assert_called_once_with(ANY)  # we looked up by filename
-    mock_get_script.assert_called_once_with("CAM1", ANY)
-    mock_hash_script.assert_called_once_with(pre_script.value)
-
-    passed_job = mock_job_repo.add_one.call_args[0][0]
-    assert isinstance(passed_job.script, Script)
-    assert passed_job.script.script == pre_script.value
-    assert passed_job.script.sha == pre_script.sha
-    assert passed_job.script_id is None
-
-    assert passed_job.runner_image == "python:3.10"
-    assert passed_job.job_type == JobType.AUTOREDUCTION
-    assert passed_job.inputs == {"x": 1}
-    assert passed_job.run_id == existing_run.id
-    assert passed_job.owner_id == existing_run.owner_id
-    assert passed_job.instrument_id == existing_run.instrument_id
-    """
