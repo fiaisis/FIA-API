@@ -17,9 +17,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from fia_api.core.models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import ENGINE, SESSION, Repo, ensure_db_connection
-from fia_api.core.services.job import create_autoreduction_job
 from fia_api.core.specifications.job import JobSpecification
-from test.core.services.test_job import make_request
 
 DB_USERNAME = os.environ.get("DB_USERNAME", "postgres")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "password")
@@ -234,22 +232,3 @@ def test_add_one(owner_repo):
 def test_ensure_db_connection_with_real_session(session):
     """Test the ensure_db_connection method from repositories.py"""
     ensure_db_connection(session)
-
-
-def test_create_autoreduction_job_uses_single_session(monkeypatch, session):
-    """Test to ensure that a service function uses a single session throughout"""
-    seen_sessions = []
-
-    class SpyRepo(Repo):
-        def __init__(self, s, *args, **kwargs):
-            seen_sessions.append(id(s))
-            super().__init__(s, *args, **kwargs)
-
-    monkeypatch.setattr("fia_api.core.services.job.Repo", SpyRepo)
-
-    req = make_request()
-
-    create_autoreduction_job(req, session)
-
-    assert len(set(seen_sessions)) == 1
-    assert seen_sessions[0] == id(session)

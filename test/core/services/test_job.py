@@ -8,6 +8,7 @@ import pytest
 from fia_api.core.exceptions import AuthError, MissingRecordError
 from fia_api.core.models import Instrument, JobOwner, JobType, Run, Script, State
 from fia_api.core.request_models import AutoreductionRequest
+from fia_api.core.repositories import Repo
 from fia_api.core.services.job import (
     count_jobs,
     count_jobs_by_instrument,
@@ -281,7 +282,7 @@ def test_get_all_jobs_with_pagination(mock_spec_class, mock_repo):
 @patch("fia_api.core.services.job.JobSpecification")
 def test_update_job_by_id(mock_spec_class, mock_repo):
     """Test update_job_by_id with valid job data."""
-    mock_sesion = Mock()
+    mock_session = Mock()
     mock_repo_instance = Mock()
     mock_repo.return_value = mock_repo_instance
     job_id = 1
@@ -297,7 +298,7 @@ def test_update_job_by_id(mock_spec_class, mock_repo):
     original_job.stacktrace = None
     mock_repo_instance.find_one.return_value = original_job
 
-    update_job_by_id(job_id, job_data, mock_sesion)
+    update_job_by_id(job_id, job_data, mock_session)
 
     mock_spec_class.assert_called_once_with()
     mock_spec_class.return_value.by_id.assert_called_once_with(job_id)
@@ -314,7 +315,7 @@ def test_update_job_by_id(mock_spec_class, mock_repo):
 @patch("fia_api.core.services.job.JobSpecification")
 def test_update_job_by_id_invalid_job_id(mock_spec_class, mock_repo):
     """Test update_job_by_id when the job ID does not exist."""
-    mock_sesion = Mock()
+    mock_session = Mock()
     mock_repo_instance = Mock()
     mock_repo.return_value = mock_repo_instance
     job_id = 999
@@ -322,7 +323,7 @@ def test_update_job_by_id_invalid_job_id(mock_spec_class, mock_repo):
     mock_repo_instance.find_one.return_value = None  # Simulate job not found
 
     with pytest.raises(MissingRecordError):
-        update_job_by_id(job_id, job_data, mock_sesion)
+        update_job_by_id(job_id, job_data, mock_session)
 
     mock_spec_class.assert_called_once_with()
     mock_spec_class.return_value.by_id.assert_called_once_with(job_id)
@@ -334,7 +335,7 @@ def test_update_job_by_id_invalid_job_id(mock_spec_class, mock_repo):
 @patch("fia_api.core.services.job.JobSpecification")
 def test_update_job_by_id_never_updates_certain_fields(mock_spec_class, mock_repo):
     """Test update_job_by_id ensuring certain fields are never updated"""
-    mock_sesion = Mock()
+    mock_session = Mock()
     mock_repo_instance = Mock()
     mock_repo.return_value = mock_repo_instance
     job_id = 2
@@ -351,7 +352,7 @@ def test_update_job_by_id_never_updates_certain_fields(mock_spec_class, mock_rep
 
     mock_repo_instance.find_one.return_value = original_job
 
-    update_job_by_id(job_id, job_data, mock_sesion)
+    update_job_by_id(job_id, job_data, mock_session)
 
     mock_spec_class.assert_called_once_with()
     mock_spec_class.return_value.by_id.assert_called_once_with(job_id)
@@ -391,7 +392,7 @@ def test_run_exists_creates_job_with_new_script(
     mock_get_script,
     mock_hash_script,
 ):
-    mock_sesion = Mock()
+    mock_session = Mock()
     mock_run_repo = Mock()
     mock_script_repo = Mock()
     mock_job_repo = Mock()
@@ -420,7 +421,7 @@ def test_run_exists_creates_job_with_new_script(
     returned_job = Mock()
     mock_job_repo.add_one.return_value = returned_job
 
-    result = create_autoreduction_job(req, mock_sesion)
+    result = create_autoreduction_job(req, mock_session)
     assert result is returned_job
 
     mock_run_repo.find_one.assert_called_once_with(ANY)  # we looked up by filename
@@ -449,7 +450,7 @@ def test_run_exists_reuses_existing_script(
     mock_get_script,
     mock_hash_script,
 ):
-    mock_sesion = Mock()
+    mock_session = Mock()
     mock_run_repo = Mock()
     mock_script_repo = Mock()
     mock_job_repo = Mock()
@@ -481,7 +482,7 @@ def test_run_exists_reuses_existing_script(
     returned_job = Mock()
     mock_job_repo.add_one.return_value = returned_job
 
-    result = create_autoreduction_job(req, mock_sesion)
+    result = create_autoreduction_job(req, mock_session)
     assert result is returned_job
 
     passed_job = mock_job_repo.add_one.call_args[0][0]
@@ -573,3 +574,78 @@ def test_run_not_exists_creates_instrument_owner_run_and_new_script(
     assert passed_job.run_id == created_run.id
     assert passed_job.owner_id == new_owner.id
     assert passed_job.instrument_id == new_instr.id
+
+
+@patch("fia_api.core.services.job.hash_script")
+@patch("fia_api.core.services.job.get_script_for_job")
+@patch("fia_api.core.services.job.Repo")
+def test_create_autoreduction_job_uses_single_session(
+    mock_repo_class,
+    mock_get_script,
+    mock_hash_script,
+    monkeypatch):
+    """Test to ensure that a service function uses a single session throughout"""
+    seen_sessions = []
+    mock_session = Mock()
+    mock_run_repo = Mock()
+    mock_script_repo = Mock()
+    mock_job_repo = Mock()
+    mock_repo_class.side_effect = [mock_run_repo, mock_script_repo, mock_job_repo]
+
+    existing_run = Mock(spec=Run)
+    existing_run.id = 42
+    existing_run.owner_id = 7
+    existing_run.instrument_id = 99
+    existing_run.instrument = Mock(spec=Instrument, instrument_name="CAM1")
+    mock_run_repo.find_one.return_value = existing_run
+
+    pre_script = Mock(value="print('do work')", sha="deadbeef")
+    mock_get_script.return_value = pre_script
+    mock_hash_script.return_value = "deadbeef"
+    mock_script_repo.find_one.return_value = None
+
+    class SpyRepo(Repo):
+        def __init__(self, s, *args, **kwargs):
+            seen_sessions.append(id(s))
+            super().__init__(s, *args, **kwargs)
+
+    monkeypatch.setattr("fia_api.core.services.job.Repo", SpyRepo)
+
+    req = make_request(
+        filename="foo.fits",
+        additional_values={"x": 1},
+        runner_image="python:3.10",
+        instrument_name="CAM1",
+        rb_number="123",
+    )
+
+    create_autoreduction_job(req, mock_session)
+
+    assert len(set(seen_sessions)) == 1
+    assert seen_sessions[0] == id(mock_session)
+
+    
+    """
+    returned_job = Mock()
+    mock_job_repo.add_one.return_value = returned_job
+
+    result = create_autoreduction_job(req, mock_session)
+    assert result is returned_job
+
+    mock_run_repo.find_one.assert_called_once_with(ANY)  # we looked up by filename
+    mock_get_script.assert_called_once_with("CAM1", ANY)
+    mock_hash_script.assert_called_once_with(pre_script.value)
+
+    passed_job = mock_job_repo.add_one.call_args[0][0]
+    assert isinstance(passed_job.script, Script)
+    assert passed_job.script.script == pre_script.value
+    assert passed_job.script.sha == pre_script.sha
+    assert passed_job.script_id is None
+
+    assert passed_job.runner_image == "python:3.10"
+    assert passed_job.job_type == JobType.AUTOREDUCTION
+    assert passed_job.inputs == {"x": 1}
+    assert passed_job.run_id == existing_run.id
+    assert passed_job.owner_id == existing_run.owner_id
+    assert passed_job.instrument_id == existing_run.instrument_id
+    """
