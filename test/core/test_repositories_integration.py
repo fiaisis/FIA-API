@@ -244,7 +244,7 @@ def test_create_autoreduction_job_uses_single_session(monkeypatch, session):
         def __init__(self, s, *args, **kwargs):
             seen_sessions.append(id(s))
             super().__init__(s, *args, **kwargs)
-    
+
     monkeypatch.setattr("fia_api.core.services.job.Repo", SpyRepo)
 
     req = make_request(
