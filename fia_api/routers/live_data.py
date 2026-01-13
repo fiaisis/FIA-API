@@ -19,7 +19,7 @@ jwt_api_security = JWTAPIBearer()
 
 
 @LiveDataRouter.get("/live-data/{instrument}/script")
-async def get_instrument_script(instrument: str, db: Annotated[Session, Depends(get_db_session)]) -> str | None:
+async def get_instrument_script(instrument: str, session: Annotated[Session, Depends(get_db_session)]) -> str | None:
     """
     Given an instrument string, return the live data script for that instrument
     \f
@@ -27,7 +27,7 @@ async def get_instrument_script(instrument: str, db: Annotated[Session, Depends(
     :param session: The current session of the request
     :return: The live data script or None
     """
-    return get_live_data_script_by_instrument_name(instrument.upper(), db)
+    return get_live_data_script_by_instrument_name(instrument.upper(), session)
 
 
 @LiveDataRouter.put("/live-data/{instrument}/script")
@@ -35,7 +35,7 @@ async def update_instrument_script(
     instrument: str,
     script_request: LiveDataScriptUpdateRequest,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-    db: Annotated[Session, Depends(get_db_session)],
+    session: Annotated[Session, Depends(get_db_session)],
 ) -> Literal["ok"]:
     """
     Given an instrument string and a script request, update the live data script for that instrument
@@ -43,12 +43,12 @@ async def update_instrument_script(
     :param instrument: The instrument string
     :param script_request: The json wrapped update request
     :param credentials: injected http authorization credentials
-    :param db: The current session of the request
+    :param session: The current session of the request
     :return:
     """
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         raise AuthError("Only Staff can update Live Data Scripts")
 
-    update_live_data_script_for_instrument(instrument.upper(), script_request.value, db)
+    update_live_data_script_for_instrument(instrument.upper(), script_request.value, session)
     return "ok"
