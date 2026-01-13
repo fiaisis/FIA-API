@@ -247,13 +247,7 @@ def test_create_autoreduction_job_uses_single_session(monkeypatch, session):
 
     monkeypatch.setattr("fia_api.core.services.job.Repo", SpyRepo)
 
-    req = make_request(
-        filename="foo.fits",
-        additional_values={"x": 1},
-        runner_image="python:3.10",
-        instrument_name="CAM1",
-        rb_number="123",
-    )
+    req = make_request()
 
     create_autoreduction_job(req, session)
 
