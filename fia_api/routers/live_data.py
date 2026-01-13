@@ -24,7 +24,7 @@ async def get_instrument_script(instrument: str, db: Annotated[Session, Depends(
     Given an instrument string, return the live data script for that instrument
     \f
     :param instrument: The instrument string
-    :param db: The current session of the request
+    :param session: The current session of the request
     :return: The live data script or None
     """
     return get_live_data_script_by_instrument_name(instrument.upper(), db)
