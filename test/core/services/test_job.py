@@ -7,8 +7,8 @@ import pytest
 
 from fia_api.core.exceptions import AuthError, MissingRecordError
 from fia_api.core.models import Instrument, JobOwner, JobType, Run, Script, State
-from fia_api.core.request_models import AutoreductionRequest
 from fia_api.core.repositories import Repo
+from fia_api.core.request_models import AutoreductionRequest
 from fia_api.core.services.job import (
     count_jobs,
     count_jobs_by_instrument,
@@ -579,11 +579,7 @@ def test_run_not_exists_creates_instrument_owner_run_and_new_script(
 @patch("fia_api.core.services.job.hash_script")
 @patch("fia_api.core.services.job.get_script_for_job")
 @patch("fia_api.core.services.job.Repo")
-def test_create_autoreduction_job_uses_single_session(
-    mock_repo_class,
-    mock_get_script,
-    mock_hash_script,
-    monkeypatch):
+def test_create_autoreduction_job_uses_single_session(mock_repo_class, mock_get_script, mock_hash_script, monkeypatch):
     """Test to ensure that a service function uses a single session throughout"""
     seen_sessions = []
     mock_session = Mock()
@@ -624,7 +620,6 @@ def test_create_autoreduction_job_uses_single_session(
     assert len(set(seen_sessions)) == 1
     assert seen_sessions[0] == id(mock_session)
 
-    
     """
     returned_job = Mock()
     mock_job_repo.add_one.return_value = returned_job
