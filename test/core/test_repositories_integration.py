@@ -17,8 +17,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from fia_api.core.models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import ENGINE, SESSION, Repo, ensure_db_connection
+from fia_api.core.services.job import create_autoreduction_job
 from fia_api.core.specifications.job import JobSpecification
-from fia_api.routers.jobs import create_autoreduction
 from test.core.services.test_job import make_request
 
 DB_USERNAME = os.environ.get("DB_USERNAME", "postgres")
@@ -255,7 +255,7 @@ def test_create_autoreduction_job_uses_single_session(monkeypatch, session):
         rb_number="123",
     )
 
-    create_autoreduction(req, session)
+    create_autoreduction_job(req, session)
 
     assert len(set(seen_sessions)) == 1
     assert seen_sessions[0] == id(session)
