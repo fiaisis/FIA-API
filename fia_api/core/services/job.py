@@ -3,8 +3,9 @@
 import os
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
+from fastapi import Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -28,6 +29,7 @@ from fia_api.core.utility import (
     get_packages,
     hash_script,
 )
+from fia_api.core.session import get_db_session
 from fia_api.scripts.acquisition import get_script_for_job
 
 
