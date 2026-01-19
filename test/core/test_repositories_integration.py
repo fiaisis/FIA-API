@@ -6,16 +6,23 @@ with a live db connection
 """
 
 import datetime
+import os
+from collections.abc import Generator
 from unittest import mock
-from unittest.mock import Mock
+from unittest.mock import MagicMock
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import NullPool, create_engine, select
+from sqlalchemy.orm import Session, sessionmaker
 
 from fia_api.core.models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
-from fia_api.core.repositories import ENGINE, SESSION, Repo, test_connection
+from fia_api.core.repositories import ENGINE, SESSION, Repo, ensure_db_connection
 from fia_api.core.specifications.job import JobSpecification
 
+DB_USERNAME = os.environ.get("DB_USERNAME", "postgres")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "password")
+DB_IP = os.environ.get("DB_IP", "localhost")
+DB_URL = f"postgresql+psycopg2://{DB_USERNAME}:{DB_PASSWORD}@{DB_IP}:5432/fia"
 TEST_JOB_OWNER = JobOwner(experiment_number=1)
 TEST_JOB_OWNER_2 = JobOwner(experiment_number=2)
 TEST_INSTRUMENT_1 = Instrument(instrument_name="instrument 1", latest_run=1, specification={"foo": "bar"})
@@ -113,30 +120,52 @@ def _setup() -> None:
 
 
 @pytest.fixture
-def job_repo() -> Repo[Job]:
+def job_repo(session: Session) -> Repo[Job]:
     """
     JobRepo fixture
     :return: JobRepo
     """
-    return Repo()
+    return Repo(session)
 
 
 @pytest.fixture
-def run_repo() -> Repo[Run]:
+def run_repo(session: Session) -> Repo[Run]:
     """
     RunRepo fixture
     :return: RunRepo
     """
-    return Repo()
+    return Repo(session)
 
 
 @pytest.fixture
-def owner_repo() -> Repo[JobOwner]:
+def owner_repo(session: Session) -> Repo[JobOwner]:
     """
     JobOwnerRepo fixture.
     :return: JobOwnerRepo
     """
-    return Repo()
+    return Repo(session)
+
+
+@pytest.fixture(scope="session")
+def engine():
+    engine = create_engine(DB_URL, poolclass=NullPool)  # Test DB URL, what is this???
+    Base.metadata.create_all(engine)
+    yield engine
+    Base.metadata.drop_all(engine)
+
+
+@pytest.fixture
+def session(engine) -> Generator[Session, None, None]:
+    """
+    Session fixture
+    :return: Session object
+    """
+    sessionlocal = sessionmaker(bind=engine, class_=Session)
+    db = sessionlocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 @pytest.mark.parametrize(
@@ -175,14 +204,14 @@ def test_jobs_by_instrument_sort_by_job_field(job_repo):
     assert result == expected
 
 
-@mock.patch("fia_api.core.repositories.SESSION")
 @mock.patch("fia_api.core.repositories.select")
-def test_test_connection_raises_httpexception(mock_select, mock_session):
+def test_ensure_db_connection_raises_httpexception(mock_select):
     """Test exception raised when runtime error occurs"""
-    mock_session_object = Mock()
-    mock_session.return_value.__enter__.return_value = mock_session_object
+    mock_session_object = MagicMock()
+    mock_session_object.__enter__.return_value = mock_session_object
 
-    test_connection()
+    ensure_db_connection(mock_session_object)
+
     mock_session_object.execute.assert_called_once_with(mock_select.return_value)
 
 
@@ -198,3 +227,8 @@ def test_add_one(owner_repo):
             .one()
         )
         assert job_owner.experiment_number == experiment_number
+
+
+def test_ensure_db_connection_with_real_session(session):
+    """Test the ensure_db_connection method from repositories.py"""
+    ensure_db_connection(session)

@@ -3,9 +3,11 @@
 import os
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
+from fastapi import Depends
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from fia_api.core.auth.experiments import get_experiments_for_user_number
 from fia_api.core.auth.tokens import User
@@ -14,6 +16,7 @@ from fia_api.core.job_maker import JobMaker
 from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import Repo
 from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
+from fia_api.core.session import get_db_session
 from fia_api.core.specifications.filters import apply_filters_to_spec
 from fia_api.core.specifications.instrument import InstrumentSpecification
 from fia_api.core.specifications.job import JobSpecification
@@ -30,14 +33,18 @@ from fia_api.core.utility import (
 from fia_api.scripts.acquisition import get_script_for_job
 
 
-def job_maker() -> JobMaker:
+def job_maker(session: Annotated[Session, Depends(get_db_session)]) -> JobMaker:
     """Creates a JobMaker and returns it using env vars"""
     queue_host = os.environ.get("QUEUE_HOST", "localhost")
     queue_name = os.environ.get("EGRESS_QUEUE_NAME", "scheduled-jobs")
     producer_username = os.environ.get("QUEUE_USER", "guest")
     producer_password = os.environ.get("QUEUE_PASSWORD", "guest")
     return JobMaker(
-        queue_host=queue_host, queue_name=queue_name, username=producer_username, password=producer_password
+        queue_host=queue_host,
+        queue_name=queue_name,
+        username=producer_username,
+        password=producer_password,
+        db=session,
     )
 
 
@@ -65,15 +72,10 @@ OrderField = Literal[
     "filename",
 ]
 
-_JOB_REPO: Repo[Job] = Repo()
-_RUN_REPO: Repo[Run] = Repo()
-_INSTRUMENT_REPO: Repo[Instrument] = Repo()
-_OWNER_REPO: Repo[JobOwner] = Repo()
-_SCRIPT_REPO: Repo[Script] = Repo()
-
 
 def get_job_by_instrument(
     instrument: str,
+    session: Session,
     limit: int = 100,
     offset: int = 0,
     order_by: OrderField = "start",
@@ -85,6 +87,7 @@ def get_job_by_instrument(
     Given an instrument name return a sequence of jobs for that instrument. Optionally providing a limit and
     offset to be applied to the sequence
     :param instrument: (str) - The instrument to get by
+    :param session: The current session of the request
     :param limit: (int) - the maximum number of results to be allowed in the sequence
     :param offset: (int) - the number of jobs to offset the sequence from the entire job set
     :param order_direction: (str) Direction to der by "asc" | "desc"
@@ -103,10 +106,12 @@ def get_job_by_instrument(
     )
     if filters:
         specification = apply_filters_to_spec(filters, specification)
-    return _JOB_REPO.find(specification)
+    job_repo: Repo[Job] = Repo(session)
+    return job_repo.find(specification)
 
 
 def get_all_jobs(
+    session: Session,
     limit: int = 100,
     offset: int = 0,
     order_by: OrderField = "start",
@@ -117,6 +122,7 @@ def get_all_jobs(
     """
     Get all jobs, if a user number is provided then only the jobs that user has permission for will be
     provided.
+    :param session: The current session of the request
     :param user_number:  Optional user number to filter with
     :param limit: (int) - the maximum number of results to be allowed in the sequence
     :param offset: (int) - the number of jobs to offset the sequence from the entire job set
@@ -137,18 +143,24 @@ def get_all_jobs(
         )
     if filters:
         apply_filters_to_spec(filters, specification)
+    job_repo: Repo[Job] = Repo(session)
+    return job_repo.find(specification)
 
-    return _JOB_REPO.find(specification)
 
-
-def get_job_by_id(job_id: int, user_number: int | None = None) -> Job:
+def get_job_by_id(
+    job_id: int,
+    session: Session,
+    user_number: int | None = None,
+) -> Job:
     """
     Given an ID return the jobs with that ID
     :param job_id: The id of the jobs to search for
+    :param session: The current session of the request
     :return: The job
     :raises: MissingRecordError when no jobs for that ID is found
     """
-    job = _JOB_REPO.find_one(JobSpecification().by_id(job_id))
+    job_repo: Repo[Job] = Repo(session)
+    job = job_repo.find_one(JobSpecification().by_id(job_id))
     if job is None:
         raise MissingRecordError(f"No Job for id {job_id}")
 
@@ -162,36 +174,46 @@ def get_job_by_id(job_id: int, user_number: int | None = None) -> Job:
     return job
 
 
-def count_jobs_by_instrument(instrument: str, filters: Mapping[str, Any]) -> int:
+def count_jobs_by_instrument(instrument: str, session: Session, filters: Mapping[str, Any] | None) -> int:
     """
     Given an instrument name, count the jobs for that instrument
     :param instrument: Instruments to count from
+    :param session: The current session of the request
     :return: Number of jobs
     """
     spec = JobSpecification().by_instruments(instruments=[instrument])
     if filters:
         spec = apply_filters_to_spec(filters, spec)
-    return _JOB_REPO.count(spec)
+    job_repo: Repo[Job] = Repo(session)
+    return job_repo.count(spec)
 
 
-def count_jobs(filters: Mapping[str, Any] | None = None) -> int:
+def count_jobs(
+    session: Session,
+    filters: Mapping[str, Any] | None = None,
+) -> int:
     """
     Count the total number of jobs
+    :param filters: Optional Mapping[str,Any] the filters to be applied
+    :param session: The current session of the request
     :return: (int) number of jobs
     """
     spec = JobSpecification().all()
     if filters:
         spec = apply_filters_to_spec(filters, spec)
-    return _JOB_REPO.count(spec)
+    job_repo: Repo[Job] = Repo(session)
+    return job_repo.count(spec)
 
 
-def get_experiment_number_for_job_id(job_id: int) -> int:
+def get_experiment_number_for_job_id(job_id: int, session: Session) -> int:
     """
     Given a job id find and return the experiment number attached to it or will raise an exception.
     :param job_id: (int) The id of the job
+    :param session: The current session of the request
     :return: (int) the experiment number of the job found with the id
     """
-    job = _JOB_REPO.find_one(JobSpecification().by_id(job_id))
+    job_repo: Repo[Job] = Repo(session)
+    job = job_repo.find_one(JobSpecification().by_id(job_id))
     if job is not None:
         owner = job.owner
         if owner is not None and owner.experiment_number is not None:
@@ -200,15 +222,17 @@ def get_experiment_number_for_job_id(job_id: int) -> int:
     raise ValueError("No job found with ID in the DB")
 
 
-def update_job_by_id(id_: int, job: PartialJobUpdateRequest) -> Job:
+def update_job_by_id(id_: int, job: PartialJobUpdateRequest, session: Session) -> Job:
     """
     Update the given job in the database. This is a safe update as it will only update fields that should be updated,
     and not update those that shouldn't. I.E no retroactive changing of IDs etc.
     :param id_: (int) The id of the job to update
     :param job: The job to update with
+    :param session: The current session of the request
     :return: The updated job
     """
-    original_job = _JOB_REPO.find_one(JobSpecification().by_id(id_))
+    job_repo: Repo[Job] = Repo(session)
+    original_job = job_repo.find_one(JobSpecification().by_id(id_))
     if original_job is None:
         raise MissingRecordError(f"No job found with id {id_}")
     # We only update the fields that should change, not those that should never e.g. script, inputs.
@@ -218,10 +242,10 @@ def update_job_by_id(id_: int, job: PartialJobUpdateRequest) -> Job:
         if value is not None:
             setattr(original_job, attr, value)
 
-    return _JOB_REPO.update_one(original_job)
+    return job_repo.update_one(original_job)
 
 
-def create_autoreduction_job(job_request: AutoreductionRequest) -> Job:
+def create_autoreduction_job(job_request: AutoreductionRequest, session: Session) -> Job:
     """
     Create an autoreduction job in the system based on a provided request.
 
@@ -231,10 +255,11 @@ def create_autoreduction_job(job_request: AutoreductionRequest) -> Job:
 
     :param job_request: (AutoreductionRequest) The job creation request data containing information
                         about the run, instrument name, experiment number, and other related metadata.
+    :param session: The current session of the request
     :return: The created Job instance.
     """
-
-    run = _RUN_REPO.find_one(RunSpecification().by_filename(job_request.filename))
+    run_repo: Repo[Run] = Repo(session)
+    run = run_repo.find_one(RunSpecification().by_filename(job_request.filename))
 
     if run:
         job = Job(
@@ -253,15 +278,17 @@ def create_autoreduction_job(job_request: AutoreductionRequest) -> Job:
         instrument = run.instrument
 
     else:
-        instrument = _INSTRUMENT_REPO.find_one(InstrumentSpecification().by_name(job_request.instrument_name))  # type: ignore # The above declaration is guaranteed to be not None, but mypy cannot know this
+        instrument_repo: Repo[Instrument] = Repo(session)
+        owner_repo: Repo[JobOwner] = Repo(session)
+        instrument = instrument_repo.find_one(InstrumentSpecification().by_name(job_request.instrument_name))  # type: ignore # The above declaration is guaranteed to be not None, but mypy cannot know this
         if instrument is None:
-            instrument = _INSTRUMENT_REPO.add_one(Instrument(instrument_name=job_request.instrument_name))
-        owner = _OWNER_REPO.find_one(
+            instrument = instrument_repo.add_one(Instrument(instrument_name=job_request.instrument_name))
+        owner = owner_repo.find_one(
             JobOwnerSpecification().by_values(experiment_number=int(job_request.rb_number), user_number=None)
         )
         if owner is None:
-            owner = _OWNER_REPO.add_one(JobOwner(experiment_number=int(job_request.rb_number)))
-        run = _RUN_REPO.add_one(
+            owner = owner_repo.add_one(JobOwner(experiment_number=int(job_request.rb_number)))
+        run = run_repo.add_one(
             Run(
                 title=job_request.title,
                 users=job_request.users,
@@ -291,20 +318,19 @@ def create_autoreduction_job(job_request: AutoreductionRequest) -> Job:
         )
 
     pre_script = get_script_for_job(instrument.instrument_name, job)
-    script = _SCRIPT_REPO.find_one(ScriptSpecification().by_script_hash(hash_script(pre_script.value)))
+    script_repo: Repo[Script] = Repo(session)
+    script = script_repo.find_one(ScriptSpecification().by_script_hash(hash_script(pre_script.value)))
     if script is None:
         script = Script(script=pre_script.value, sha=pre_script.sha)
         job.script = script
     else:
         job.script_id = script.id
-
-    return _JOB_REPO.add_one(job)
+    job_repo: Repo[Job] = Repo(session)
+    return job_repo.add_one(job)
 
 
 def resolve_job_files(
-    job_files: dict[str, list[str]],
-    user: User,
-    ceph_dir: str,
+    job_files: dict[str, list[str]], user: User, ceph_dir: str, session: Session
 ) -> tuple[list[tuple[int, str, str]], list[str]]:
     """
     Return a tuple of job_id int, filename string, and filepath string
@@ -318,7 +344,11 @@ def resolve_job_files(
 
     for job_id_str, filenames in job_files.items():
         job_id = int(job_id_str)
-        job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
+        job = (
+            get_job_by_id(job_id, session)
+            if user.role == "staff"
+            else get_job_by_id(job_id, session, user_number=user.user_number)
+        )
 
         if job.owner is None:
             continue
@@ -354,12 +384,7 @@ def resolve_job_files(
     return resolved_files, missing_files
 
 
-def resolve_job_file_path(
-    job_id: int,
-    filename: str,
-    user: User,
-    ceph_dir: str,
-) -> str:
+def resolve_job_file_path(job_id: int, filename: str, user: User, ceph_dir: str, session: Session) -> str:
     """
     Return a string with the filepath leading to the passed filename
 
@@ -368,7 +393,11 @@ def resolve_job_file_path(
     :param user: the user requesting the file for download
     :param ceph_dir: the base directory
     """
-    job = get_job_by_id(job_id) if user.role == "staff" else get_job_by_id(job_id, user_number=user.user_number)
+    job = (
+        get_job_by_id(job_id, session)
+        if user.role == "staff"
+        else get_job_by_id(job_id, session, user_number=user.user_number)
+    )
 
     if job.owner is None:
         raise JobOwnerError("Job has no owner.")

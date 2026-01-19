@@ -10,6 +10,7 @@ from typing import Any
 from pika.adapters.blocking_connection import BlockingConnection  # type: ignore[import-untyped]
 from pika.connection import ConnectionParameters  # type: ignore[import-untyped]
 from pika.credentials import PlainCredentials  # type: ignore[import-untyped]
+from sqlalchemy.orm import Session
 
 from fia_api.core.exceptions import JobRequestError
 from fia_api.core.models import Job, JobOwner, JobType, Script, State
@@ -40,11 +41,19 @@ def require_owner(func: Callable[..., Any]) -> Callable[..., Any]:
 
 
 class JobMaker:
-    def __init__(self, queue_host: str, username: str, password: str, queue_name: str):
+    def __init__(
+        self,
+        queue_host: str,
+        username: str,
+        password: str,
+        queue_name: str,
+        db: Session,
+    ):
         credentials = PlainCredentials(username=username, password=password)
-        self._job_repo: Repo[Job] = Repo()
-        self._owner_repo: Repo[JobOwner] = Repo()
-        self._script_repo: Repo[Script] = Repo()
+        session = db
+        self._job_repo: Repo[Job] = Repo(session)
+        self._owner_repo: Repo[JobOwner] = Repo(session)
+        self._script_repo: Repo[Script] = Repo(session)
         self.connection_parameters = ConnectionParameters(queue_host, 5672, credentials=credentials)
         self.queue_name = queue_name
         self.connection = None
