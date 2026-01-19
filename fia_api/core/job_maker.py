@@ -5,9 +5,8 @@ import json
 import logging
 from collections.abc import Callable
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import Depends
 from pika.adapters.blocking_connection import BlockingConnection  # type: ignore[import-untyped]
 from pika.connection import ConnectionParameters  # type: ignore[import-untyped]
 from pika.credentials import PlainCredentials  # type: ignore[import-untyped]
@@ -16,7 +15,6 @@ from sqlalchemy.orm import Session
 from fia_api.core.exceptions import JobRequestError
 from fia_api.core.models import Job, JobOwner, JobType, Script, State
 from fia_api.core.repositories import Repo
-from fia_api.core.session import get_db_session
 from fia_api.core.specifications.job import JobSpecification
 from fia_api.core.specifications.job_owner import JobOwnerSpecification
 from fia_api.core.specifications.script import ScriptSpecification
