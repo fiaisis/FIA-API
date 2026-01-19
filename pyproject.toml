@@ -26,7 +26,7 @@ dependencies = [
 
 [project.optional-dependencies]
 formatting = [
-    "ruff==0.14.11",
+    "ruff==0.14.13",
     "mypy==1.19.1",
     "fia-api[test]",
     "types-requests==2.32.4.20260107",
@@ -40,7 +40,7 @@ test = [
     "httpx==0.28.1",
     "pytest-cov==7.0.0",
     "pytest-random-order==1.2.0",
-    "Faker==40.1.0",
+    "Faker==40.1.2",
     "pytest-env==1.2.0",
 ]
 
