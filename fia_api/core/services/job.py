@@ -33,7 +33,7 @@ from fia_api.core.utility import (
 from fia_api.scripts.acquisition import get_script_for_job
 
 
-def job_maker(session: Annotated[Session, Depends(get_db_session)]) -> JobMaker:
+def job_maker(session: Session) -> JobMaker:
     """Creates a JobMaker and returns it using env vars"""
     queue_host = os.environ.get("QUEUE_HOST", "localhost")
     queue_name = os.environ.get("EGRESS_QUEUE_NAME", "scheduled-jobs")
@@ -75,7 +75,7 @@ OrderField = Literal[
 
 def get_job_by_instrument(
     instrument: str,
-    session: Annotated[Session, Depends(get_db_session)],
+    session: Session,
     limit: int = 100,
     offset: int = 0,
     order_by: OrderField = "start",
@@ -111,7 +111,7 @@ def get_job_by_instrument(
 
 
 def get_all_jobs(
-    session: Annotated[Session, Depends(get_db_session)],
+    session: Session,
     limit: int = 100,
     offset: int = 0,
     order_by: OrderField = "start",
@@ -149,7 +149,7 @@ def get_all_jobs(
 
 def get_job_by_id(
     job_id: int,
-    session: Annotated[Session, Depends(get_db_session)],
+    session: Session,
     user_number: int | None = None,
 ) -> Job:
     """
@@ -175,7 +175,7 @@ def get_job_by_id(
 
 
 def count_jobs_by_instrument(
-    instrument: str, session: Annotated[Session, Depends(get_db_session)], filters: Mapping[str, Any] | None
+    instrument: str, session: Session, filters: Mapping[str, Any] | None
 ) -> int:
     """
     Given an instrument name, count the jobs for that instrument
@@ -191,7 +191,7 @@ def count_jobs_by_instrument(
 
 
 def count_jobs(
-    session: Annotated[Session, Depends(get_db_session)],
+    session: Session,
     filters: Mapping[str, Any] | None = None,
 ) -> int:
     """
@@ -207,7 +207,7 @@ def count_jobs(
     return job_repo.count(spec)
 
 
-def get_experiment_number_for_job_id(job_id: int, session: Annotated[Session, Depends(get_db_session)]) -> int:
+def get_experiment_number_for_job_id(job_id: int, session: Session) -> int:
     """
     Given a job id find and return the experiment number attached to it or will raise an exception.
     :param job_id: (int) The id of the job
@@ -225,7 +225,7 @@ def get_experiment_number_for_job_id(job_id: int, session: Annotated[Session, De
 
 
 def update_job_by_id(
-    id_: int, job: PartialJobUpdateRequest, session: Annotated[Session, Depends(get_db_session)]
+    id_: int, job: PartialJobUpdateRequest, session: Session
 ) -> Job:
     """
     Update the given job in the database. This is a safe update as it will only update fields that should be updated,
@@ -250,7 +250,7 @@ def update_job_by_id(
 
 
 def create_autoreduction_job(
-    job_request: AutoreductionRequest, session: Annotated[Session, Depends(get_db_session)]
+    job_request: AutoreductionRequest, session: Session
 ) -> Job:
     """
     Create an autoreduction job in the system based on a provided request.
@@ -336,7 +336,7 @@ def create_autoreduction_job(
 
 
 def resolve_job_files(
-    job_files: dict[str, list[str]], user: User, ceph_dir: str, session: Annotated[Session, Depends(get_db_session)]
+    job_files: dict[str, list[str]], user: User, ceph_dir: str, session: Session
 ) -> tuple[list[tuple[int, str, str]], list[str]]:
     """
     Return a tuple of job_id int, filename string, and filepath string
@@ -391,7 +391,7 @@ def resolve_job_files(
 
 
 def resolve_job_file_path(
-    job_id: int, filename: str, user: User, ceph_dir: str, session: Annotated[Session, Depends(get_db_session)]
+    job_id: int, filename: str, user: User, ceph_dir: str, session: Session
 ) -> str:
     """
     Return a string with the filepath leading to the passed filename
