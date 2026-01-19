@@ -3,9 +3,8 @@
 import os
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 
-from fastapi import Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -16,7 +15,6 @@ from fia_api.core.job_maker import JobMaker
 from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import Repo
 from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
-from fia_api.core.session import get_db_session
 from fia_api.core.specifications.filters import apply_filters_to_spec
 from fia_api.core.specifications.instrument import InstrumentSpecification
 from fia_api.core.specifications.job import JobSpecification
@@ -174,9 +172,7 @@ def get_job_by_id(
     return job
 
 
-def count_jobs_by_instrument(
-    instrument: str, session: Session, filters: Mapping[str, Any] | None
-) -> int:
+def count_jobs_by_instrument(instrument: str, session: Session, filters: Mapping[str, Any] | None) -> int:
     """
     Given an instrument name, count the jobs for that instrument
     :param instrument: Instruments to count from
@@ -224,9 +220,7 @@ def get_experiment_number_for_job_id(job_id: int, session: Session) -> int:
     raise ValueError("No job found with ID in the DB")
 
 
-def update_job_by_id(
-    id_: int, job: PartialJobUpdateRequest, session: Session
-) -> Job:
+def update_job_by_id(id_: int, job: PartialJobUpdateRequest, session: Session) -> Job:
     """
     Update the given job in the database. This is a safe update as it will only update fields that should be updated,
     and not update those that shouldn't. I.E no retroactive changing of IDs etc.
@@ -249,9 +243,7 @@ def update_job_by_id(
     return job_repo.update_one(original_job)
 
 
-def create_autoreduction_job(
-    job_request: AutoreductionRequest, session: Session
-) -> Job:
+def create_autoreduction_job(job_request: AutoreductionRequest, session: Session) -> Job:
     """
     Create an autoreduction job in the system based on a provided request.
 
@@ -390,9 +382,7 @@ def resolve_job_files(
     return resolved_files, missing_files
 
 
-def resolve_job_file_path(
-    job_id: int, filename: str, user: User, ceph_dir: str, session: Session
-) -> str:
+def resolve_job_file_path(job_id: int, filename: str, user: User, ceph_dir: str, session: Session) -> str:
     """
     Return a string with the filepath leading to the passed filename
 
