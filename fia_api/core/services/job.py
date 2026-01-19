@@ -16,6 +16,7 @@ from fia_api.core.job_maker import JobMaker
 from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script, State
 from fia_api.core.repositories import Repo
 from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
+from fia_api.core.session import get_db_session
 from fia_api.core.specifications.filters import apply_filters_to_spec
 from fia_api.core.specifications.instrument import InstrumentSpecification
 from fia_api.core.specifications.job import JobSpecification
@@ -29,7 +30,6 @@ from fia_api.core.utility import (
     get_packages,
     hash_script,
 )
-from fia_api.core.session import get_db_session
 from fia_api.scripts.acquisition import get_script_for_job
 
 
