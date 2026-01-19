@@ -33,7 +33,7 @@ from fia_api.core.utility import (
 from fia_api.scripts.acquisition import get_script_for_job
 
 
-def job_maker(session: Session) -> JobMaker:
+def job_maker(session: Annotated[Session, Depends(get_db_session)]) -> JobMaker:
     """Creates a JobMaker and returns it using env vars"""
     queue_host = os.environ.get("QUEUE_HOST", "localhost")
     queue_name = os.environ.get("EGRESS_QUEUE_NAME", "scheduled-jobs")
