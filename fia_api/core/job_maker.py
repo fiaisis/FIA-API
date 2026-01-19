@@ -49,7 +49,7 @@ class JobMaker:
         username: str,
         password: str,
         queue_name: str,
-        db: Annotated[Session, Depends(get_db_session)],
+        db: Session,
     ):
         credentials = PlainCredentials(username=username, password=password)
         session = db
