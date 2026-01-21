@@ -15,6 +15,7 @@ from redis.exceptions import RedisError
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass(slots=True)
 class _ValkeyState:
     client: Redis | None = None
@@ -96,8 +97,14 @@ def cache_get_json(key: str) -> Any | None:
         return None
     if raw is None:
         return None
+    if isinstance(raw, (bytes, bytearray)):
+        raw_text = raw.decode("utf-8")
+    elif isinstance(raw, str):
+        raw_text = raw
+    else:
+        return None
     try:
-        return json.loads(raw)
+        return json.loads(raw_text)
     except json.JSONDecodeError:
         return None
 
