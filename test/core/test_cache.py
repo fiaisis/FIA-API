@@ -1,15 +1,14 @@
 """Tests for cache helpers."""
 
 import json
-
 import os
 from unittest.mock import Mock, patch
+
 from redis.exceptions import RedisError
 
 from fia_api.core.cache import (
     _create_client,
     _valkey_configured,
-    _valkey_state,
     cache_get_json,
     cache_set_json,
     get_valkey_client,
@@ -64,7 +63,6 @@ def test_cache_set_json_noop_for_non_positive_ttl():
         mock_client.assert_not_called()
 
 
-
 def test_valkey_configured_false():
     with patch.dict(os.environ, {}, clear=True):
         assert _valkey_configured() is False
@@ -75,7 +73,6 @@ def test_valkey_configured_true():
         assert _valkey_configured() is True
     with patch.dict(os.environ, {"VALKEY_HOST": "localhost"}, clear=True):
         assert _valkey_configured() is True
-
 
 
 def test_create_client_with_url():
@@ -95,13 +92,12 @@ def test_create_client_with_params():
         "VALKEY_PASSWORD": "pass",
         "VALKEY_SSL": "true",
     }
-    with patch.dict(os.environ, env, clear=True):
-        with patch("fia_api.core.cache.Redis") as mock_redis:
-            _create_client()
-            mock_redis.assert_called_once()
-            _, kwargs = mock_redis.call_args
-            assert kwargs["host"] == "localhost"
-            assert kwargs["ssl"] is True
+    with patch.dict(os.environ, env, clear=True), patch("fia_api.core.cache.Redis") as mock_redis:
+        _create_client()
+        mock_redis.assert_called_once()
+        _, kwargs = mock_redis.call_args
+        assert kwargs["host"] == "localhost"
+        assert kwargs["ssl"] is True
 
 
 def test_create_client_no_host():
