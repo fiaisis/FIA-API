@@ -15,6 +15,7 @@ from redis.exceptions import RedisError
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass(slots=True)
 class _ValkeyState:
     client: Redis | None = None
