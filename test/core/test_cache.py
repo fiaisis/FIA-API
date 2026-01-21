@@ -5,6 +5,8 @@ from unittest.mock import Mock, patch
 
 from fia_api.core.cache import cache_get_json, cache_set_json, hash_key
 
+TTL_SECONDS = 30
+
 
 def test_cache_get_json_returns_none_when_no_client():
     with patch("fia_api.core.cache.get_valkey_client", return_value=None) as mock_client:
@@ -30,18 +32,18 @@ def test_cache_get_json_returns_none_for_bad_json():
 def test_cache_set_json_sets_payload_with_ttl():
     mock_client = Mock()
     with patch("fia_api.core.cache.get_valkey_client", return_value=mock_client):
-        cache_set_json("key", {"answer": 42}, 30)
+        cache_set_json("key", {"answer": 42}, TTL_SECONDS)
         mock_client.setex.assert_called_once()
         args = mock_client.setex.call_args[0]
         assert args[0] == "key"
-        assert args[1] == 30
+        assert args[1] == TTL_SECONDS
         assert json.loads(args[2]) == {"answer": 42}
 
 
 def test_cache_set_json_noop_for_bad_payload():
     mock_client = Mock()
     with patch("fia_api.core.cache.get_valkey_client", return_value=mock_client):
-        cache_set_json("key", object(), 30)
+        cache_set_json("key", object(), TTL_SECONDS)
         mock_client.setex.assert_not_called()
 
 
