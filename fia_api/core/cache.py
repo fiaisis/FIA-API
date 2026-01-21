@@ -6,6 +6,8 @@ import hashlib
 import json
 import logging
 import os
+from dataclasses import dataclass
+from functools import cache
 from typing import Any
 
 from redis import Redis
@@ -13,8 +15,15 @@ from redis.exceptions import RedisError
 
 logger = logging.getLogger(__name__)
 
-_VALKEY_CLIENT: Redis | None = None
-_VALKEY_DISABLED = False
+@dataclass(slots=True)
+class _ValkeyState:
+    client: Redis | None = None
+    disabled: bool = False
+
+
+@cache
+def _valkey_state() -> _ValkeyState:
+    return _ValkeyState()
 
 
 def _valkey_configured() -> bool:
@@ -54,25 +63,25 @@ def _create_client() -> Redis | None:
 
 
 def get_valkey_client() -> Redis | None:
-    global _VALKEY_CLIENT, _VALKEY_DISABLED
-    if _VALKEY_DISABLED:
+    state = _valkey_state()
+    if state.disabled:
         return None
     if not _valkey_configured():
         return None
-    if _VALKEY_CLIENT is None:
+    if state.client is None:
         try:
-            _VALKEY_CLIENT = _create_client()
+            state.client = _create_client()
         except (RedisError, ValueError) as exc:
-            _VALKEY_DISABLED = True
+            state.disabled = True
             logger.warning("Valkey cache disabled: %s", exc)
             return None
-    return _VALKEY_CLIENT
+    return state.client
 
 
 def _disable_cache(exc: Exception) -> None:
-    global _VALKEY_DISABLED
-    if not _VALKEY_DISABLED:
-        _VALKEY_DISABLED = True
+    state = _valkey_state()
+    if not state.disabled:
+        state.disabled = True
         logger.warning("Valkey cache disabled: %s", exc)
 
 
