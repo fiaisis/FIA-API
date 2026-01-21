@@ -7,6 +7,7 @@ import pytest
 
 from fia_api.core.exceptions import AuthError, MissingRecordError
 from fia_api.core.models import Instrument, JobOwner, JobType, Run, Script, State
+from fia_api.core.repositories import Repo
 from fia_api.core.request_models import AutoreductionRequest
 from fia_api.core.services.job import (
     count_jobs,
@@ -21,7 +22,7 @@ from fia_api.core.services.job import (
 )
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_jobs_by_instrument(mock_spec_class, mock_repo):
     """
@@ -29,48 +30,60 @@ def test_get_jobs_by_instrument(mock_spec_class, mock_repo):
     :param mock_repo: Mocked Repo class
     :return: None
     """
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     spec = mock_spec_class.return_value
-    get_job_by_instrument("test", limit=5, offset=6)
+    get_job_by_instrument("test", mock_session, limit=5, offset=6)
 
-    mock_repo.find.assert_called_once_with(spec.by_instruments(["test"], limit=5, offset=6))
+    mock_repo_instance.find.assert_called_once_with(spec.by_instruments(["test"], limit=5, offset=6))
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 def test_get_job_by_id_job_exists(mock_repo):
     """
     Test that correct repo call and return is made
     :param mock_repo: Mocked Repo
     :return:
     """
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     expected_job = Mock()
-    mock_repo.find_one.return_value = expected_job
-    job = get_job_by_id(1)
+    mock_repo_instance.find_one.return_value = expected_job
+    job = get_job_by_id(1, mock_session)
     assert job == expected_job
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 def test_get_job_by_id_not_found_raises(mock_repo):
     """
     Test MissingRecordError raised when repo returns None
     :param mock_repo: Mocked Repo
     :return: None
     """
-    mock_repo.find_one.return_value = None
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
+    mock_repo_instance.find_one.return_value = None
     with pytest.raises(MissingRecordError):
-        get_job_by_id(1)
+        get_job_by_id(1, mock_session)
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 def test_count_jobs(mock_repo):
     """
     Test count is called
     :return: None
     """
-    count_jobs()
-    mock_repo.count.assert_called_once()
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
+    count_jobs(mock_session)
+    mock_repo_instance.count.assert_called_once()
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_count_jobs_by_instrument(mock_spec_class, mock_repo):
     """
@@ -78,9 +91,12 @@ def test_count_jobs_by_instrument(mock_spec_class, mock_repo):
     :param mock_repo: mock repo fixture
     :return: None
     """
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     spec = mock_spec_class.return_value
-    count_jobs_by_instrument("TEST", filters={})
-    mock_repo.count.assert_called_once_with(spec.by_instruments(["TEST"]))
+    count_jobs_by_instrument("TEST", mock_session, filters={})
+    mock_repo_instance.count.assert_called_once_with(spec.by_instruments(["TEST"]))
 
 
 @patch("fia_api.core.services.job.get_packages")
@@ -96,154 +112,193 @@ def test_list_mantid_runners_filters_empty_tags(mock_get_packages):
     mock_get_packages.assert_called_once_with(org="fiaisis", image_name="mantid")
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 def test_get_job_by_id_for_user_no_experiments(mock_get_exp, mock_repo):
     """Test get_job_by_id when no experiments are permitted"""
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     job = Mock()
     job.owner = Mock()
-    mock_repo.find_one.return_value = job
+    mock_repo_instance.find_one.return_value = job
     mock_get_exp.return_value = []
 
     with pytest.raises(AuthError):
-        get_job_by_id(1, user_number=1234)
+        get_job_by_id(1, mock_session, user_number=1234)
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 def test_get_job_by_id_for_user_with_experiments(mock_get_exp, mock_repo):
     """Test get_job_by_id_"""
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     job = Mock()
     job.owner.experiment_number = 1234
     job.runs = [job, Mock()]
-    mock_repo.find_one.return_value = job
+    mock_repo_instance.find_one.return_value = job
     mock_get_exp.return_value = [1234]
 
-    assert get_job_by_id(1, 1234) == job
+    assert get_job_by_id(1, mock_session, 1234) == job
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 def test_get_job_by_id_for_user_with_user_number(mock_get_exp, mock_repo):
     """Test get_job_by_id_"""
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     job = Mock()
     job.owner.user_number = 1234
     job.runs = [job, Mock()]
-    mock_repo.find_one.return_value = job
+    mock_repo_instance.find_one.return_value = job
     mock_get_exp.return_value = [1234]
 
-    assert get_job_by_id(1, 1234) == job
+    assert get_job_by_id(1, mock_session, 1234) == job
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_without_user(mock_spec_class, mock_repo):
     """Test get_all_jobs without a user number"""
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     spec = mock_spec_class.return_value
-    get_all_jobs(limit=10, offset=5, order_by="end", order_direction="asc")
+    get_all_jobs(mock_session, limit=10, offset=5, order_by="end", order_direction="asc")
     spec.all.assert_called_once_with(limit=10, offset=5, order_by="end", order_direction="asc")
-    mock_repo.find.assert_called_once_with(spec.all())
+    mock_repo_instance.find.assert_called_once_with(spec.all())
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.JobSpecification")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 def test_get_all_jobs_with_user_having_access(mock_get_experiments, mock_spec_class, mock_repo):
     """Test get_all_jobs with a user number and the user has access to experiments"""
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     mock_get_experiments.return_value = [123, 456]
     spec = mock_spec_class.return_value
-    get_all_jobs(user_number=1234, limit=5, offset=0, order_by="start", order_direction="desc")
+    get_all_jobs(mock_session, user_number=1234, limit=5, offset=0, order_by="start", order_direction="desc")
     mock_get_experiments.assert_called_once_with(1234)
     spec.by_experiment_numbers.assert_called_once_with(
         [123, 456], limit=5, offset=0, order_by="start", order_direction="desc"
     )
-    mock_repo.find.assert_called_once_with(spec.by_experiment_numbers())
+    mock_repo_instance.find.assert_called_once_with(spec.by_experiment_numbers())
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.JobSpecification")
 @patch("fia_api.core.services.job.get_experiments_for_user_number")
 def test_get_all_jobs_with_user_no_access(mock_get_experiments, mock_spec_class, mock_repo):
     """Test get_all_jobs with a user number but no access to any experiments"""
-    mock_repo.find.return_value = []
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
+    mock_repo_instance.find.return_value = []
     mock_get_experiments.return_value = []
     spec = mock_spec_class.return_value
-    jobs = get_all_jobs(user_number=9876)
+    jobs = get_all_jobs(mock_session, user_number=9876)
     mock_get_experiments.assert_called_once_with(9876)
     spec.by_experiment_numbers.assert_called_once_with(
         [], order_by="start", order_direction="desc", limit=100, offset=0
     )
-    mock_repo.find.assert_called_once_with(spec.by_experiment_numbers())
+    mock_repo_instance.find.assert_called_once_with(spec.by_experiment_numbers())
     assert jobs == []
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_experiment_number_from_job_id(mock_spec_class, mock_repo):
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     job_id = faker.generator.random.randint(1, 1000)
 
-    get_experiment_number_for_job_id(job_id)
+    get_experiment_number_for_job_id(job_id, mock_session)
 
     mock_spec_class.assert_called_once_with()
     mock_spec_class.return_value.by_id.assert_called_once_with(job_id)
-    mock_repo.find_one.assert_called_once_with(mock_spec_class().by_id())
+    mock_repo_instance.find_one.assert_called_once_with(mock_spec_class().by_id())
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 def test_get_experiment_number_from_job_id_expect_raise(mock_repo):
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     job_id = faker.generator.random.randint(1, 1000)
-    mock_repo.find_one.return_value = None
+    mock_repo_instance.find_one.return_value = None
 
     with patch("fia_api.core.services.job.JobSpecification"), pytest.raises(ValueError):  # noqa: PT011
-        get_experiment_number_for_job_id(job_id)
+        get_experiment_number_for_job_id(job_id, mock_session)
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_order_by_run_start_desc(mock_spec_class, mock_repo):
     """Test get_all_jobs with order_by 'run_start' in descending order."""
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     spec = mock_spec_class.return_value
-    get_all_jobs(limit=5, offset=0, order_by="run_start", order_direction="desc")
+    get_all_jobs(mock_session, limit=5, offset=0, order_by="run_start", order_direction="desc")
     spec.all.assert_called_once_with(limit=5, offset=0, order_by="run_start", order_direction="desc")
-    mock_repo.find.assert_called_once_with(spec.all())
+    mock_repo_instance.find.assert_called_once_with(spec.all())
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_order_by_run_start_asc(mock_spec_class, mock_repo):
     """Test get_all_jobs with order_by 'run_start' in ascending order."""
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     spec = mock_spec_class.return_value
-    get_all_jobs(limit=5, offset=0, order_by="run_start", order_direction="asc")
+    get_all_jobs(mock_session, limit=5, offset=0, order_by="run_start", order_direction="asc")
     spec.all.assert_called_once_with(limit=5, offset=0, order_by="run_start", order_direction="asc")
-    mock_repo.find.assert_called_once_with(spec.all())
+    mock_repo_instance.find.assert_called_once_with(spec.all())
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_default_order_by_start(mock_spec_class, mock_repo):
     """
     Test get_all_jobs without specifying a different order_by, per the function signature it should order by 'start'.
     """
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     spec = mock_spec_class.return_value
-    get_all_jobs(limit=5, offset=0)
+    get_all_jobs(mock_session, limit=5, offset=0)
     spec.all.assert_called_once_with(limit=5, offset=0, order_by="start", order_direction="desc")
-    mock_repo.find.assert_called_once_with(spec.all())
+    mock_repo_instance.find.assert_called_once_with(spec.all())
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_get_all_jobs_with_pagination(mock_spec_class, mock_repo):
     """Test get_all_jobs with custom pagination (limit and offset)."""
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     spec = mock_spec_class.return_value
-    get_all_jobs(limit=15, offset=30)
+    get_all_jobs(mock_session, limit=15, offset=30)
     spec.all.assert_called_once_with(limit=15, offset=30, order_by="start", order_direction="desc")
-    mock_repo.find.assert_called_once_with(spec.all())
+    mock_repo_instance.find.assert_called_once_with(spec.all())
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_update_job_by_id(mock_spec_class, mock_repo):
     """Test update_job_by_id with valid job data."""
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     job_id = 1
     job_data = Mock()  # This represents the JobResponse object
     job_data.state = State.SUCCESSFUL
@@ -255,42 +310,48 @@ def test_update_job_by_id(mock_spec_class, mock_repo):
     original_job = Mock()
     # the mocking library will create a new mock if we don't do this.
     original_job.stacktrace = None
-    mock_repo.find_one.return_value = original_job
+    mock_repo_instance.find_one.return_value = original_job
 
-    update_job_by_id(job_id, job_data)
+    update_job_by_id(job_id, job_data, mock_session)
 
     mock_spec_class.assert_called_once_with()
     mock_spec_class.return_value.by_id.assert_called_once_with(job_id)
-    mock_repo.find_one.assert_called_once_with(mock_spec_class.return_value.by_id())
+    mock_repo_instance.find_one.assert_called_once_with(mock_spec_class.return_value.by_id())
     assert original_job.state == State.SUCCESSFUL
     assert original_job.end == "2023-10-10T10:00:00"
     assert original_job.status_message == "Job completed successfully"
     assert original_job.outputs == {"output_key": "output_value"}
     assert original_job.stacktrace is None
-    mock_repo.update_one.assert_called_once_with(original_job)
+    mock_repo_instance.update_one.assert_called_once_with(original_job)
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_update_job_by_id_invalid_job_id(mock_spec_class, mock_repo):
     """Test update_job_by_id when the job ID does not exist."""
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     job_id = 999
     job_data = Mock()
-    mock_repo.find_one.return_value = None  # Simulate job not found
+    mock_repo_instance.find_one.return_value = None  # Simulate job not found
 
     with pytest.raises(MissingRecordError):
-        update_job_by_id(job_id, job_data)
+        update_job_by_id(job_id, job_data, mock_session)
 
     mock_spec_class.assert_called_once_with()
     mock_spec_class.return_value.by_id.assert_called_once_with(job_id)
-    mock_repo.find_one.assert_called_once_with(mock_spec_class.return_value.by_id())
-    mock_repo.update_one.assert_not_called()
+    mock_repo_instance.find_one.assert_called_once_with(mock_spec_class.return_value.by_id())
+    mock_repo_instance.update_one.assert_not_called()
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
+@patch("fia_api.core.services.job.Repo")
 @patch("fia_api.core.services.job.JobSpecification")
 def test_update_job_by_id_never_updates_certain_fields(mock_spec_class, mock_repo):
     """Test update_job_by_id ensuring certain fields are never updated"""
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
     job_id = 2
     job_data = Mock()
     job_data.state = State.NOT_STARTED
@@ -303,19 +364,19 @@ def test_update_job_by_id_never_updates_certain_fields(mock_spec_class, mock_rep
     original_job.start = "2023-10-09T12:00:00"
     original_job.input = {"output_key": "previous_output"}
 
-    mock_repo.find_one.return_value = original_job
+    mock_repo_instance.find_one.return_value = original_job
 
-    update_job_by_id(job_id, job_data)
+    update_job_by_id(job_id, job_data, mock_session)
 
     mock_spec_class.assert_called_once_with()
     mock_spec_class.return_value.by_id.assert_called_once_with(job_id)
-    mock_repo.find_one.assert_called_once_with(mock_spec_class.return_value.by_id())
+    mock_repo_instance.find_one.assert_called_once_with(mock_spec_class.return_value.by_id())
     assert original_job.state == State.NOT_STARTED
     assert original_job.start == "2023-10-09T12:00:01"
     assert original_job.status_message == "Job is running"
     assert original_job.input == {"output_key": "previous_output"}  # Ensure this remains unchanged
     assert original_job.stacktrace == "Some stacktrace info"
-    mock_repo.update_one.assert_called_once_with(original_job)
+    mock_repo_instance.update_one.assert_called_once_with(original_job)
 
 
 def make_request(**kwargs) -> AutoreductionRequest:
@@ -337,18 +398,20 @@ def make_request(**kwargs) -> AutoreductionRequest:
     )
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
-@patch("fia_api.core.services.job._SCRIPT_REPO")
 @patch("fia_api.core.services.job.hash_script")
 @patch("fia_api.core.services.job.get_script_for_job")
-@patch("fia_api.core.services.job._RUN_REPO")
+@patch("fia_api.core.services.job.Repo")
 def test_run_exists_creates_job_with_new_script(
-    mock_run_repo,
+    mock_repo_class,
     mock_get_script,
     mock_hash_script,
-    mock_script_repo,
-    mock_job_repo,
 ):
+    mock_session = Mock()
+    mock_run_repo = Mock()
+    mock_script_repo = Mock()
+    mock_job_repo = Mock()
+    mock_repo_class.side_effect = [mock_run_repo, mock_script_repo, mock_job_repo]
+
     existing_run = Mock(spec=Run)
     existing_run.id = 42
     existing_run.owner_id = 7
@@ -372,7 +435,7 @@ def test_run_exists_creates_job_with_new_script(
     returned_job = Mock()
     mock_job_repo.add_one.return_value = returned_job
 
-    result = create_autoreduction_job(req)
+    result = create_autoreduction_job(req, mock_session)
     assert result is returned_job
 
     mock_run_repo.find_one.assert_called_once_with(ANY)  # we looked up by filename
@@ -393,18 +456,21 @@ def test_run_exists_creates_job_with_new_script(
     assert passed_job.instrument_id == existing_run.instrument_id
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
-@patch("fia_api.core.services.job._SCRIPT_REPO")
 @patch("fia_api.core.services.job.hash_script")
 @patch("fia_api.core.services.job.get_script_for_job")
-@patch("fia_api.core.services.job._RUN_REPO")
+@patch("fia_api.core.services.job.Repo")
 def test_run_exists_reuses_existing_script(
-    mock_run_repo,
+    mock_repo_class,
     mock_get_script,
     mock_hash_script,
-    mock_script_repo,
-    mock_job_repo,
 ):
+    mock_session = Mock()
+    mock_run_repo = Mock()
+    mock_script_repo = Mock()
+    mock_job_repo = Mock()
+
+    mock_repo_class.side_effect = [mock_run_repo, mock_script_repo, mock_job_repo]
+
     existing_run = Mock(spec=Run)
     existing_run.id = 7
     existing_run.owner_id = 5
@@ -430,7 +496,7 @@ def test_run_exists_reuses_existing_script(
     returned_job = Mock()
     mock_job_repo.add_one.return_value = returned_job
 
-    result = create_autoreduction_job(req)
+    result = create_autoreduction_job(req, mock_session)
     assert result is returned_job
 
     passed_job = mock_job_repo.add_one.call_args[0][0]
@@ -438,22 +504,30 @@ def test_run_exists_reuses_existing_script(
     assert not hasattr(passed_job, "script") or passed_job.script is None
 
 
-@patch("fia_api.core.services.job._JOB_REPO")
-@patch("fia_api.core.services.job._SCRIPT_REPO")
 @patch("fia_api.core.services.job.hash_script")
 @patch("fia_api.core.services.job.get_script_for_job")
-@patch("fia_api.core.services.job._OWNER_REPO")
-@patch("fia_api.core.services.job._INSTRUMENT_REPO")
-@patch("fia_api.core.services.job._RUN_REPO")
+@patch("fia_api.core.services.job.Repo")
 def test_run_not_exists_creates_instrument_owner_run_and_new_script(
-    mock_run_repo,
-    mock_instrument_repo,
-    mock_owner_repo,
+    mock_repo_class,
     mock_get_script,
     mock_hash_script,
-    mock_script_repo,
-    mock_job_repo,
 ):
+    mock_session = Mock()
+    mock_run_repo = Mock()
+    mock_script_repo = Mock()
+    mock_job_repo = Mock()
+    mock_owner_repo = Mock()
+    mock_instrument_repo = Mock()
+
+    # These repo instances need to be in the order they are called from create_autoreduction_job
+    mock_repo_class.side_effect = [
+        mock_run_repo,
+        mock_instrument_repo,
+        mock_owner_repo,
+        mock_script_repo,
+        mock_job_repo,
+    ]
+
     mock_run_repo.find_one.return_value = None
 
     mock_instrument_repo.find_one.return_value = None
@@ -485,7 +559,7 @@ def test_run_not_exists_creates_instrument_owner_run_and_new_script(
     returned_job = Mock()
     mock_job_repo.add_one.return_value = returned_job
 
-    result = create_autoreduction_job(req)
+    result = create_autoreduction_job(req, mock_session)
     assert result is returned_job
 
     mock_instrument_repo.find_one.assert_called_once_with(ANY)
@@ -514,3 +588,48 @@ def test_run_not_exists_creates_instrument_owner_run_and_new_script(
     assert passed_job.run_id == created_run.id
     assert passed_job.owner_id == new_owner.id
     assert passed_job.instrument_id == new_instr.id
+
+
+@patch("fia_api.core.services.job.hash_script")
+@patch("fia_api.core.services.job.get_script_for_job")
+@patch("fia_api.core.services.job.Repo")
+def test_create_autoreduction_job_uses_single_session(mock_repo_class, mock_get_script, mock_hash_script, monkeypatch):
+    """Test to ensure that a service function uses a single session throughout"""
+    seen_sessions = []
+    mock_session = Mock()
+    mock_run_repo = Mock()
+    mock_script_repo = Mock()
+    mock_job_repo = Mock()
+    mock_repo_class.side_effect = [mock_run_repo, mock_script_repo, mock_job_repo]
+
+    existing_run = Mock(spec=Run)
+    existing_run.id = 42
+    existing_run.owner_id = 7
+    existing_run.instrument_id = 99
+    existing_run.instrument = Mock(spec=Instrument, instrument_name="CAM1")
+    mock_run_repo.find_one.return_value = existing_run
+
+    pre_script = Mock(value="print('do work')", sha="deadbeef")
+    mock_get_script.return_value = pre_script
+    mock_hash_script.return_value = "deadbeef"
+    mock_script_repo.find_one.return_value = None
+
+    class SpyRepo(Repo):
+        def __init__(self, s, *args, **kwargs):
+            seen_sessions.append(id(s))
+            super().__init__(s, *args, **kwargs)
+
+    monkeypatch.setattr("fia_api.core.services.job.Repo", SpyRepo)
+
+    req = make_request(
+        filename="foo.fits",
+        additional_values={"x": 1},
+        runner_image="python:3.10",
+        instrument_name="CAM1",
+        rb_number="123",
+    )
+
+    create_autoreduction_job(req, mock_session)
+
+    assert len(set(seen_sessions)) == 1
+    assert seen_sessions[0] == id(mock_session)
