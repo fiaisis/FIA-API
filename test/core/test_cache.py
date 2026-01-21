@@ -77,11 +77,14 @@ def test_valkey_configured_true():
         assert _valkey_configured() is True
 
 
+
 def test_create_client_with_url():
-    with patch.dict(os.environ, {"VALKEY_URL": "redis://localhost"}, clear=True):
-        with patch("fia_api.core.cache.Redis.from_url") as mock_from_url:
-            _create_client()
-            mock_from_url.assert_called_once()
+    with (
+        patch.dict(os.environ, {"VALKEY_URL": "redis://localhost"}, clear=True),
+        patch("fia_api.core.cache.Redis.from_url") as mock_from_url,
+    ):
+        _create_client()
+        mock_from_url.assert_called_once()
 
 
 def test_create_client_with_params():
@@ -96,7 +99,7 @@ def test_create_client_with_params():
         with patch("fia_api.core.cache.Redis") as mock_redis:
             _create_client()
             mock_redis.assert_called_once()
-            args, kwargs = mock_redis.call_args
+            _, kwargs = mock_redis.call_args
             assert kwargs["host"] == "localhost"
             assert kwargs["ssl"] is True
 
@@ -130,10 +133,12 @@ def test_get_valkey_client_creation_error():
         mock_state.client = None
         mock_state_func.return_value = mock_state
 
-        with patch("fia_api.core.cache._valkey_configured", return_value=True):
-            with patch("fia_api.core.cache._create_client", side_effect=RedisError("boom")):
-                assert get_valkey_client() is None
-                assert mock_state.disabled is True
+        with (
+            patch("fia_api.core.cache._valkey_configured", return_value=True),
+            patch("fia_api.core.cache._create_client", side_effect=RedisError("boom")),
+        ):
+            assert get_valkey_client() is None
+            assert mock_state.disabled is True
 
 
 def test_cache_get_json_redis_error():
@@ -171,10 +176,12 @@ def test_cache_set_json_redis_error():
         # Should check if cache got disabled
         # We can mock _disable_cache to verify it IS called
 
-    with patch("fia_api.core.cache.get_valkey_client", return_value=mock_client):
-         with patch("fia_api.core.cache._disable_cache") as mock_disable:
-             cache_set_json("key", {}, TTL_SECONDS)
-             mock_disable.assert_called_once()
+    with (
+        patch("fia_api.core.cache.get_valkey_client", return_value=mock_client),
+        patch("fia_api.core.cache._disable_cache") as mock_disable,
+    ):
+        cache_set_json("key", {}, TTL_SECONDS)
+        mock_disable.assert_called_once()
 
 
 def test_get_valkey_client_returns_existing_client():
