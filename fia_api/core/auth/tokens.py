@@ -10,11 +10,13 @@ from fastapi import Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from fia_api.core.auth import AUTH_URL
+from fia_api.core.cache import cache_get_json, cache_set_json, hash_key
 from fia_api.core.exceptions import AuthError
 
 logger = logging.getLogger(__name__)
 
 DEV_MODE = bool(os.environ.get("DEV_MODE", False))  # noqa: PLW1508
+AUTH_VERIFY_CACHE_TTL_SECONDS = int(os.environ.get("AUTH_VERIFY_CACHE_TTL_SECONDS", "60"))
 
 
 @dataclass
@@ -40,11 +42,11 @@ def get_user_from_token(token: str) -> User:
 
 
 class JWTAPIBearer(HTTPBearer):
-    """Extends the FastAPI `HTTPBearer` class to provide JSON Web Token (JWT) based authentication/authorization."""
+    """Extends the FastAPI `HTTPBearer` class to provide JSON Web Token (JWT)
+    based authentication/authorization."""
 
     async def __call__(self, request: Request) -> HTTPAuthorizationCredentials | None:
-        """
-        Callable method for JWT access token authentication/authorization.
+        """Callable method for JWT access token authentication/authorization.
 
         This method is called when `JWTAPIBearer` is used as a dependency in a FastAPI route. It performs
         authentication/authorization by calling the parent class method and then verifying the JWT access
@@ -68,8 +70,7 @@ class JWTAPIBearer(HTTPBearer):
 
     @staticmethod
     def _is_jwt_access_token_valid(access_token: str) -> bool:
-        """
-        Check if the JWT access token is valid.
+        """Check if the JWT access token is valid.
 
         It does this by checking that it was signed by the corresponding private key and has not expired. It also
         requires the payload to contain a username.
@@ -78,9 +79,15 @@ class JWTAPIBearer(HTTPBearer):
         """
         logger.info("Checking if JWT access token is valid")
         try:
+            cache_key = f"fia_api:auth:verify:{hash_key(access_token)}"
+            cached = cache_get_json(cache_key)
+            if cached is True:
+                return True
+
             response = requests.post(f"{AUTH_URL}/verify", json={"token": access_token}, timeout=30)
             if response.status_code == HTTPStatus.OK:
                 logger.info("JWT was valid")
+                cache_set_json(cache_key, True, AUTH_VERIFY_CACHE_TTL_SECONDS)
                 return True
             return False
         except RuntimeError:
@@ -89,8 +96,7 @@ class JWTAPIBearer(HTTPBearer):
 
     @staticmethod
     def _is_api_key_valid(api_key: str) -> bool:
-        """
-        Check if the API key is valid.
+        """Check if the API key is valid.
 
         It does this by checking that it was signed by the corresponding private key and has not expired.
         :param api_key: The API key to check.

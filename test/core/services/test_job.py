@@ -17,6 +17,7 @@ from fia_api.core.services.job import (
     get_experiment_number_for_job_id,
     get_job_by_id,
     get_job_by_instrument,
+    list_mantid_runners,
     update_job_by_id,
 )
 
@@ -96,6 +97,19 @@ def test_count_jobs_by_instrument(mock_spec_class, mock_repo):
     spec = mock_spec_class.return_value
     count_jobs_by_instrument("TEST", mock_session, filters={})
     mock_repo_instance.count.assert_called_once_with(spec.by_instruments(["TEST"]))
+
+
+@patch("fia_api.core.services.job.get_packages")
+def test_list_mantid_runners_filters_empty_tags(mock_get_packages):
+    mock_get_packages.return_value = [
+        {"name": "sha256:aaa", "metadata": {"container": {"tags": ["6.8.0"]}}},
+        {"name": "sha256:bbb", "metadata": {"container": {"tags": []}}},
+        {"name": "sha256:ccc", "metadata": {"container": {}}},
+        {"name": "sha256:ddd"},
+    ]
+
+    assert list_mantid_runners() == {"sha256:aaa": "6.8.0"}
+    mock_get_packages.assert_called_once_with(org="fiaisis", image_name="mantid")
 
 
 @patch("fia_api.core.services.job.Repo")
