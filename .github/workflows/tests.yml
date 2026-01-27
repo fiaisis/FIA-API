@@ -154,9 +154,6 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
 
-      - name: Verify Issue
-        run: echo "${{ secrets.SCRIPT_WRITE_OTKEN}}"
-
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
