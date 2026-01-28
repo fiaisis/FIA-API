@@ -19,6 +19,17 @@ def get_instrument_by_name(instrument_name: str, session: Session) -> Instrument
     return instrument
 
 
+def get_instruments_with_live_data_support(session: Session) -> list[str]:
+    """
+    Return a list of instrument names that have live data support enabled.
+    :param session: The database session
+    :return: List of instrument names with live data support
+    """
+    repo: Repo[Instrument] = Repo(session)
+    instruments = repo.find(InstrumentSpecification().with_live_data_support())
+    return [inst.instrument_name for inst in instruments]
+
+
 def get_specification_by_instrument_name(instrument_name: str, session: Session) -> JSONB | None:
     """
     Given an instrument name, return the specification for that instrument

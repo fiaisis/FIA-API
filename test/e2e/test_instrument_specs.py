@@ -57,3 +57,36 @@ def test_put_instrument_specification_no_api_key():
     client.put("/instrument/het/specification", json={"foo": "bar"})
     response = client.get("/instrument/het/specification")
     assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+def test_get_instruments_with_live_data_support():
+    """Test getting instruments with live data support returns expected list"""
+    with SESSION() as session:
+        expected_instruments = [
+            inst.instrument_name
+            for inst in session.scalars(select(Instrument).where(Instrument.live_data_support.is_(True)))
+        ]
+    response = client.get("/live-data/instruments")
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == expected_instruments
+
+
+def test_get_instruments_with_live_data_support_after_enabling():
+    """Test that an instrument appears in the list after enabling live data support"""
+    with SESSION() as session:
+        # Enable live data support for MARI
+        instrument = session.scalar(select(Instrument).where(Instrument.instrument_name == "MARI"))
+        original_value = instrument.live_data_support
+        instrument.live_data_support = True
+        session.commit()
+
+    try:
+        response = client.get("/live-data/instruments")
+        assert response.status_code == HTTPStatus.OK
+        assert "MARI" in response.json()
+    finally:
+        # Revert the change
+        with SESSION() as session:
+            instrument = session.scalar(select(Instrument).where(Instrument.instrument_name == "MARI"))
+            instrument.live_data_support = original_value
+            session.commit()

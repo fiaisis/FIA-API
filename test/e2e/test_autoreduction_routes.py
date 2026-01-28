@@ -171,3 +171,10 @@ def test_json_output_added_to_autoreduced_script():
         finally:
             session.execute(delete(Job).where(Job.id == response.json()["job_id"]))
             session.commit()
+
+
+def test_get_live_data_instruments():
+    """Test that the live data instruments endpoint returns a list"""
+    response = client.get("/live-data/instruments")
+    assert response.status_code == HTTPStatus.OK
+    assert isinstance(response.json(), list)
