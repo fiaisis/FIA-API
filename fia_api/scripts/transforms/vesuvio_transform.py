@@ -29,7 +29,7 @@ class VesuvioTransform(Transform):
         if isinstance(runno, list):
             if len(runno) > 1:
                 # Convert list to range string if contiguous, otherwise comma-separated
-                if all(runno[i] == runno[i-1] + 1 for i in range(1, len(runno))):
+                if all(runno[i] == runno[i - 1] + 1 for i in range(1, len(runno))):
                     runno_str = f"{runno[0]}-{runno[-1]}"
                 else:
                     runno_str = ",".join(map(str, runno))
