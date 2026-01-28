@@ -25,7 +25,7 @@ class VesuvioTransform(Transform):
         logger.info("Beginning Vesuvio transform for job %s...", job.id)
         lines = script.value.splitlines()
 
-        runno = job.inputs["runno"]
+        runno = job.inputs["runno"] # type: ignore
         if isinstance(runno, list):
             if len(runno) > 1:
                 # Convert list to range string if contiguous, otherwise comma-separated
