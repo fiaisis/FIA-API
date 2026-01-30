@@ -9,6 +9,7 @@ from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.exceptions import AuthError
 from fia_api.core.request_models import LiveDataScriptUpdateRequest
 from fia_api.core.services.instrument import (
+    get_instruments_with_live_data_support,
     get_live_data_script_by_instrument_name,
     update_live_data_script_for_instrument,
 )
@@ -16,6 +17,17 @@ from fia_api.core.session import get_db_session
 
 LiveDataRouter = APIRouter(tags=["live-data"])
 jwt_api_security = JWTAPIBearer()
+
+
+@LiveDataRouter.get("/live-data/instruments")
+async def get_live_data_instruments(session: Annotated[Session, Depends(get_db_session)]) -> list[str]:
+    """
+    Return a list of instrument names that support live data viewing.
+    \f
+    :param session: The current session of the request
+    :return: List of instrument names with live data support enabled
+    """
+    return get_instruments_with_live_data_support(session)
 
 
 @LiveDataRouter.get("/live-data/{instrument}/script")

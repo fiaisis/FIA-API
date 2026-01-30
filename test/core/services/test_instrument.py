@@ -4,6 +4,7 @@ import pytest
 
 from fia_api.core.exceptions import MissingRecordError
 from fia_api.core.services.instrument import (
+    get_instruments_with_live_data_support,
     get_latest_run_by_instrument_name,
     get_live_data_script_by_instrument_name,
     get_specification_by_instrument_name,
@@ -181,3 +182,39 @@ def test_update_live_data_script_for_instrument_instrument_missing(mock_repo):
         mock_repo_instance.find_one.return_value = None
         with pytest.raises(MissingRecordError):
             update_live_data_script_for_instrument("mari", "print('hello world')", mock_session)
+
+
+@patch("fia_api.core.services.instrument.Repo")
+@patch("fia_api.core.services.instrument.InstrumentSpecification")
+def test_get_instruments_with_live_data_support(mock_spec, mock_repo):
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
+
+    mock_instrument_1 = Mock()
+    mock_instrument_1.instrument_name = "mari"
+    mock_instrument_2 = Mock()
+    mock_instrument_2.instrument_name = "wish"
+    mock_repo_instance.find.return_value = [mock_instrument_1, mock_instrument_2]
+
+    instruments = get_instruments_with_live_data_support(mock_session)
+
+    assert instruments == ["mari", "wish"]
+    mock_repo.assert_called_once_with(mock_session)
+    mock_spec.return_value.with_live_data_support.assert_called_once()
+    mock_repo_instance.find.assert_called_once_with(mock_spec.return_value.with_live_data_support.return_value)
+
+
+@patch("fia_api.core.services.instrument.Repo")
+@patch("fia_api.core.services.instrument.InstrumentSpecification")
+def test_get_instruments_with_live_data_support_returns_empty_list_when_none_found(mock_spec, mock_repo):
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
+    mock_repo_instance.find.return_value = []
+
+    instruments = get_instruments_with_live_data_support(mock_session)
+
+    assert instruments == []
+    mock_repo.assert_called_once_with(mock_session)
+    mock_spec.return_value.with_live_data_support.assert_called_once()
