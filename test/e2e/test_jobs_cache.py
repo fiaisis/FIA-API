@@ -1,7 +1,7 @@
 """Cache behavior tests for jobs endpoints."""
 
 from http import HTTPStatus
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from starlette.testclient import TestClient
 
