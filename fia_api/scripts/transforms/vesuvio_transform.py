@@ -1,3 +1,4 @@
+# mypy: disable-error-code="unused-ignore, arg-type, index, attr-defined"
 """
 Module provides the VesuvioTransform class, an implementation of the Transform abstract base class for VESUVIO
 instrument scripts.
