@@ -24,6 +24,8 @@ class VesuvioTransform(Transform):
     def apply(self, script: PreScript, job: Job) -> None:
         logger.info("Beginning Vesuvio transform for job %s...", job.id)
         lines = script.value.splitlines()
+        # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
+        # If you get here in the future, try removing the type ignore and see if it passes with newer mypy
 
         runno = job.inputs["runno"]  # type: ignore
         if isinstance(runno, list):
