@@ -65,5 +65,7 @@ def test_vesuvio_transform_apply(script, reduction):
             assert line == 'empty_runs = "12345-12355"'
         elif line.startswith("ip"):
             assert line == 'ip = "IP0001.par"'
+        elif line.startswith("diff"):
+            assert line == 'diff_ip_file = "IP0001.par"'
         else:
             assert line == original_lines[index]
