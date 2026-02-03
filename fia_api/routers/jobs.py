@@ -131,7 +131,7 @@ async def get_jobs(
     if cache_key:
         cache_set_json(cache_key, payload, JOB_LIST_CACHE_TTL_SECONDS)
 
-    return payload
+    return payload  # type: ignore[return-value]
 
 
 @JobsRouter.get("/instrument/{instrument}/jobs", tags=["jobs"])
@@ -214,7 +214,7 @@ async def get_jobs_by_instrument(
     if cache_key:
         cache_set_json(cache_key, payload, JOB_LIST_CACHE_TTL_SECONDS)
 
-    return payload
+    return payload  # type: ignore[return-value]
 
 
 @JobsRouter.get("/instrument/{instrument}/jobs/count", tags=["jobs"])
