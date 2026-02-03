@@ -1,11 +1,11 @@
-"""Jobs API Router"""
+"""Jobs API Router."""
 
 import io
 import json
 import os
 import zipfile
 from http import HTTPStatus
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.responses import FileResponse, StreamingResponse
@@ -13,6 +13,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
+from fia_api.core.cache import cache_get_json, cache_set_json, hash_key
 from fia_api.core.exceptions import (
     AuthError,
     NoFilesAddedError,
@@ -34,6 +35,8 @@ from fia_api.core.session import get_db_session
 
 JobsRouter = APIRouter(tags=["jobs"])
 jwt_api_security = JWTAPIBearer()
+JOB_LIST_CACHE_TTL_SECONDS = int(os.environ.get("JOB_LIST_CACHE_TTL_SECONDS", "15"))
+JOB_COUNT_CACHE_TTL_SECONDS = int(os.environ.get("JOB_COUNT_CACHE_TTL_SECONDS", "15"))
 
 OrderField = Literal[
     "start",
@@ -47,6 +50,11 @@ OrderField = Literal[
     "experiment_title",
     "filename",
 ]
+
+
+def _jobs_cache_key(scope: str, payload: dict[str, Any]) -> str:
+    digest = hash_key(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+    return f"fia_api:jobs:{scope}:{digest}"
 
 
 @JobsRouter.get("/jobs", tags=["jobs"])
@@ -87,6 +95,24 @@ async def get_jobs(
     else:
         user_number = user.user_number
 
+    cache_key = None
+    if JOB_LIST_CACHE_TTL_SECONDS > 0:
+        cache_key = _jobs_cache_key(
+            "list:all",
+            {
+                "user_number": user_number,
+                "include_run": include_run,
+                "limit": limit,
+                "offset": offset,
+                "order_by": order_by,
+                "order_direction": order_direction,
+                "filters": filters,
+            },
+        )
+        cached = cache_get_json(cache_key)
+        if isinstance(cached, list):
+            return cached
+
     jobs = get_all_jobs(
         session,
         limit=limit,
@@ -98,8 +124,14 @@ async def get_jobs(
     )
 
     if include_run:
-        return [JobWithRunResponse.from_job(j) for j in jobs]
-    return [JobResponse.from_job(j) for j in jobs]
+        payload = [JobWithRunResponse.from_job(j).model_dump(mode="json") for j in jobs]
+    else:
+        payload = [JobResponse.from_job(j).model_dump(mode="json") for j in jobs]
+
+    if cache_key:
+        cache_set_json(cache_key, payload, JOB_LIST_CACHE_TTL_SECONDS)
+
+    return payload  # type: ignore[return-value]
 
 
 @JobsRouter.get("/instrument/{instrument}/jobs", tags=["jobs"])
@@ -144,6 +176,25 @@ async def get_jobs_by_instrument(
     else:
         user_number = user.user_number
 
+    cache_key = None
+    if JOB_LIST_CACHE_TTL_SECONDS > 0:
+        cache_key = _jobs_cache_key(
+            "list:instrument",
+            {
+                "instrument": instrument,
+                "user_number": user_number,
+                "include_run": include_run,
+                "limit": limit,
+                "offset": offset,
+                "order_by": order_by,
+                "order_direction": order_direction,
+                "filters": filters,
+            },
+        )
+        cached = cache_get_json(cache_key)
+        if isinstance(cached, list):
+            return cached
+
     jobs = get_job_by_instrument(
         instrument,
         session,
@@ -156,8 +207,14 @@ async def get_jobs_by_instrument(
     )
 
     if include_run:
-        return [JobWithRunResponse.from_job(j) for j in jobs]
-    return [JobResponse.from_job(j) for j in jobs]
+        payload = [JobWithRunResponse.from_job(j).model_dump(mode="json") for j in jobs]
+    else:
+        payload = [JobResponse.from_job(j).model_dump(mode="json") for j in jobs]
+
+    if cache_key:
+        cache_set_json(cache_key, payload, JOB_LIST_CACHE_TTL_SECONDS)
+
+    return payload  # type: ignore[return-value]
 
 
 @JobsRouter.get("/instrument/{instrument}/jobs/count", tags=["jobs"])
@@ -174,9 +231,20 @@ async def count_jobs_for_instrument(
     :return: CountResponse containing the count
     """
     instrument = instrument.upper()
-    return CountResponse(
-        count=count_jobs_by_instrument(instrument, session, filters=json.loads(filters) if filters else None)
-    )
+    parsed_filters = json.loads(filters) if filters else None
+
+    cache_key = None
+    if JOB_COUNT_CACHE_TTL_SECONDS > 0:
+        cache_key = _jobs_cache_key("count:instrument", {"instrument": instrument, "filters": parsed_filters})
+        cached = cache_get_json(cache_key)
+        if isinstance(cached, dict) and "count" in cached:
+            return CountResponse.model_validate(cached)
+
+    count = count_jobs_by_instrument(instrument, session, filters=parsed_filters)
+    payload = {"count": count}
+    if cache_key:
+        cache_set_json(cache_key, payload, JOB_COUNT_CACHE_TTL_SECONDS)
+    return CountResponse.model_validate(payload)
 
 
 @JobsRouter.get("/job/{job_id}", tags=["jobs"])
@@ -229,13 +297,22 @@ async def count_all_jobs(
     session: Annotated[Session, Depends(get_db_session)],
     filters: Annotated[str | None, Query(description="json string of filters")] = None,
 ) -> CountResponse:
-    """
-    Count all jobs
-    \f
-    :param filters: json string of filters
-    :return: CountResponse containing the count
-    """
-    return CountResponse(count=count_jobs(session, filters=json.loads(filters) if filters else None))
+    """Count all jobs \f :param filters: json string of filters :return:
+    CountResponse containing the count."""
+    parsed_filters = json.loads(filters) if filters else None
+
+    cache_key = None
+    if JOB_COUNT_CACHE_TTL_SECONDS > 0:
+        cache_key = _jobs_cache_key("count:all", {"filters": parsed_filters})
+        cached = cache_get_json(cache_key)
+        if isinstance(cached, dict) and "count" in cached:
+            return CountResponse.model_validate(cached)
+
+    count = count_jobs(session, filters=parsed_filters)
+    payload = {"count": count}
+    if cache_key:
+        cache_set_json(cache_key, payload, JOB_COUNT_CACHE_TTL_SECONDS)
+    return CountResponse.model_validate(payload)
 
 
 @JobsRouter.get("/job/{job_id}/filename/{filename}", tags=["jobs"])
