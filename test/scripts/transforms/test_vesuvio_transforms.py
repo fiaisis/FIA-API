@@ -69,3 +69,42 @@ def test_vesuvio_transform_apply(script, reduction):
             assert line == 'diff_ip_file = "IP0001.par"'
         else:
             assert line == original_lines[index]
+
+
+def test_vesuvio_transform_multi_contiguous(script, reduction):
+    """
+    Test vesuvio transform with contiguous runs
+    """
+    transform = VesuvioTransform()
+    reduction.inputs["runno"] = [55956, 55957, 55958]
+    transform.apply(script, reduction)
+    updated_lines = script.value.splitlines()
+    for line in updated_lines:
+        if line.startswith("runno"):
+            assert line == 'runno = "55956-55958"'
+
+
+def test_vesuvio_transform_multi_non_contiguous(script, reduction):
+    """
+    Test vesuvio transform with non-contiguous runs
+    """
+    transform = VesuvioTransform()
+    reduction.inputs["runno"] = [55956, 55958, 55960]
+    transform.apply(script, reduction)
+    updated_lines = script.value.splitlines()
+    for line in updated_lines:
+        if line.startswith("runno"):
+            assert line == 'runno = "55956,55958,55960"'
+
+
+def test_vesuvio_transform_single_list(script, reduction):
+    """
+    Test vesuvio transform with a single run in a list
+    """
+    transform = VesuvioTransform()
+    reduction.inputs["runno"] = [55956]
+    transform.apply(script, reduction)
+    updated_lines = script.value.splitlines()
+    for line in updated_lines:
+        if line.startswith("runno"):
+            assert line == 'runno = "55956"'

@@ -27,6 +27,20 @@ class VesuvioTransform(Transform):
         lines = script.value.splitlines()
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
         # If you get here in the future, try removing the type ignore and see if it passes with newer mypy
+
+        runno = job.inputs["runno"]  # type: ignore
+        if isinstance(runno, list):
+            if len(runno) > 1:
+                # Convert list to range string if contiguous, otherwise comma-separated
+                if all(runno[i] == runno[i - 1] + 1 for i in range(1, len(runno))):
+                    runno_str = f"{runno[0]}-{runno[-1]}"
+                else:
+                    runno_str = ",".join(map(str, runno))
+            else:
+                runno_str = str(runno[0])
+        else:
+            runno_str = str(runno)
+
         for index, line in enumerate(lines):
             if self._replace_input(line, lines, index, "ip", f'"{job.inputs["ip_file"]}"'):
                 continue
@@ -34,7 +48,7 @@ class VesuvioTransform(Transform):
                 line, lines, index, "diff_ip", f'"{job.inputs.get("diff_ip_file", job.inputs["ip_file"])}"'
             ):
                 continue
-            if self._replace_input(line, lines, index, "runno", f'"{job.inputs["runno"]}"'):
+            if self._replace_input(line, lines, index, "runno", f'"{runno_str}"'):  # type: ignore
                 continue
             if self._replace_input(line, lines, index, "empty_runs", f'"{job.inputs["empty_runs"]}"'):
                 continue
