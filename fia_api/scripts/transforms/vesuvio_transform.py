@@ -48,7 +48,7 @@ class VesuvioTransform(Transform):
                 line, lines, index, "diff_ip", f'"{job.inputs.get("diff_ip_file", job.inputs["ip_file"])}"'
             ):
                 continue
-            if self._replace_input(line, lines, index, "runno", f'"{job.inputs["runno"]}"'):
+            if self._replace_input(line, lines, index, "runno", f'"{runno_str}"'):  # type: ignore
                 continue
             if self._replace_input(line, lines, index, "empty_runs", f'"{job.inputs["empty_runs"]}"'):
                 continue
