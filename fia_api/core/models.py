@@ -135,6 +135,7 @@ class Instrument(Base):
     latest_run: Mapped[str | None] = mapped_column()
     specification: Mapped[JSONB | None] = mapped_column(JSONB)
     live_data_script: Mapped[str | None] = mapped_column()
+    live_data_support: Mapped[bool] = mapped_column(default=False)
 
     def __hash__(self) -> int:
         return hash(self.instrument_name)
