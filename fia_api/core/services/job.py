@@ -53,6 +53,10 @@ class SimpleJob(BaseModel):
     script: str
 
 
+class FastStartJob(BaseModel):
+    script: str
+
+
 class RerunJob(BaseModel):
     job_id: int
     runner_image: str
