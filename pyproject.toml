@@ -4,9 +4,9 @@ readme = "README.md"
 version = "0.0.1"
 requires-python = ">= 3.11"
 dependencies = [
-    "fastapi[all]==0.128.0",
+    "fastapi[all]==0.128.5",
     "PyGithub==2.8.1",
-    "PyJWT==2.10.1",
+    "PyJWT==2.11.0",
     "psycopg2==2.9.11",
     "SQLAlchemy==2.0.46",
     "pydantic==2.12.5",
@@ -27,7 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 formatting = [
-    "ruff==0.14.14",
+    "ruff==0.15.0",
     "mypy==1.19.1",
     "fia-api[test]",
     "types-requests==2.32.4.20260107",
@@ -41,7 +41,7 @@ test = [
     "httpx==0.28.1",
     "pytest-cov==7.0.0",
     "pytest-random-order==1.2.0",
-    "Faker==40.1.2",
+    "Faker==40.4.0",
     "pytest-env==1.2.0",
 ]
 
