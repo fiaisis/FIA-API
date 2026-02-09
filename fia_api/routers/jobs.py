@@ -61,7 +61,7 @@ async def get_jobs(
     include_run: bool = False,
     filters: Annotated[str | None, Query(description="json string of filters")] = None,
     as_user: bool = False,
-    exclude_fast_start_jobs: bool = False,
+    include_fast_start_jobs: bool = False,
 ) -> list[JobResponse] | list[JobWithRunResponse]:
     """
     Retrieve all jobs.
@@ -77,7 +77,7 @@ async def get_jobs(
     :param include_run: bool
     :param filters: json string of filters
     :param as_user: bool
-    :param exclude_fast_start_jobs: bool
+    :param include_fast_start_jobs: bool
     :return: List of JobResponse objects
     """
     user = get_user_from_token(credentials.credentials)
@@ -98,7 +98,7 @@ async def get_jobs(
         order_direction=order_direction,
         user_number=user_number,
         filters=filters,
-        exclude_fast_start_jobs=exclude_fast_start_jobs,
+        include_fast_start_jobs=include_fast_start_jobs,
     )
 
     if include_run:
@@ -118,7 +118,7 @@ async def get_jobs_by_instrument(
     include_run: bool = False,
     filters: Annotated[str | None, Query(description="json string of filters")] = None,
     as_user: bool = False,
-    exclude_fast_start_jobs: bool = False,
+    include_fast_start_jobs: bool = False,
 ) -> list[JobResponse] | list[JobWithRunResponse]:
     """
     Retrieve a list of jobs for a given instrument.
@@ -135,7 +135,7 @@ async def get_jobs_by_instrument(
     :param include_run: bool
     :param filters: json string of filters
     :param as_user: bool
-    :param exclude_fast_start_jobs: bool
+    :param include_fast_start_jobs: bool
     :return: List of JobResponse objects
     """
     user = get_user_from_token(credentials.credentials)
@@ -159,7 +159,7 @@ async def get_jobs_by_instrument(
         order_direction=order_direction,
         user_number=user_number,
         filters=filters,
-        exclude_fast_start_jobs=exclude_fast_start_jobs,
+        include_fast_start_jobs=include_fast_start_jobs,
     )
 
     if include_run:
@@ -172,14 +172,14 @@ async def count_jobs_for_instrument(
     instrument: str,
     session: Annotated[Session, Depends(get_db_session)],
     filters: Annotated[str | None, Query(description="json string of filters")] = None,
-    exclude_fast_start_jobs: bool = False,
+    include_fast_start_jobs: bool = False,
 ) -> CountResponse:
     """
     Count jobs for a given instrument.
     \f
     :param instrument: the name of the instrument
     :param filters: json string of filters
-    :param exclude_fast_start_jobs: bool
+    :param include_fast_start_jobs: bool
     :return: CountResponse containing the count
     """
     instrument = instrument.upper()
@@ -188,7 +188,7 @@ async def count_jobs_for_instrument(
             instrument,
             session,
             filters=json.loads(filters) if filters else None,
-            exclude_fast_start_jobs=exclude_fast_start_jobs,
+            include_fast_start_jobs=include_fast_start_jobs,
         )
     )
 
@@ -256,18 +256,18 @@ async def update_job(
 async def count_all_jobs(
     session: Annotated[Session, Depends(get_db_session)],
     filters: Annotated[str | None, Query(description="json string of filters")] = None,
-    exclude_fast_start_jobs: bool = False,
+    include_fast_start_jobs: bool = False,
 ) -> CountResponse:
     """
     Count all jobs
     \f
     :param filters: json string of filters
-    :param exclude_fast_start_jobs: bool
+    :param include_fast_start_jobs: bool
     :return: CountResponse containing the count
     """
     return CountResponse(
         count=count_jobs(
-            session, filters=json.loads(filters) if filters else None, exclude_fast_start_jobs=exclude_fast_start_jobs
+            session, filters=json.loads(filters) if filters else None, include_fast_start_jobs=include_fast_start_jobs
         )
     )
 
