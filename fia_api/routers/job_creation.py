@@ -9,6 +9,7 @@ from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.exceptions import AuthError
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.services.job import (
+    FastStartJob,
     RerunJob,
     SimpleJob,
     get_experiment_number_for_job_id,
@@ -72,6 +73,27 @@ async def make_simple_job(
         raise AuthError("User not authorised for this action")
     return job_maker.create_simple_job(  # type: ignore # Despite returning int, mypy believes this returns any
         runner_image=simple_job.runner_image, script=simple_job.script, user_number=user.user_number
+    )
+
+
+@JobCreationRouter.post("/job/fast-start", tags=["job creation"])
+async def create_fast_start_job_endpoint(
+    fast_start_job: FastStartJob,
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+    job_maker: Annotated[JobMaker, Depends(job_maker)],
+) -> int:
+    """
+    Create a fast start job, returning the ID of the created job.
+    \f
+    :param fast_start_job: The fast start job details including runner image and script.
+    :param credentials: HTTPAuthorizationCredentials
+    :param job_maker: Dependency injected job maker
+    :return: The job id
+    """
+    user = get_user_from_token(credentials.credentials)
+    # Any authenticated user can create a fast start job
+    return job_maker.create_fast_start_job(
+        runner_image="default", script=fast_start_job.script, user_number=user.user_number
     )
 
 
