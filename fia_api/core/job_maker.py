@@ -229,7 +229,7 @@ class JobMaker:
 
         try:
             response = requests.post(
-                llsp_url,
+                f"{llsp_url}/execute",
                 json={"script": script},
                 headers={"Authorization": f"Bearer {llsp_key}"},
                 timeout=10,
