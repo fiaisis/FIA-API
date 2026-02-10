@@ -224,7 +224,7 @@ class JobMaker:
         )
 
         # Call External API
-        llsp_url = os.environ.get("LLSP_API_URL", "http://localhost:8001")
+        llsp_url = os.environ.get("LLSP_API_HOST", "http://localhost:8001")
         llsp_key = os.environ.get("LLSP_API_KEY", "shh")
 
         try:
