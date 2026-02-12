@@ -6,7 +6,7 @@ import logging
 import os
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Concatenate, ParamSpec, TypeVar, cast
 
 import requests
 from pika.adapters.blocking_connection import BlockingConnection  # type: ignore[import-untyped]
@@ -25,7 +25,11 @@ from fia_api.core.utility import hash_script
 logger = logging.getLogger(__name__)
 
 
-def require_owner(func: Callable[..., Any]) -> Callable[..., Any]:
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+def require_owner(func: Callable[Concatenate[JobMaker, P], R]) -> Callable[Concatenate[JobMaker, P], R]:
     """
     Decorator to ensure that either a user_number or experiment_number is provided to the function. if not, raise a
     JobRequestError
@@ -34,12 +38,12 @@ def require_owner(func: Callable[..., Any]) -> Callable[..., Any]:
     """
 
     @functools.wraps(func)
-    def wrapper(self: JobMaker, *args: tuple[Any], **kwargs: dict[str, Any]) -> Any:
+    def wrapper(self: JobMaker, *args: P.args, **kwargs: P.kwargs) -> R:
         if kwargs.get("user_number") is None and kwargs.get("experiment_number") is None:
             raise JobRequestError("Something needs to own the job, either experiment_number or user_number.")
         return func(self, *args, **kwargs)
 
-    return wrapper
+    return cast("Callable[Concatenate[JobMaker, P], R]", wrapper)
 
 
 class JobMaker:

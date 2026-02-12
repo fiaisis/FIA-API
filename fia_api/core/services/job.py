@@ -17,6 +17,7 @@ from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script,
 from fia_api.core.repositories import Repo
 from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
 from fia_api.core.session import get_db_session
+from fia_api.core.specifications.base import Specification
 from fia_api.core.specifications.filters import apply_filters_to_spec
 from fia_api.core.specifications.instrument import InstrumentSpecification
 from fia_api.core.specifications.job import JobSpecification
@@ -110,12 +111,13 @@ def get_job_by_instrument(
         order_direction=order_direction,
         user_number=user_number,
     )
+    spec: Specification[Job] = specification
     if filters:
-        specification = apply_filters_to_spec(filters, specification)
+        spec = apply_filters_to_spec(filters, spec)
     if not include_fast_start_jobs:
-        specification = apply_filters_to_spec({"job_type_not_in": [JobType.FAST_START]}, specification)
+        spec = apply_filters_to_spec({"job_type_not_in": [JobType.FAST_START]}, spec)
     job_repo: Repo[Job] = Repo(session)
-    return job_repo.find(specification)
+    return job_repo.find(spec)
 
 
 def get_all_jobs(
@@ -151,12 +153,13 @@ def get_all_jobs(
         specification = specification.by_experiment_numbers(
             experiment_numbers, limit=limit, offset=offset, order_by=order_by, order_direction=order_direction
         )
+    spec: Specification[Job] = specification
     if filters:
-        specification = apply_filters_to_spec(filters, specification)
+        spec = apply_filters_to_spec(filters, spec)
     if not include_fast_start_jobs:
-        specification = apply_filters_to_spec({"job_type_not_in": [JobType.FAST_START]}, specification)
+        spec = apply_filters_to_spec({"job_type_not_in": [JobType.FAST_START]}, spec)
     job_repo: Repo[Job] = Repo(session)
-    return job_repo.find(specification)
+    return job_repo.find(spec)
 
 
 def get_job_by_id(
@@ -199,7 +202,7 @@ def count_jobs_by_instrument(
     :param include_fast_start_jobs: (bool) Whether to include fast start jobs
     :return: Number of jobs
     """
-    spec = JobSpecification().by_instruments(instruments=[instrument])
+    spec: Specification[Job] = JobSpecification().by_instruments(instruments=[instrument])
     if filters:
         spec = apply_filters_to_spec(filters, spec)
     if not include_fast_start_jobs:
@@ -220,7 +223,7 @@ def count_jobs(
     :param include_fast_start_jobs: (bool) Whether to include fast start jobs
     :return: (int) number of jobs
     """
-    spec = JobSpecification().all()
+    spec: Specification[Job] = JobSpecification().all()
     if filters:
         spec = apply_filters_to_spec(filters, spec)
     if not include_fast_start_jobs:
