@@ -139,7 +139,7 @@ async def get_jobs(
 
 
 @JobsRouter.get("/instrument/{instrument}/jobs", tags=["jobs"])
-async def get_jobs_by_instrument(
+async def get_jobs_by_instrument(  # noqa: PLR0913
     instrument: str,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
     session: Annotated[Session, Depends(get_db_session)],
