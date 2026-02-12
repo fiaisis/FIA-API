@@ -60,7 +60,6 @@ class JobMaker:
         self.queue_name = queue_name
         self.connection = None
         self.channel = None
-        self._connect_to_broker()
 
     def _connect_to_broker(self) -> None:
         """
