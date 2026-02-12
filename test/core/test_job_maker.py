@@ -18,7 +18,7 @@ def test_send_message(broker):
 
     job_maker._send_message(custom_message)
 
-    assert broker.call_count == 2  # noqa: PLR2004
+    assert broker.call_count == 1
     assert broker.call_args == [mock.call(), mock.call()]
     assert job_maker.channel.basic_publish.call_count == 1
     assert job_maker.channel.basic_publish.call_args == mock.call(exchange="", routing_key="", body=custom_message)
