@@ -249,12 +249,13 @@ async def count_jobs_for_instrument(
         if isinstance(cached, dict) and "count" in cached:
             return CountResponse.model_validate(cached)
 
-    count = count_jobs_by_instrument(instrument, session, filters=parsed_filters. include_fast_start_jobs=include_fast_start_jobs)
+    count = count_jobs_by_instrument(
+        instrument, session, filters=parsed_filters, include_fast_start_jobs=include_fast_start_jobs
+    )
     payload = {"count": count}
     if cache_key:
         cache_set_json(cache_key, payload, JOB_COUNT_CACHE_TTL_SECONDS)
     return CountResponse.model_validate(payload)
-
 
 
 @JobsRouter.get("/job/{job_id}", tags=["jobs"])
@@ -322,8 +323,8 @@ async def count_all_jobs(
     filters: Annotated[str | None, Query(description="json string of filters")] = None,
     include_fast_start_jobs: bool = False,
 ) -> CountResponse:
-    """Count all jobs 
-    \f 
+    """Count all jobs
+    \f
     :param filters: json string of filters :return:
     CountResponse containing the count."""
     parsed_filters = json.loads(filters) if filters else None
