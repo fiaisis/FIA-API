@@ -36,7 +36,7 @@ def get_user_from_token(token: str) -> User:
             token, options={"verify_signature": False}
         )  # We don't verify here as it is verified by the auth api previously when the token is obtained via the
         # JWTAPIBearer class below
-        return User(user_number=payload.get("usernumber"), role=payload.get("role"))
+        return User(user_number=payload.get("usernumber"), role=payload.get("role"))  # type: ignore
     except RuntimeError as exc:
         raise AuthError("Problem unpacking jwt token") from exc
 
