@@ -21,8 +21,8 @@ AUTH_VERIFY_CACHE_TTL_SECONDS = int(os.environ.get("AUTH_VERIFY_CACHE_TTL_SECOND
 
 @dataclass
 class User:
-    user_number: int
-    role: Literal["staff", "user"]
+    user_number: int | None
+    role: Literal["staff", "user"] | None
 
 
 def get_user_from_token(token: str) -> User:
