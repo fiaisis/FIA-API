@@ -18,6 +18,7 @@ from fia_api.core.exceptions import (
     AuthError,
     NoFilesAddedError,
 )
+from fia_api.core.models import JobType
 from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
 from fia_api.core.responses import AutoreductionResponse, CountResponse, JobResponse, JobWithRunResponse
 from fia_api.core.services.job import (
@@ -68,6 +69,7 @@ async def get_jobs(
     include_run: bool = False,
     filters: Annotated[str | None, Query(description="json string of filters")] = None,
     as_user: bool = False,
+    include_fast_start_jobs: bool = False,
 ) -> list[JobResponse] | list[JobWithRunResponse]:
     """
     Retrieve all jobs.
@@ -83,6 +85,7 @@ async def get_jobs(
     :param include_run: bool
     :param filters: json string of filters
     :param as_user: bool
+    :param include_fast_start_jobs: bool
     :return: List of JobResponse objects
     """
     user = get_user_from_token(credentials.credentials)
@@ -121,6 +124,7 @@ async def get_jobs(
         order_direction=order_direction,
         user_number=user_number,
         filters=filters,
+        include_fast_start_jobs=include_fast_start_jobs,
     )
 
     if include_run:
@@ -135,7 +139,7 @@ async def get_jobs(
 
 
 @JobsRouter.get("/instrument/{instrument}/jobs", tags=["jobs"])
-async def get_jobs_by_instrument(
+async def get_jobs_by_instrument(  # noqa: PLR0913
     instrument: str,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
     session: Annotated[Session, Depends(get_db_session)],
@@ -146,6 +150,7 @@ async def get_jobs_by_instrument(
     include_run: bool = False,
     filters: Annotated[str | None, Query(description="json string of filters")] = None,
     as_user: bool = False,
+    include_fast_start_jobs: bool = False,
 ) -> list[JobResponse] | list[JobWithRunResponse]:
     """
     Retrieve a list of jobs for a given instrument.
@@ -162,6 +167,7 @@ async def get_jobs_by_instrument(
     :param include_run: bool
     :param filters: json string of filters
     :param as_user: bool
+    :param include_fast_start_jobs: bool
     :return: List of JobResponse objects
     """
     user = get_user_from_token(credentials.credentials)
@@ -204,6 +210,7 @@ async def get_jobs_by_instrument(
         order_direction=order_direction,
         user_number=user_number,
         filters=filters,
+        include_fast_start_jobs=include_fast_start_jobs,
     )
 
     if include_run:
@@ -222,12 +229,14 @@ async def count_jobs_for_instrument(
     instrument: str,
     session: Annotated[Session, Depends(get_db_session)],
     filters: Annotated[str | None, Query(description="json string of filters")] = None,
+    include_fast_start_jobs: bool = False,
 ) -> CountResponse:
     """
     Count jobs for a given instrument.
     \f
     :param instrument: the name of the instrument
     :param filters: json string of filters
+    :param include_fast_start_jobs: bool
     :return: CountResponse containing the count
     """
     instrument = instrument.upper()
@@ -240,7 +249,9 @@ async def count_jobs_for_instrument(
         if isinstance(cached, dict) and "count" in cached:
             return CountResponse.model_validate(cached)
 
-    count = count_jobs_by_instrument(instrument, session, filters=parsed_filters)
+    count = count_jobs_by_instrument(
+        instrument, session, filters=parsed_filters, include_fast_start_jobs=include_fast_start_jobs
+    )
     payload = {"count": count}
     if cache_key:
         cache_set_json(cache_key, payload, JOB_COUNT_CACHE_TTL_SECONDS)
@@ -287,8 +298,22 @@ async def update_job(
     :return: JobResponse
     """
     user = get_user_from_token(credentials.credentials)
-    if user.role != "staff":
+
+    # Check permissions
+    is_staff = user.role == "staff"
+
+    # We need to get the job to check its type for API key access
+    job_in_db = get_job_by_id(job_id, session)
+
+    if is_staff:
+        # Staff can update any job
+        pass
+    elif user.user_number == -1 and job_in_db.job_type == JobType.FAST_START:
+        # API Key users can update FAST_START jobs
+        pass
+    else:
         raise AuthError("User not authorised for this action")
+
     return JobResponse.from_job(update_job_by_id(job_id, job, session))
 
 
@@ -296,8 +321,11 @@ async def update_job(
 async def count_all_jobs(
     session: Annotated[Session, Depends(get_db_session)],
     filters: Annotated[str | None, Query(description="json string of filters")] = None,
+    include_fast_start_jobs: bool = False,
 ) -> CountResponse:
-    """Count all jobs \f :param filters: json string of filters :return:
+    """Count all jobs
+    \f
+    :param filters: json string of filters :return:
     CountResponse containing the count."""
     parsed_filters = json.loads(filters) if filters else None
 
@@ -308,7 +336,7 @@ async def count_all_jobs(
         if isinstance(cached, dict) and "count" in cached:
             return CountResponse.model_validate(cached)
 
-    count = count_jobs(session, filters=parsed_filters)
+    count = count_jobs(session, filters=parsed_filters, include_fast_start_jobs=include_fast_start_jobs)
     payload = {"count": count}
     if cache_key:
         cache_set_json(cache_key, payload, JOB_COUNT_CACHE_TTL_SECONDS)

@@ -3,10 +3,12 @@ from __future__ import annotations
 import functools
 import json
 import logging
+import os
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Concatenate, ParamSpec, TypeVar, cast
 
+import requests
 from pika.adapters.blocking_connection import BlockingConnection  # type: ignore[import-untyped]
 from pika.connection import ConnectionParameters  # type: ignore[import-untyped]
 from pika.credentials import PlainCredentials  # type: ignore[import-untyped]
@@ -23,7 +25,11 @@ from fia_api.core.utility import hash_script
 logger = logging.getLogger(__name__)
 
 
-def require_owner(func: Callable[..., Any]) -> Callable[..., Any]:
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+def require_owner(func: Callable[Concatenate[JobMaker, P], R]) -> Callable[Concatenate[JobMaker, P], R]:
     """
     Decorator to ensure that either a user_number or experiment_number is provided to the function. if not, raise a
     JobRequestError
@@ -32,12 +38,12 @@ def require_owner(func: Callable[..., Any]) -> Callable[..., Any]:
     """
 
     @functools.wraps(func)
-    def wrapper(self: JobMaker, *args: tuple[Any], **kwargs: dict[str, Any]) -> Any:
+    def wrapper(self: JobMaker, *args: P.args, **kwargs: P.kwargs) -> R:
         if kwargs.get("user_number") is None and kwargs.get("experiment_number") is None:
             raise JobRequestError("Something needs to own the job, either experiment_number or user_number.")
         return func(self, *args, **kwargs)
 
-    return wrapper
+    return cast("Callable[Concatenate[JobMaker, P], R]", wrapper)
 
 
 class JobMaker:
@@ -58,7 +64,6 @@ class JobMaker:
         self.queue_name = queue_name
         self.connection = None
         self.channel = None
-        self._connect_to_broker()
 
     def _connect_to_broker(self) -> None:
         """
@@ -193,6 +198,55 @@ class JobMaker:
             "job_id": job.id,
         }
         self._send_message(json.dumps(message_dict))
+        return job.id
+
+    @require_owner
+    def create_fast_start_job(
+        self, runner_image: str, script: str, experiment_number: int | None = None, user_number: int | None = None
+    ) -> int:
+        """
+        Create a fast start job by calling the external LLSP API.
+        :param runner_image: The image used as a runner
+        :param script: The script to be used
+        :param experiment_number: (unused but required by decorator/signature consistency if reused)
+        :param user_number: the user number of the owner
+        :return: created job id
+        """
+
+        job_owner = self._get_or_create_job_owner(None, user_number)  # fast starts are user jobs only
+
+        script_object = self._get_or_create_script(script)
+
+        job = Job(
+            owner=job_owner,
+            job_type=JobType.FAST_START,
+            runner_image=runner_image,
+            script_id=script_object.id,
+            state=State.NOT_STARTED,
+            inputs={},
+        )
+
+        # Call External API
+        llsp_url = os.environ.get("LLSP_API_HOST", "http://localhost:8001")
+        llsp_key = os.environ.get("LLSP_API_KEY", "shh")
+
+        try:
+            response = requests.post(
+                f"{llsp_url}/execute",
+                json={"script": script},
+                headers={"Authorization": f"Bearer {llsp_key}"},
+                timeout=10,
+            )
+            response.raise_for_status()
+        except requests.RequestException as e:
+            # If external API fails, we should probably fail the job creation or log it.
+            # For now raising JobRequestError
+            logger.error(f"Failed to submit fast start job to LLSP: {e}")
+            job.state = State.UNSUCCESSFUL
+            job.outputs = "Job failed to submit to LLSP."
+            raise JobRequestError(f"Failed to submit fast start job: {e}") from e
+        finally:
+            job = self._job_repo.add_one(job)
         return job.id
 
     def _get_or_create_script(self, script: str) -> Script:
