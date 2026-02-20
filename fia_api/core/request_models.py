@@ -50,4 +50,5 @@ class LiveDataTracebackUpdateRequest(BaseModel):
     """
     Traceback Update Request for live data
     """
+
     value: str | None
