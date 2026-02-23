@@ -7,7 +7,9 @@ from unittest.mock import patch
 
 from starlette.testclient import TestClient
 
+from fia_api.core.cache import cache_set_json
 from fia_api.fia_api import app
+from fia_api.routers.live_data import _get_traceback_key
 
 from .constants import API_KEY_HEADER, USER_HEADER
 
@@ -33,3 +35,28 @@ def test_live_data_script_updating_bad_creds(mock_post):
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.put("/live-data/test/script", json={"value": "print('hello world')"}, headers=USER_HEADER)
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_live_data_traceback_fetching_and_clearing(mock_post):
+    mock_post.return_value.status_code = HTTPStatus.OK
+
+    # Simulate a traceback being set in the cache
+    traceback_content = "Exception: Some error occurred during live data processing"
+    cache_set_json(_get_traceback_key("test"), traceback_content, ttl_seconds=60)
+
+    # Verify the traceback can be fetched
+    response = client.get("/live-data/test/traceback", headers=API_KEY_HEADER)
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == traceback_content
+
+    # Update the script, which should clear the cache
+    client.put("/live-data/test/script", json={"value": "print('fixed error')"}, headers=API_KEY_HEADER)
+
+    # Verify the traceback is now cleared
+    response = client.get("/live-data/test/traceback", headers=API_KEY_HEADER)
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() is None
+
+    # Revert for safety
+    client.put("/live-data/test/script", json={"value": "Reverted"}, headers=API_KEY_HEADER)
