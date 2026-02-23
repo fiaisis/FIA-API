@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
 from fia_api.core.cache import cache_get_json, cache_set_json
 from fia_api.core.exceptions import AuthError
-from fia_api.core.request_models import LiveDataScriptUpdateRequest, LiveDataTracebackUpdateRequest
+from fia_api.core.request_models import LiveDataScriptUpdateRequest
 from fia_api.core.services.instrument import (
     get_instruments_with_live_data_support,
     get_live_data_script_by_instrument_name,
@@ -44,31 +44,6 @@ async def get_instrument_traceback(instrument: str) -> str | None:
     :return: The live data traceback or None
     """
     return cache_get_json(_get_traceback_key(instrument))
-
-
-@LiveDataRouter.post("/live-data/{instrument}/traceback")
-async def update_instrument_traceback(
-    instrument: str,
-    traceback_request: LiveDataTracebackUpdateRequest,
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-) -> Literal["ok"]:
-    """
-    Given an instrument string and a traceback request, update the live data traceback for that instrument
-    \f
-    :param instrument: The instrument string
-    :param traceback_request: The json wrapped update request
-    :param credentials: injected http authorization credentials
-    :return:
-    """
-    # Only allow reporting if authenticated (either by user or API key)
-    # The processor uses FIA_API_API_KEY which gives it staff role
-    user = get_user_from_token(credentials.credentials)
-    if user.role != "staff":
-        raise AuthError("Only Staff can update Live Data Tracebacks")
-
-    # Store in Valkey with 24 hour TTL
-    cache_set_json(_get_traceback_key(instrument), traceback_request.value, 60 * 60 * 24)
-    return "ok"
 
 
 @LiveDataRouter.get("/live-data/{instrument}/script")
