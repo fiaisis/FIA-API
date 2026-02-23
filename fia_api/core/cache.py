@@ -64,6 +64,17 @@ def _create_client() -> Redis | None:
 
 
 def get_valkey_client() -> Redis | None:
+    """
+    Get or create a Valkey (Redis) client instance.
+
+    Returns a shared Redis client if Valkey is configured and available.
+    The client is lazily initialized on first access and cached for reuse.
+    If the connection fails or Valkey is not configured, it returns None and
+    disables further connection attempts.
+
+    :return: Redis client instance if available, None otherwise
+    """
+
     state = _valkey_state()
     if state.disabled:
         return None
@@ -87,6 +98,17 @@ def _disable_cache(exc: Exception) -> None:
 
 
 def cache_get_json(key: str) -> Any | None:
+    """
+    Retrieve and deserialize a JSON value from the Valkey cache.
+
+    Attempts to fetch a cached value by key and parse it as JSON. If the cache
+    is unavailable, the key doesn't exist, or the value cannot be parsed as JSON,
+    returns None. Automatically disables the cache on connection errors.
+
+    :param key: The cache key to retrieve
+    :return: Deserialized JSON value if found and valid, None otherwise
+    """
+
     client = get_valkey_client()
     if client is None:
         return None
@@ -110,6 +132,20 @@ def cache_get_json(key: str) -> Any | None:
 
 
 def cache_set_json(key: str, value: Any, ttl_seconds: int) -> None:
+    """
+    Store a JSON-serializable value in the Valkey cache with a time-to-live.
+
+    Serializes the provided value to JSON and stores it in the cache with an
+    expiration time. If the cache is unavailable, the value cannot be serialized
+    to JSON, or the TTL is non-positive, the operation is silently skipped.
+    Automatically disables the cache on connection errors.
+
+    :param key: The cache key under which to store the value
+    :param value: Any JSON-serializable value to cache
+    :param ttl_seconds: Time-to-live in seconds; must be positive
+    :return: None
+    """
+
     if ttl_seconds <= 0:
         return
     client = get_valkey_client()
@@ -126,4 +162,13 @@ def cache_set_json(key: str, value: Any, ttl_seconds: int) -> None:
 
 
 def hash_key(value: str) -> str:
+    """
+    Compute a SHA-256 hash of the given string value.
+
+    Encodes the input string as UTF-8 and returns its hexadecimal SHA-256 digest.
+    Useful for generating deterministic cache keys or identifiers from arbitrary strings.
+
+    :param value: The string-to-hash
+    :return: Hexadecimal representation of the SHA-256 hash
+    """
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
