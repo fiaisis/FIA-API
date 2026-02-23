@@ -12,7 +12,6 @@ from fia_api.core.cache import (
     cache_get_json,
     cache_set_json,
     get_valkey_client,
-    hash_key,
 )
 
 TTL_SECONDS = 30
@@ -201,7 +200,3 @@ def test_cache_get_json_returns_none_if_raw_is_none():
     mock_client.get.return_value = None
     with patch("fia_api.core.cache.get_valkey_client", return_value=mock_client):
         assert cache_get_json("key") is None
-
-
-def test_hash_key_returns_sha256_hex():
-    assert hash_key("abc") == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
