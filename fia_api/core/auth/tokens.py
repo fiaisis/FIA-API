@@ -15,7 +15,6 @@ from fia_api.core.exceptions import AuthError
 logger = logging.getLogger(__name__)
 
 DEV_MODE = bool(os.environ.get("DEV_MODE", False))  # noqa: PLW1508
-AUTH_VERIFY_CACHE_TTL_SECONDS = int(os.environ.get("AUTH_VERIFY_CACHE_TTL_SECONDS", "60"))
 
 
 @dataclass
@@ -35,7 +34,7 @@ def get_user_from_token(token: str) -> User:
             token, options={"verify_signature": False}
         )  # We don't verify here as it is verified by the auth api previously when the token is obtained via the
         # JWTAPIBearer class below
-        return User(user_number=payload.get("usernumber"), role=payload.get("role"))  # type: ignore
+        return User(user_number=payload.get("usernumber"), role=payload.get("role"))
     except RuntimeError as exc:
         raise AuthError("Problem unpacking jwt token") from exc
 
