@@ -14,7 +14,7 @@ from pika.connection import ConnectionParameters  # type: ignore[import-untyped]
 from pika.credentials import PlainCredentials  # type: ignore[import-untyped]
 from sqlalchemy.orm import Session
 
-from fia_api.core.exceptions import JobRequestError
+from fia_api.core.exceptions import JobRequestError, LLSPSubmissionFailureError
 from fia_api.core.models import Job, JobOwner, JobType, Script, State
 from fia_api.core.repositories import Repo
 from fia_api.core.specifications.job import JobSpecification
@@ -239,12 +239,10 @@ class JobMaker:
             )
             response.raise_for_status()
         except requests.RequestException as e:
-            # If external API fails, we should probably fail the job creation or log it.
-            # For now raising JobRequestError
             logger.error(f"Failed to submit fast start job to LLSP: {e}")
             job.state = State.UNSUCCESSFUL
             job.outputs = "Job failed to submit to LLSP."
-            raise JobRequestError(f"Failed to submit fast start job: {e}") from e
+            raise LLSPSubmissionFailureError(f"Failed to submit fast start job: {e}") from e
         finally:
             job = self._job_repo.add_one(job)
         return job.id
