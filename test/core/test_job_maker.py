@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest import mock
 
 import pytest  # type: ignore
+from requests.exceptions import RequestException
 
 from fia_api.core.exceptions import JobRequestError
 from fia_api.core.job_maker import JobMaker
@@ -17,7 +18,7 @@ def test_send_message(broker):
 
     job_maker._send_message(custom_message)
 
-    assert broker.call_count == 2  # noqa: PLR2004
+    assert broker.call_count == 1
     assert broker.call_args == [mock.call(), mock.call()]
     assert job_maker.channel.basic_publish.call_count == 1
     assert job_maker.channel.basic_publish.call_args == mock.call(exchange="", routing_key="", body=custom_message)
@@ -184,3 +185,50 @@ def test_create_simple_job_require_owner():
     script = "print('error')"
     with pytest.raises(JobRequestError):
         job_maker.create_simple_job(runner_image=runner_image, script=script, user_number=None, experiment_number=None)
+
+
+@mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
+@mock.patch("fia_api.core.job_maker.requests.post")
+def test_create_fast_start_job_success(mock_post, mock_connect, faker):
+    mock_session = mock.Mock()
+    job_maker = JobMaker("", "", "", "test_queue", mock_session)
+    job_maker._owner_repo.find_one = mock.MagicMock(return_value=None)
+    job_maker._script_repo.find_one = mock.MagicMock(return_value=None)
+    job = mock.MagicMock()
+    job.id = faker.random.randint(1000, 2000)
+    job_maker._job_repo.add_one = mock.MagicMock(return_value=job)
+
+    runner_image = "fast_runner"
+    script = "print('fast')"
+    user_number = 12345
+
+    mock_response = mock.Mock()
+    mock_response.status_code = 200
+    mock_post.return_value = mock_response
+
+    job_id = job_maker.create_fast_start_job(runner_image=runner_image, script=script, user_number=user_number)
+
+    assert job_id == job.id
+    mock_post.assert_called_once()
+    _, kwargs = mock_post.call_args
+    assert kwargs["json"] == {"script": script}
+    # Check default header key 'shh'
+    assert kwargs["headers"]["Authorization"] == "Bearer shh"
+
+
+@mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
+@mock.patch("fia_api.core.job_maker.requests.post")
+def test_create_fast_start_job_failure(mock_post, mock_connect, faker):
+    mock_session = mock.Mock()
+    job_maker = JobMaker("", "", "", "test_queue", mock_session)
+    # job setup ...
+    job = mock.MagicMock()
+    job.id = 1
+    job_maker._job_repo.add_one = mock.MagicMock(return_value=job)
+    job_maker._owner_repo.find_one = mock.MagicMock(return_value=None)
+    job_maker._script_repo.find_one = mock.MagicMock(return_value=None)
+
+    mock_post.side_effect = RequestException("Connection error")
+
+    with pytest.raises(JobRequestError, match="Failed to submit fast start job"):
+        job_maker.create_fast_start_job(runner_image="img", script="print('fail')", user_number=123)
