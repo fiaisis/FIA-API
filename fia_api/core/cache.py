@@ -15,7 +15,7 @@ from redis.exceptions import RedisError
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_VALKEY_URL = "redis://valkey-staging.valkey.svc.cluster.local:6379/0"
+DEFAULT_VALKEY_URL = "redis://valkey.valkey.svc.cluster.local:6379/0"
 
 
 @dataclass(slots=True)
