@@ -90,7 +90,7 @@ def test_create_client_uses_default_url():
         _create_client()
         mock_from_url.assert_called_once()
         args = mock_from_url.call_args[0]
-        assert args[0] == "redis://valkey-staging.valkey.svc.cluster.local:6379/0"
+        assert args[0] == "redis://valkey.valkey.svc.cluster.local:6379/0"
 
 
 def test_create_client_no_host():
