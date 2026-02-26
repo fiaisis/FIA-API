@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -158,3 +159,17 @@ def cache_set_json(key: str, value: Any, ttl_seconds: int) -> None:
         client.setex(key, ttl_seconds, payload)
     except RedisError as exc:
         _disable_cache(exc)
+
+
+def hash_key(value: str) -> str:
+    """
+    Generate a SHA-256 hash of the input string.
+
+    Computes a hexadecimal SHA-256 digest of the UTF-8 encoded input string.
+    Useful for creating deterministic cache keys from arbitrary string data.
+
+    :param value: The string to hash
+    :return: Hexadecimal SHA-256 digest as a string
+    """
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
