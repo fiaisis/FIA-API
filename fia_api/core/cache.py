@@ -172,4 +172,3 @@ def hash_key(value: str) -> str:
     :return: Hexadecimal SHA-256 digest as a string
     """
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
-
