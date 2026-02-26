@@ -15,6 +15,8 @@ from redis.exceptions import RedisError
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_VALKEY_URL = "redis://valkey-staging.valkey.svc.cluster.local:6379/0"
+
 
 @dataclass(slots=True)
 class _ValkeyState:
@@ -28,7 +30,7 @@ def _valkey_state() -> _ValkeyState:
 
 
 def _valkey_configured() -> bool:
-    return bool(os.environ.get("VALKEY_URL") or os.environ.get("VALKEY_HOST"))
+    return bool(os.environ.get("VALKEY_URL") or os.environ.get("VALKEY_HOST") or DEFAULT_VALKEY_URL)
 
 
 def _create_client() -> Redis | None:
@@ -44,7 +46,13 @@ def _create_client() -> Redis | None:
 
     host = os.environ.get("VALKEY_HOST")
     if not host:
-        return None
+        return Redis.from_url(
+            DEFAULT_VALKEY_URL,
+            decode_responses=True,
+            socket_connect_timeout=0.5,
+            socket_timeout=1,
+            retry_on_timeout=False,
+        )
 
     port = int(os.environ.get("VALKEY_PORT", "6379"))
     db = int(os.environ.get("VALKEY_DB", "0"))

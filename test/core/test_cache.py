@@ -65,7 +65,7 @@ def test_cache_set_json_noop_for_non_positive_ttl():
 
 def test_valkey_configured_false():
     with patch.dict(os.environ, {}, clear=True):
-        assert _valkey_configured() is False
+        assert _valkey_configured() is True
 
 
 def test_valkey_configured_true():
@@ -101,8 +101,12 @@ def test_create_client_with_params():
 
 
 def test_create_client_no_host():
-    with patch.dict(os.environ, {}, clear=True):
-        assert _create_client() is None
+    with (
+        patch.dict(os.environ, {}, clear=True),
+        patch("fia_api.core.cache.Redis.from_url") as mock_from_url,
+    ):
+        _create_client()
+        mock_from_url.assert_called_once()
 
 
 def test_get_valkey_client_disabled():
