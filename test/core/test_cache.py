@@ -8,7 +8,6 @@ from redis.exceptions import RedisError
 
 from fia_api.core.cache import (
     _create_client,
-    _valkey_configured,
     cache_get_json,
     cache_set_json,
     get_valkey_client,
@@ -63,16 +62,6 @@ def test_cache_set_json_noop_for_non_positive_ttl():
         mock_client.assert_not_called()
 
 
-def test_valkey_configured_false():
-    with patch.dict(os.environ, {}, clear=True):
-        assert _valkey_configured() is True
-
-
-def test_valkey_configured_true():
-    with patch.dict(os.environ, {"VALKEY_URL": "redis://localhost"}, clear=True):
-        assert _valkey_configured() is True
-
-
 def test_create_client_with_url():
     with (
         patch.dict(os.environ, {"VALKEY_URL": "redis://localhost"}, clear=True),
@@ -110,15 +99,6 @@ def test_get_valkey_client_disabled():
         assert get_valkey_client() is None
 
 
-def test_get_valkey_client_not_configured():
-    with patch("fia_api.core.cache._valkey_state") as mock_state_func:
-        mock_state = Mock()
-        mock_state.disabled = False
-        mock_state_func.return_value = mock_state
-        with patch("fia_api.core.cache._valkey_configured", return_value=False):
-            assert get_valkey_client() is None
-
-
 def test_get_valkey_client_creation_error():
     with patch("fia_api.core.cache._valkey_state") as mock_state_func:
         mock_state = Mock()
@@ -126,10 +106,7 @@ def test_get_valkey_client_creation_error():
         mock_state.client = None
         mock_state_func.return_value = mock_state
 
-        with (
-            patch("fia_api.core.cache._valkey_configured", return_value=True),
-            patch("fia_api.core.cache._create_client", side_effect=RedisError("boom")),
-        ):
+        with patch("fia_api.core.cache._create_client", side_effect=RedisError("boom")):
             assert get_valkey_client() is None
             assert mock_state.disabled is True
 
@@ -185,12 +162,11 @@ def test_get_valkey_client_returns_existing_client():
         mock_state.client = existing_client
         mock_state_func.return_value = mock_state
 
-        with patch("fia_api.core.cache._valkey_configured", return_value=True):
-            assert get_valkey_client() is existing_client
-            # Should NOT call _create_client
-            with patch("fia_api.core.cache._create_client") as mock_create:
-                get_valkey_client()
-                mock_create.assert_not_called()
+        assert get_valkey_client() is existing_client
+        # Should NOT call _create_client
+        with patch("fia_api.core.cache._create_client") as mock_create:
+            get_valkey_client()
+            mock_create.assert_not_called()
 
 
 def test_cache_get_json_returns_none_if_raw_is_none():

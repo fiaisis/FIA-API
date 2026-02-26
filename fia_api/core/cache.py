@@ -29,10 +29,6 @@ def _valkey_state() -> _ValkeyState:
     return _ValkeyState()
 
 
-def _valkey_configured() -> bool:
-    return bool(os.environ.get("VALKEY_URL", DEFAULT_VALKEY_URL))
-
-
 def _create_client() -> Redis | None:
     url = os.environ.get("VALKEY_URL", DEFAULT_VALKEY_URL)
     return Redis.from_url(
@@ -48,18 +44,16 @@ def get_valkey_client() -> Redis | None:
     """
     Get or create a Valkey (Redis) client instance.
 
-    Returns a shared Redis client if Valkey is configured and available.
+    Returns a shared Redis client if Valkey is available.
     The client is lazily initialized on first access and cached for reuse.
-    If the connection fails or Valkey is not configured, it returns None and
-    disables further connection attempts.
+    If the connection fails, it returns None and disables further connection
+    attempts.
 
     :return: Redis client instance if available, None otherwise
     """
 
     state = _valkey_state()
     if state.disabled:
-        return None
-    if not _valkey_configured():
         return None
     if state.client is None:
         try:
