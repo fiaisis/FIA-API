@@ -30,40 +30,13 @@ def _valkey_state() -> _ValkeyState:
 
 
 def _valkey_configured() -> bool:
-    return bool(os.environ.get("VALKEY_URL") or os.environ.get("VALKEY_HOST") or DEFAULT_VALKEY_URL)
+    return bool(os.environ.get("VALKEY_URL", DEFAULT_VALKEY_URL))
 
 
 def _create_client() -> Redis | None:
-    url = os.environ.get("VALKEY_URL")
-    if url:
-        return Redis.from_url(
-            url,
-            decode_responses=True,
-            socket_connect_timeout=0.5,
-            socket_timeout=1,
-            retry_on_timeout=False,
-        )
-
-    host = os.environ.get("VALKEY_HOST")
-    if not host:
-        return Redis.from_url(
-            DEFAULT_VALKEY_URL,
-            decode_responses=True,
-            socket_connect_timeout=0.5,
-            socket_timeout=1,
-            retry_on_timeout=False,
-        )
-
-    port = int(os.environ.get("VALKEY_PORT", "6379"))
-    db = int(os.environ.get("VALKEY_DB", "0"))
-    password = os.environ.get("VALKEY_PASSWORD")
-    ssl_enabled = os.environ.get("VALKEY_SSL", "").lower() in ("1", "true", "yes")
-    return Redis(
-        host=host,
-        port=port,
-        db=db,
-        password=password,
-        ssl=ssl_enabled,
+    url = os.environ.get("VALKEY_URL", DEFAULT_VALKEY_URL)
+    return Redis.from_url(
+        url,
         decode_responses=True,
         socket_connect_timeout=0.5,
         socket_timeout=1,

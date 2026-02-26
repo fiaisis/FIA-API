@@ -71,8 +71,6 @@ def test_valkey_configured_false():
 def test_valkey_configured_true():
     with patch.dict(os.environ, {"VALKEY_URL": "redis://localhost"}, clear=True):
         assert _valkey_configured() is True
-    with patch.dict(os.environ, {"VALKEY_HOST": "localhost"}, clear=True):
-        assert _valkey_configured() is True
 
 
 def test_create_client_with_url():
@@ -84,20 +82,15 @@ def test_create_client_with_url():
         mock_from_url.assert_called_once()
 
 
-def test_create_client_with_params():
-    env = {
-        "VALKEY_HOST": "localhost",
-        "VALKEY_PORT": "6379",
-        "VALKEY_DB": "0",
-        "VALKEY_PASSWORD": "pass",
-        "VALKEY_SSL": "true",
-    }
-    with patch.dict(os.environ, env, clear=True), patch("fia_api.core.cache.Redis") as mock_redis:
+def test_create_client_uses_default_url():
+    with (
+        patch.dict(os.environ, {}, clear=True),
+        patch("fia_api.core.cache.Redis.from_url") as mock_from_url,
+    ):
         _create_client()
-        mock_redis.assert_called_once()
-        _, kwargs = mock_redis.call_args
-        assert kwargs["host"] == "localhost"
-        assert kwargs["ssl"] is True
+        mock_from_url.assert_called_once()
+        args = mock_from_url.call_args[0]
+        assert args[0] == "redis://valkey-staging.valkey.svc.cluster.local:6379/0"
 
 
 def test_create_client_no_host():
