@@ -15,6 +15,8 @@ from redis.exceptions import RedisError
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_VALKEY_URL = "redis://valkey.valkey.svc.cluster.local:6379/0"
+
 
 @dataclass(slots=True)
 class _ValkeyState:
@@ -27,35 +29,10 @@ def _valkey_state() -> _ValkeyState:
     return _ValkeyState()
 
 
-def _valkey_configured() -> bool:
-    return bool(os.environ.get("VALKEY_URL") or os.environ.get("VALKEY_HOST"))
-
-
 def _create_client() -> Redis | None:
-    url = os.environ.get("VALKEY_URL")
-    if url:
-        return Redis.from_url(
-            url,
-            decode_responses=True,
-            socket_connect_timeout=0.5,
-            socket_timeout=1,
-            retry_on_timeout=False,
-        )
-
-    host = os.environ.get("VALKEY_HOST")
-    if not host:
-        return None
-
-    port = int(os.environ.get("VALKEY_PORT", "6379"))
-    db = int(os.environ.get("VALKEY_DB", "0"))
-    password = os.environ.get("VALKEY_PASSWORD")
-    ssl_enabled = os.environ.get("VALKEY_SSL", "").lower() in ("1", "true", "yes")
-    return Redis(
-        host=host,
-        port=port,
-        db=db,
-        password=password,
-        ssl=ssl_enabled,
+    url = os.environ.get("VALKEY_URL", DEFAULT_VALKEY_URL)
+    return Redis.from_url(
+        url,
         decode_responses=True,
         socket_connect_timeout=0.5,
         socket_timeout=1,
@@ -67,18 +44,16 @@ def get_valkey_client() -> Redis | None:
     """
     Get or create a Valkey (Redis) client instance.
 
-    Returns a shared Redis client if Valkey is configured and available.
+    Returns a shared Redis client if Valkey is available.
     The client is lazily initialized on first access and cached for reuse.
-    If the connection fails or Valkey is not configured, it returns None and
-    disables further connection attempts.
+    If the connection fails, it returns None and disables further connection
+    attempts.
 
     :return: Redis client instance if available, None otherwise
     """
 
     state = _valkey_state()
     if state.disabled:
-        return None
-    if not _valkey_configured():
         return None
     if state.client is None:
         try:
