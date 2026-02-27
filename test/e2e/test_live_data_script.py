@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 from starlette.testclient import TestClient
 
-from fia_api.core.cache import cache_set_json
+from fia_api.core.cache import get_valkey_client
 from fia_api.fia_api import app
 from fia_api.routers.live_data import _get_traceback_key
 
@@ -43,7 +43,8 @@ def test_live_data_traceback_fetching_and_clearing(mock_post):
 
     # Simulate a traceback being set in the cache
     traceback_content = "Exception: Some error occurred during live data processing"
-    cache_set_json(_get_traceback_key("test"), traceback_content, ttl_seconds=60)
+    client_cache = get_valkey_client()
+    client_cache.set(_get_traceback_key("test"), traceback_content, ex=60)
 
     # Verify the traceback can be fetched
     response = client.get("/live-data/test/traceback", headers=API_KEY_HEADER)
