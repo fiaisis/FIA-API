@@ -54,6 +54,7 @@ def get_valkey_client() -> Redis | None:
 
     state = _valkey_state()
     if state.disabled:
+        logger.warning("Valkey cache disabled: previous connection error")
         return None
     if state.client is None:
         try:
@@ -72,6 +73,28 @@ def _disable_cache(exc: Exception) -> None:
         logger.warning("Valkey cache disabled: %s", exc)
 
 
+def cache_get(key: str) -> Any | None:
+    """Retrieve a value from the Valkey cache.
+
+    Attempts to fetch a cached value by key. If the cache is unavailable,
+    the key doesn't exist, or the value cannot be parsed as JSON, returns None.
+    Automatically disables the cache on connection errors.
+
+    :param key: The cache key to retrieve
+    :return: Cached value if found, None otherwise
+    """
+    client = get_valkey_client()
+    if client is None:
+        logger.warning("Failed to retrieve value from Valkey cache (cache disabled)")
+        return None
+    try:
+        return client.get(key)
+    except RedisError as exc:
+        _disable_cache(exc)
+        logger.exception("Failed to retrieve value from Valkey cache", exc_info=exc)
+        return None
+
+
 def cache_get_json(key: str) -> Any | None:
     """
     Retrieve and deserialize a JSON value from the Valkey cache.
@@ -86,13 +109,16 @@ def cache_get_json(key: str) -> Any | None:
 
     client = get_valkey_client()
     if client is None:
+        logger.warning("Failed to retrieve JSON from Valkey cache (cache disabled)")
         return None
     try:
         raw = client.get(key)
     except RedisError as exc:
         _disable_cache(exc)
+        logger.exception("Failed to retrieve JSON from Valkey cache", exc_info=exc)
         return None
     if raw is None:
+        logger.warning("No value found in Valkey cache for key: %s", key)
         return None
     if isinstance(raw, (bytes, bytearray)):
         raw_text = raw.decode("utf-8")
@@ -103,6 +129,7 @@ def cache_get_json(key: str) -> Any | None:
     try:
         return json.loads(raw_text)
     except json.JSONDecodeError:
+        logger.warning("Failed to parse JSON from Valkey cache")
         return None
 
 
@@ -125,6 +152,7 @@ def cache_set_json(key: str, value: Any, ttl_seconds: int) -> None:
         return
     client = get_valkey_client()
     if client is None:
+        logger.warning("Failed to set JSON in Valkey cache (cache disabled)")
         return
     try:
         payload = json.dumps(value)
