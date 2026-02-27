@@ -6,7 +6,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.cache import cache_get_json, cache_set_json
+from fia_api.core.cache import cache_get_json, cache_set_json, cache_get
 from fia_api.core.exceptions import AuthError
 from fia_api.core.request_models import LiveDataScriptUpdateRequest
 from fia_api.core.services.instrument import (
@@ -43,7 +43,7 @@ async def get_instrument_traceback(instrument: str) -> str | None:
     :param instrument: The instrument string
     :return: The live data traceback or None
     """
-    return cache_get_json(_get_traceback_key(instrument))
+    return cache_get(_get_traceback_key(instrument))
 
 
 @LiveDataRouter.get("/live-data/{instrument}/script")

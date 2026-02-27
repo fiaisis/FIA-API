@@ -73,6 +73,27 @@ def _disable_cache(exc: Exception) -> None:
         logger.warning("Valkey cache disabled: %s", exc)
 
 
+def cache_get(key: str) -> Any | None:
+    """Retrieve a value from the Valkey cache.
+
+    Attempts to fetch a cached value by key. If the cache is unavailable,
+    the key doesn't exist, or the value cannot be parsed as JSON, returns None.
+    Automatically disables the cache on connection errors.
+
+    :param key: The cache key to retrieve
+    :return: Cached value if found, None otherwise
+    """
+    client = get_valkey_client()
+    if client is None:
+        logger.warning("Failed to retrieve value from Valkey cache (cache disabled)")
+        return None
+    try:
+        return client.get(key)
+    except RedisError as exc:
+        _disable_cache(exc)
+        logger.exception("Failed to retrieve value from Valkey cache", exc_info=exc)
+        return None
+
 def cache_get_json(key: str) -> Any | None:
     """
     Retrieve and deserialize a JSON value from the Valkey cache.
