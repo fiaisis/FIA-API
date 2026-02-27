@@ -163,12 +163,12 @@ def cache_set_json(key: str, value: Any, ttl_seconds: int) -> None:
 
 def hash_key(value: str) -> str:
     """
-    Compute a SHA-256 hash of the given string value.
+    Generate a SHA-256 hash of the input string.
 
-    Encodes the input string as UTF-8 and returns its hexadecimal SHA-256 digest.
-    Useful for generating deterministic cache keys or identifiers from arbitrary strings.
+    Computes a hexadecimal SHA-256 digest of the UTF-8 encoded input string.
+    Useful for creating deterministic cache keys from arbitrary string data.
 
-    :param value: The string-to-hash
-    :return: Hexadecimal representation of the SHA-256 hash
+    :param value: The string to hash
+    :return: Hexadecimal SHA-256 digest as a string
     """
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
