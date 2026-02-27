@@ -94,6 +94,7 @@ def cache_get(key: str) -> Any | None:
         logger.exception("Failed to retrieve value from Valkey cache", exc_info=exc)
         return None
 
+
 def cache_get_json(key: str) -> Any | None:
     """
     Retrieve and deserialize a JSON value from the Valkey cache.
