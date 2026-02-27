@@ -6,7 +6,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.cache import cache_get_json, cache_set_json, cache_get
+from fia_api.core.cache import cache_get, cache_set_json
 from fia_api.core.exceptions import AuthError
 from fia_api.core.request_models import LiveDataScriptUpdateRequest
 from fia_api.core.services.instrument import (
