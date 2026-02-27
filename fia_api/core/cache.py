@@ -88,7 +88,8 @@ def cache_get(key: str) -> Any | None:
         logger.warning("Failed to retrieve value from Valkey cache (cache disabled)")
         return None
     try:
-        return client.get(key)
+        result = client.get(key)
+        return result if (result is not None or result != "null") else None
     except RedisError as exc:
         _disable_cache(exc)
         logger.exception("Failed to retrieve value from Valkey cache", exc_info=exc)
