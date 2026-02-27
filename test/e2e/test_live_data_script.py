@@ -57,7 +57,7 @@ def test_live_data_traceback_fetching_and_clearing(mock_post):
     # Verify the traceback is now cleared
     response = client.get("/live-data/test/traceback", headers=API_KEY_HEADER)
     assert response.status_code == HTTPStatus.OK
-    assert response.json() is None
+    assert response.json() == "null"
 
     # Revert for safety
     client.put("/live-data/test/script", json={"value": "Reverted"}, headers=API_KEY_HEADER)
