@@ -32,7 +32,7 @@ async def get_live_data_instruments(session: Annotated[Session, Depends(get_db_s
 
 
 def _get_traceback_key(instrument: str) -> str:
-    return f"fia_api:live_data:traceback:{instrument.upper()}"
+    return f"live_data:{instrument.upper()}:traceback"
 
 
 @LiveDataRouter.get("/live-data/{instrument}/traceback")
