@@ -43,7 +43,7 @@ async def get_instrument_traceback(instrument: str) -> str | None:
     :param instrument: The instrument string
     :return: The live data traceback or None
     """
-    return cache_get(_get_traceback_key(instrument))
+    return cache_get(_get_traceback_key(instrument.lower()))
 
 
 @LiveDataRouter.get("/live-data/{instrument}/script")
