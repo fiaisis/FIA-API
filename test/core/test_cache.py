@@ -8,6 +8,7 @@ from redis.exceptions import RedisError
 
 from fia_api.core.cache import (
     _create_client,
+    cache_get,
     cache_get_json,
     cache_set_json,
     get_valkey_client,
@@ -21,6 +22,27 @@ def test_cache_get_json_returns_none_when_no_client():
     with patch("fia_api.core.cache.get_valkey_client", return_value=None) as mock_client:
         assert cache_get_json("key") is None
         mock_client.assert_called_once_with()
+
+
+def test_cache_get_returns_none_when_no_client():
+    with patch("fia_api.core.cache.get_valkey_client", return_value=None) as mock_client:
+        assert cache_get("key") is None
+        mock_client.assert_called_once_with()
+
+
+def test_cache_get_returns_payload():
+    mock_client = Mock()
+    mock_client.get.return_value = "some_string_value"
+    with patch("fia_api.core.cache.get_valkey_client", return_value=mock_client):
+        assert cache_get("key") == "some_string_value"
+        mock_client.get.assert_called_once_with("key")
+
+
+def test_cache_get_redis_error():
+    mock_client = Mock()
+    mock_client.get.side_effect = RedisError("boom")
+    with patch("fia_api.core.cache.get_valkey_client", return_value=mock_client):
+        assert cache_get("key") is None
 
 
 def test_cache_get_json_returns_parsed_payload():
