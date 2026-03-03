@@ -158,10 +158,7 @@ class PearlAutomation:
             return
 
         # Outputs is expected to be a string or list of filenames
-        if isinstance(outputs, str):
-            filenames = outputs.split(',')
-        else:
-            filenames = outputs
+        filenames = outputs.split(',') if isinstance(outputs, str) else outputs
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
