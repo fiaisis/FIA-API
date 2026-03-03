@@ -63,7 +63,8 @@ def test_submit_job_success(mock_post, get_automation):
     mock_post.return_value = mock_response
 
     job_id = automation.submit_job("print('hello')", "6.9.0")
-    assert job_id == 12345
+    expected_job_id = 12345
+    assert job_id == expected_job_id
     mock_post.assert_called_once()
 
 
@@ -86,7 +87,8 @@ def test_monitor_job_success(mock_sleep, mock_get, get_automation):
 
     job_data = automation.monitor_job(12345, poll_interval=0)
     assert job_data["state"] == State.SUCCESSFUL.value
-    assert mock_get.call_count == 2
+    expected_call_count = 2
+    assert mock_get.call_count == expected_call_count
 
 
 @patch("fia_api.scripts.pearl_automation.requests.get")
@@ -100,6 +102,7 @@ def test_download_results(mock_open, mock_get, get_automation):
     mock_get.return_value = mock_response
 
     automation.download_results(12345, "file1.csv, file2.csv")
+    expected_call_count = 2
 
-    assert mock_get.call_count == 2
-    assert mock_open.call_count == 2
+    assert mock_get.call_count == expected_call_count
+    assert mock_open.call_count == expected_call_count
