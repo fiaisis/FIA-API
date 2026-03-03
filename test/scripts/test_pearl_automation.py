@@ -23,7 +23,7 @@ def get_automation():
     )    
 
 @patch("fia_api.core.scripts.pearl_automation.requests.post")
-def test_authenticate_success(get_automation, mock_post):
+def test_authenticate_success(mock_post, get_automation):
     automation = get_automation
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -39,7 +39,7 @@ def test_authenticate_success(get_automation, mock_post):
     )
 
 @patch("fia_api.core.scripts.pearl_automation.requests.get")
-def test_get_runner_image_success(get_automation, mock_get):
+def test_get_runner_image_success(mock_get, get_automation):
     automation = get_automation
     automation.token = "valid_token"
     mock_response = MagicMock()
@@ -52,7 +52,7 @@ def test_get_runner_image_success(get_automation, mock_get):
     mock_get.assert_called_once()
 
 @patch("fia_api.core.scripts.pearl_automation.requests.post")
-def test_submit_job_success(get_automation, mock_post):
+def test_submit_job_success(mock_post, get_automation):
     automation = get_automation
     automation.token = "valid_token"
     mock_response = MagicMock()
@@ -66,7 +66,7 @@ def test_submit_job_success(get_automation, mock_post):
 
 @patch("fia_api.core.scripts.pearl_automation.requests.get")
 @patch("fia_api.core.scripts.pearl_automation.time.sleep", return_value=None)
-def test_monitor_job_success(get_automation, mock_sleep, mock_get):
+def test_monitor_job_success(mock_sleep, mock_get, get_automation):
     automation = get_automation
     automation.token = "valid_token"
     
@@ -87,7 +87,7 @@ def test_monitor_job_success(get_automation, mock_sleep, mock_get):
 
 @patch("fia_api.core.scripts.pearl_automation.requests.get")
 @patch("fia_api.core.scripts.pearl_automation.open", new_callable=unittest.mock.mock_open)
-def test_download_results(get_automation, mock_open, mock_get):
+def test_download_results(mock_open, mock_get, get_automation):
     automation = get_automation
     automation.token = "valid_token"
     mock_response = MagicMock()
