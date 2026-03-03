@@ -92,7 +92,7 @@ def test_monitor_job_success(mock_sleep, mock_get, get_automation):
 
 
 @patch("fia_api.scripts.pearl_automation.requests.get")
-@patch("fia_api.scripts.pearl_automation.open", new_callable=unittest.mock.mock_open)
+@patch("fia_api.scripts.pearl_automation.Path.open", new_callable=unittest.mock.mock_open)
 def test_download_results(mock_open, mock_get, get_automation):
     automation = get_automation
     automation.token = "valid_token"
