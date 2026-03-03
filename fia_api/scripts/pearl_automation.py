@@ -162,8 +162,8 @@ class PearlAutomation:
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        for filename in filenames:
-            filename = filename.strip()
+        for file in filenames:
+            filename = file.strip()
             if not filename:
                 continue
             
