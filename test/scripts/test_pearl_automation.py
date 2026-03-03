@@ -22,7 +22,7 @@ def get_automation():
         fia_url, auth_url, username, password, output_dir
     )    
 
-@patch("fia_api.scripts.pearl_automation.requests.post")
+@patch("fia_api.core.scripts.pearl_automation.requests.post")
 def test_authenticate_success(get_automation, mock_post):
     automation = get_automation
     mock_response = MagicMock()
@@ -38,7 +38,7 @@ def test_authenticate_success(get_automation, mock_post):
         timeout=30
     )
 
-@patch("fia_api.scripts.pearl_automation.requests.get")
+@patch("fia_api.core.scripts.pearl_automation.requests.get")
 def test_get_runner_image_success(get_automation, mock_get):
     automation = get_automation
     automation.token = "valid_token"
@@ -51,7 +51,7 @@ def test_get_runner_image_success(get_automation, mock_get):
     assert runner == "6.9.0"
     mock_get.assert_called_once()
 
-@patch("fia_api.scripts.pearl_automation.requests.post")
+@patch("fia_api.core.scripts.pearl_automation.requests.post")
 def test_submit_job_success(get_automation, mock_post):
     automation = get_automation
     automation.token = "valid_token"
@@ -64,8 +64,8 @@ def test_submit_job_success(get_automation, mock_post):
     assert job_id == 12345
     mock_post.assert_called_once()
 
-@patch("fia_api.scripts.pearl_automation.requests.get")
-@patch("fia_api.scripts.pearl_automation.time.sleep", return_value=None)
+@patch("fia_api.core.scripts.pearl_automation.requests.get")
+@patch("fia_api.core.scripts.pearl_automation.time.sleep", return_value=None)
 def test_monitor_job_success(get_automation, mock_sleep, mock_get):
     automation = get_automation
     automation.token = "valid_token"
@@ -85,8 +85,8 @@ def test_monitor_job_success(get_automation, mock_sleep, mock_get):
     assert job_data["state"] == State.SUCCESSFUL.value
     assert mock_get.call_count == 2
 
-@patch("fia_api.scripts.pearl_automation.requests.get")
-@patch("fia_api.scripts.pearl_automation.open", new_callable=unittest.mock.mock_open)
+@patch("fia_api.core.scripts.pearl_automation.requests.get")
+@patch("fia_api.core.scripts.pearl_automation.open", new_callable=unittest.mock.mock_open)
 def test_download_results(get_automation, mock_open, mock_get):
     automation = get_automation
     automation.token = "valid_token"
