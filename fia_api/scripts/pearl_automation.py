@@ -47,7 +47,7 @@ for cycle in Cycles2Run:
             continue
         NormaliseByCurrent(InputWorkspace=str(i), OutputWorkspace=str(i))
         ExtractSingleSpectrum(InputWorkspace=str(i),WorkspaceIndex=index, OutputWorkspace=str(i)+ '_' + str(index))
-        CropWorkspace(InputWorkspace=str(i)+ '_' + str(index), Xmin=1100, Xmax=19990, OutputWorkspace=str(i)+ '_' + str(index)) #noqa E501
+        CropWorkspace(InputWorkspace=str(i)+ '_' + str(index), Xmin=1100, Xmax=19990, OutputWorkspace=str(i)+ '_' + str(index))
         DeleteWorkspace(str(i))
 
         fit_output = Fit(Function='name=Gaussian,Height=19.2327,\\\\PeakCentre=4843.8,Sigma=1532.64,\\\\constraints=(4600<PeakCentre<5200,1100<Sigma<1900);\\\\name=FlatBackground,A0=16.6099,ties=(A0=16.6099)', InputWorkspace=str(i)+ '_' + str(index), MaxIterations=1000, CreateOutput=True, Output=str(i)+ '_' + str(index) + '_fit', OutputCompositeMembers=True, StartX=3800, EndX=6850, Normalise=True) #noqa E501
@@ -213,10 +213,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if not args.username or not args.password:
-        logger.error(
-            "Username and password must be provided via " \
+        err_msg = (
+            "Username and password must be provided via "
             "arguments or environment variables (PEARL_USERNAME, PEARL_PASSWORD)"
         )
+        logger.error(err_msg)
         sys.exit(1)
 
     automation = PearlAutomation(
