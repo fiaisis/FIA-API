@@ -17,7 +17,7 @@ def get_automation():
     fia_url = "http://fia-api"
     auth_url = "http://auth-api"
     username = "test_user"
-    password = "test_pass"
+    password = "test_pass" #noqa S105
     output_dir = "./test_output"
     return PearlAutomation(fia_url, auth_url, username, password, output_dir)
 
@@ -31,7 +31,7 @@ def test_authenticate_success(mock_post, get_automation):
     mock_post.return_value = mock_response
 
     automation.authenticate()
-    assert automation.token == "valid_token"
+    assert automation.token == "valid_token" #noqa S105
     mock_post.assert_called_once_with(
         f"{automation.auth_url}/login",
         json={"username": automation.username, "password": automation.password},
@@ -42,7 +42,7 @@ def test_authenticate_success(mock_post, get_automation):
 @patch("fia_api.scripts.pearl_automation.requests.get")
 def test_get_runner_image_success(mock_get, get_automation):
     automation = get_automation
-    automation.token = "valid_token"
+    automation.token = "valid_token" #noqa S105
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"6.8.0": "sha1", "6.9.0": "sha2"}
@@ -56,7 +56,7 @@ def test_get_runner_image_success(mock_get, get_automation):
 @patch("fia_api.scripts.pearl_automation.requests.post")
 def test_submit_job_success(mock_post, get_automation):
     automation = get_automation
-    automation.token = "valid_token"
+    automation.token = "valid_token" #noqa S105
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = 12345
@@ -72,7 +72,7 @@ def test_submit_job_success(mock_post, get_automation):
 @patch("fia_api.scripts.pearl_automation.time.sleep", return_value=None)
 def test_monitor_job_success(mock_sleep, mock_get, get_automation):
     automation = get_automation
-    automation.token = "valid_token"
+    automation.token = "valid_token" #noqa S105
 
     # Mock responses for polling: 1st NOT_STARTED, 2nd SUCCESSFUL
     mock_response_1 = MagicMock()
@@ -95,7 +95,7 @@ def test_monitor_job_success(mock_sleep, mock_get, get_automation):
 @patch("fia_api.scripts.pearl_automation.Path.open", new_callable=unittest.mock.mock_open)
 def test_download_results(mock_open, mock_get, get_automation):
     automation = get_automation
-    automation.token = "valid_token"
+    automation.token = "valid_token" #noqa S105
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.iter_content.return_value = [b"data1", b"data2"]
