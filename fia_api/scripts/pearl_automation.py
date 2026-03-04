@@ -146,7 +146,7 @@ class PearlAutomation:
         # Select latest version if possible, or just the first one
         latest_version = sorted(runners.keys())[-1]
         logger.info(f"Selected Mantid runner: {latest_version}")
-        return latest_version
+        return str(latest_version)
 
     def submit_job(self, script: str, runner_image: str) -> int:
         logger.info(f"Submitting simple job with runner {runner_image}")
@@ -162,7 +162,7 @@ class PearlAutomation:
         while True:
             response = requests.get(f"{self.fia_url}/job/{job_id}", headers=self.get_headers(), timeout=30)
             response.raise_for_status()
-            job_data = response.json()
+            job_data: dict[str, Any] = response.json()
             state = job_data.get("state")
 
             logger.info(f"Job {job_id} current state: {state}")
