@@ -4,6 +4,7 @@ import os
 import sys
 import time
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 import requests
 
@@ -96,16 +97,24 @@ logger = logging.getLogger(__name__)
 
 
 class PearlAutomation:
-    def __init__(self, fia_url, auth_url, username, password, output_dir, runner_image=None):
+    def __init__(
+        self,
+        fia_url: str,
+        auth_url: str,
+        username: Optional[str],
+        password: Optional[str],
+        output_dir: Union[str, Path],
+        runner_image: Optional[str] = None,
+    ) -> None:
         self.fia_url = fia_url.rstrip("/")
         self.auth_url = auth_url.rstrip("/")
         self.username = username
         self.password = password
         self.output_dir = Path(output_dir)
         self.runner_image = runner_image
-        self.token = None
+        self.token: Optional[str] = None
 
-    def authenticate(self):
+    def authenticate(self) -> None:
         logger.info(f"Authenticating user {self.username} at {self.auth_url}")
         try:
             response = requests.post(
@@ -120,10 +129,10 @@ class PearlAutomation:
             logger.error(f"Authentication failed: {e}")
             raise
 
-    def get_headers(self):
+    def get_headers(self) -> Dict[str, str]:
         return {"Authorization": f"Bearer {self.token}"}
 
-    def get_runner_image(self):
+    def get_runner_image(self) -> str:
         if self.runner_image:
             return self.runner_image
 
@@ -139,16 +148,16 @@ class PearlAutomation:
         logger.info(f"Selected Mantid runner: {latest_version}")
         return latest_version
 
-    def submit_job(self, script, runner_image):
+    def submit_job(self, script: str, runner_image: str) -> int:
         logger.info(f"Submitting simple job with runner {runner_image}")
         payload = {"runner_image": runner_image, "script": script}
         response = requests.post(f"{self.fia_url}/job/simple", json=payload, headers=self.get_headers(), timeout=30)
         response.raise_for_status()
-        job_id = response.json()
+        job_id = int(response.json())
         logger.info(f"Job submitted successfully. Job ID: {job_id}")
         return job_id
 
-    def monitor_job(self, job_id, poll_interval=5):
+    def monitor_job(self, job_id: int, poll_interval: int = 5) -> Dict[str, Any]:
         logger.info(f"Monitoring job {job_id}")
         while True:
             response = requests.get(f"{self.fia_url}/job/{job_id}", headers=self.get_headers(), timeout=30)
@@ -168,7 +177,7 @@ class PearlAutomation:
 
             time.sleep(poll_interval)
 
-    def download_results(self, job_id, outputs):
+    def download_results(self, job_id: int, outputs: Optional[Union[str, List[str]]]) -> None:
         if not outputs:
             logger.warning(f"No outputs found for job {job_id}")
             return
@@ -195,7 +204,7 @@ class PearlAutomation:
                     f.write(chunk)
             logger.info(f"Downloaded {filename} to {file_path}")
 
-    def run(self):
+    def run(self) -> None:
         try:
             self.authenticate()
             runner_image = self.get_runner_image()
