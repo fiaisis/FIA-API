@@ -46,11 +46,24 @@ for cycle in Cycles2Run:
             DeleteWorkspace(str(i))
             continue
         NormaliseByCurrent(InputWorkspace=str(i), OutputWorkspace=str(i))
-        ExtractSingleSpectrum(InputWorkspace=str(i),WorkspaceIndex=index, OutputWorkspace=str(i)+ '_' + str(index))
-        CropWorkspace(InputWorkspace=str(i)+ '_' + str(index), Xmin=1100, Xmax=19990, OutputWorkspace=str(i)+ '_' + str(index))
+        ExtractSingleSpectrum(InputWorkspace=str(i),WorkspaceIndex=index,
+            OutputWorkspace=str(i)+ '_' + str(index))
+        CropWorkspace(InputWorkspace=str(i)+ '_' + str(index), Xmin=1100,
+            Xmax=19990, OutputWorkspace=str(i)+ '_' + str(index))
         DeleteWorkspace(str(i))
 
-        fit_output = Fit(Function='name=Gaussian,Height=19.2327,\\\\PeakCentre=4843.8,Sigma=1532.64,\\\\constraints=(4600<PeakCentre<5200,1100<Sigma<1900);\\\\name=FlatBackground,A0=16.6099,ties=(A0=16.6099)', InputWorkspace=str(i)+ '_' + str(index), MaxIterations=1000, CreateOutput=True, Output=str(i)+ '_' + str(index) + '_fit', OutputCompositeMembers=True, StartX=3800, EndX=6850, Normalise=True) #noqa E501
+        fit_output = Fit(Function='name=Gaussian,Height=19.2327,\\
+            PeakCentre=4843.8,Sigma=1532.64,\\
+            constraints=(4600<PeakCentre<5200,1100<Sigma<1900);\\
+            name=FlatBackground,A0=16.6099,ties=(A0=16.6099)',
+            InputWorkspace=str(i)+ '_' + str(index),
+            MaxIterations=1000,
+            CreateOutput=True,
+            Output=str(i)+ '_' + str(index) + '_fit',
+            OutputCompositeMembers=True,
+            StartX=3800,
+            EndX=6850,
+            Normalise=True)
         paramTable = fit_output.OutputParameters
 
         if paramTable.column(1)[1] < 4600.0 or paramTable.column(1)[1] > 5200.0:
