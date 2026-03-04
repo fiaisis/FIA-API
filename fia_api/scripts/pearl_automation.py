@@ -4,7 +4,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import requests
 
@@ -101,10 +101,10 @@ class PearlAutomation:
         self,
         fia_url: str,
         auth_url: str,
-        username: Optional[str],
-        password: Optional[str],
-        output_dir: Union[str, Path],
-        runner_image: Optional[str] = None,
+        username: str | None,
+        password: str | None,
+        output_dir: str | Path,
+        runner_image: str | None = None,
     ) -> None:
         self.fia_url = fia_url.rstrip("/")
         self.auth_url = auth_url.rstrip("/")
@@ -112,7 +112,7 @@ class PearlAutomation:
         self.password = password
         self.output_dir = Path(output_dir)
         self.runner_image = runner_image
-        self.token: Optional[str] = None
+        self.token: str | None = None
 
     def authenticate(self) -> None:
         logger.info(f"Authenticating user {self.username} at {self.auth_url}")
@@ -129,7 +129,7 @@ class PearlAutomation:
             logger.error(f"Authentication failed: {e}")
             raise
 
-    def get_headers(self) -> Dict[str, str]:
+    def get_headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.token}"}
 
     def get_runner_image(self) -> str:
@@ -157,7 +157,7 @@ class PearlAutomation:
         logger.info(f"Job submitted successfully. Job ID: {job_id}")
         return job_id
 
-    def monitor_job(self, job_id: int, poll_interval: int = 5) -> Dict[str, Any]:
+    def monitor_job(self, job_id: int, poll_interval: int = 5) -> dict[str, Any]:
         logger.info(f"Monitoring job {job_id}")
         while True:
             response = requests.get(f"{self.fia_url}/job/{job_id}", headers=self.get_headers(), timeout=30)
@@ -177,7 +177,7 @@ class PearlAutomation:
 
             time.sleep(poll_interval)
 
-    def download_results(self, job_id: int, outputs: Optional[Union[str, List[str]]]) -> None:
+    def download_results(self, job_id: int, outputs: str | list[str] | None) -> None:
         if not outputs:
             logger.warning(f"No outputs found for job {job_id}")
             return
