@@ -48,7 +48,7 @@ def test_authenticate_no_token_raises_error(mock_post, get_automation):
     mock_post.return_value = mock_response
 
     with pytest.raises(ValueError, match="No token found in login response"):
-        automation.authenticate()   
+        automation.authenticate()
 
 
 @patch("fia_api.scripts.pearl_automation.requests.get")
