@@ -183,21 +183,41 @@ def test_run_success(mock_dl, mock_mon, mock_sub, mock_get_img, mock_auth, get_a
     mock_dl.assert_called_once_with(1, "out")
 
 
+@patch("fia_api.scripts.pearl_automation.PearlAutomation.authenticate", side_effect=Exception("Auth fail"))
+@patch("fia_api.scripts.pearl_automation.sys.exit")
+def test_run_failure(mock_exit, mock_auth, get_automation):
+    automation = get_automation
+    automation.run()
+    mock_exit.assert_called_once_with(1)
+
+
 @patch("fia_api.scripts.pearl_automation.sys.argv", ["pearl_automation.py", "--username", "u", "--password", "p"])
 @patch("fia_api.scripts.pearl_automation.PearlAutomation.run")
-def test_main_block(mock_run):
-    from fia_api.scripts import pearl_automation
-    with patch("fia_api.scripts.pearl_automation.__name__", "__main__"):
-        # We can't easily trigger the if __name__ == "__main__" block by importing
-        # but we can call a function if we wrap the main logic.
-        # However, the current script has logic directly in the if block.
-        # I'll add a test that manually triggers the parsing logic if possible, 
-        # or I can wrap the main logic in a main() function in the script first.
-        pass
+def test_main_success(mock_run):
+    from fia_api.scripts.pearl_automation import main
+    main()
+    mock_run.assert_called_once()
 
-@patch("fia_api.scripts.pearl_automation.sys.exit")
+
 @patch("fia_api.scripts.pearl_automation.sys.argv", ["pearl_automation.py", "--username", "", "--password", ""])
-def test_main_no_creds(mock_exit):
-    # This is also hard without a main() function.
-    # I'll refactor the script to have a main() function for better testability.
-    pass
+@patch("fia_api.scripts.pearl_automation.sys.exit")
+def test_main_no_creds_exits(mock_exit):
+    from fia_api.scripts.pearl_automation import main
+    with patch.dict(os.environ, {}, clear=True):
+        main()
+    mock_exit.assert_called_once_with(1)
+
+
+@patch("fia_api.scripts.pearl_automation.requests.get")
+@patch("fia_api.scripts.pearl_automation.Path.open", new_callable=unittest.mock.mock_open)
+def test_download_results_list_input(mock_open, mock_get, get_automation):
+    automation = get_automation
+    automation.token = "valid_token"
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.iter_content.return_value = [b"data"]
+    mock_get.return_value = mock_response
+
+    automation.download_results(12345, ["file1.csv"])
+    assert mock_get.call_count == 1
+    assert mock_open.call_count == 1
