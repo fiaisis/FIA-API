@@ -38,6 +38,18 @@ def test_authenticate_success(mock_post, get_automation):
         timeout=30,
     )
 
+@patch("fia_api.scripts.pearl_automation.requests.post")
+def test_authenticate_failed_raises_error(mock_post, get_automation):
+    automation = get_automation
+    mock_response = MagicMock()
+    mock_response.status_code = 400
+    mock_response.json.return_value = {"token": "invalid_token"}
+    mock_post.return_value = mock_response
+
+    with pytest.raises(Exception):
+        automation.authenticate()
+    
+
 
 @patch("fia_api.scripts.pearl_automation.requests.get")
 def test_get_runner_image_success(mock_get, get_automation):
