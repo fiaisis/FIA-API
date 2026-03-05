@@ -186,7 +186,7 @@ def test_run_success(mock_dl, mock_mon, mock_sub, mock_get_img, mock_auth, get_a
 
 @patch("fia_api.scripts.pearl_automation.PearlAutomation.authenticate", side_effect=Exception("Auth fail"))
 @patch("fia_api.scripts.pearl_automation.sys.exit")
-def test_run_failure(mock_exit, mock_auth, get_automation):
+def test_run_failure(mock_exit: MagicMock, mock_auth: MagicMock, get_automation: PearlAutomation) -> None:
     automation = get_automation
     automation.run()
     mock_exit.assert_called_once_with(1)
@@ -194,24 +194,26 @@ def test_run_failure(mock_exit, mock_auth, get_automation):
 
 @patch("fia_api.scripts.pearl_automation.sys.argv", ["pearl_automation.py", "--username", "u", "--password", "p"])
 @patch("fia_api.scripts.pearl_automation.PearlAutomation.run")
-def test_main_success(mock_run):
+def test_main_success(mock_run: MagicMock) -> None:
     from fia_api.scripts.pearl_automation import main
+
     main()
     mock_run.assert_called_once()
 
 
 @patch("fia_api.scripts.pearl_automation.sys.argv", ["pearl_automation.py", "--username", "", "--password", ""])
-@patch("fia_api.scripts.pearl_automation.sys.exit")
-def test_main_no_creds_exits(mock_exit):
+@patch("fia_api.scripts.pearl_automation.sys.exit", side_effect=SystemExit)
+def test_main_no_creds_exits(mock_exit: MagicMock) -> None:
     from fia_api.scripts.pearl_automation import main
-    with patch.dict(os.environ, {}, clear=True):
+
+    with patch.dict(os.environ, {}, clear=True), pytest.raises(SystemExit):
         main()
     mock_exit.assert_called_once_with(1)
 
 
 @patch("fia_api.scripts.pearl_automation.requests.get")
 @patch("fia_api.scripts.pearl_automation.Path.open", new_callable=unittest.mock.mock_open)
-def test_download_results_list_input(mock_open, mock_get, get_automation):
+def test_download_results_list_input(mock_open: MagicMock, mock_get: MagicMock, get_automation: PearlAutomation) -> None:
     automation = get_automation
     automation.token = "valid_token"
     mock_response = MagicMock()
@@ -222,3 +224,17 @@ def test_download_results_list_input(mock_open, mock_get, get_automation):
     automation.download_results(12345, ["file1.csv"])
     assert mock_get.call_count == 1
     assert mock_open.call_count == 1
+
+
+def test_main_entry_point() -> None:
+    import subprocess
+
+    # Run the script as a subprocess to cover the if __name__ == "__main__": block
+    # We provide invalid args so it exits quickly
+    result = subprocess.run(
+        [sys.executable, "-m", "fia_api.scripts.pearl_automation", "--username", ""],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1
+    assert "Username and password must be provided" in result.stderr
