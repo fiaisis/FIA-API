@@ -217,7 +217,7 @@ class PearlAutomation:
             sys.exit(1)
 
 
-if __name__ == "__main__":
+def main() -> None:
     parser = argparse.ArgumentParser(description="Automate PEARL Mantid jobs via FIA API")
     parser.add_argument("--fia-url", default=os.environ.get("FIA_API_URL", "http://localhost:8080"), help="FIA API URL")
     parser.add_argument(
@@ -246,3 +246,7 @@ if __name__ == "__main__":
         args.fia_url, args.auth_url, args.username, args.password, args.output_dir, args.runner
     )
     automation.run()
+
+
+if __name__ == "__main__":
+    main()
