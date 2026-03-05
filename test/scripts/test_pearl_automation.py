@@ -48,7 +48,7 @@ def test_authenticate_no_token_raises_error(mock_post, get_automation):
     mock_post.return_value = mock_response
 
     with pytest.raises(ValueError, match="No token found in login response"):
-        automation.authenticate()   
+        automation.authenticate()
 
 
 @patch("fia_api.scripts.pearl_automation.requests.get")
@@ -186,14 +186,15 @@ def test_run_success(mock_dl, mock_mon, mock_sub, mock_get_img, mock_auth, get_a
 @patch("fia_api.scripts.pearl_automation.sys.argv", ["pearl_automation.py", "--username", "u", "--password", "p"])
 @patch("fia_api.scripts.pearl_automation.PearlAutomation.run")
 def test_main_block(mock_run):
-    from fia_api.scripts import pearl_automation
+
     with patch("fia_api.scripts.pearl_automation.__name__", "__main__"):
         # We can't easily trigger the if __name__ == "__main__" block by importing
         # but we can call a function if we wrap the main logic.
         # However, the current script has logic directly in the if block.
-        # I'll add a test that manually triggers the parsing logic if possible, 
+        # I'll add a test that manually triggers the parsing logic if possible,
         # or I can wrap the main logic in a main() function in the script first.
         pass
+
 
 @patch("fia_api.scripts.pearl_automation.sys.exit")
 @patch("fia_api.scripts.pearl_automation.sys.argv", ["pearl_automation.py", "--username", "", "--password", ""])
