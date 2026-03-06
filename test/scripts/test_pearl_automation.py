@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -10,7 +11,7 @@ import pytest
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from fia_api.core.models import State
-from fia_api.scripts.pearl_automation import PearlAutomation
+from fia_api.scripts.pearl_automation import PearlAutomation, main
 
 
 @pytest.fixture(scope="session")
@@ -195,8 +196,6 @@ def test_run_failure(mock_exit: MagicMock, mock_auth: MagicMock, get_automation:
 @patch("fia_api.scripts.pearl_automation.sys.argv", ["pearl_automation.py", "--username", "u", "--password", "p"])
 @patch("fia_api.scripts.pearl_automation.PearlAutomation.run")
 def test_main_success(mock_run: MagicMock) -> None:
-    from fia_api.scripts.pearl_automation import main
-
     main()
     mock_run.assert_called_once()
 
@@ -204,8 +203,6 @@ def test_main_success(mock_run: MagicMock) -> None:
 @patch("fia_api.scripts.pearl_automation.sys.argv", ["pearl_automation.py", "--username", "", "--password", ""])
 @patch("fia_api.scripts.pearl_automation.sys.exit", side_effect=SystemExit)
 def test_main_no_creds_exits(mock_exit: MagicMock) -> None:
-    from fia_api.scripts.pearl_automation import main
-
     with patch.dict(os.environ, {}, clear=True), pytest.raises(SystemExit):
         main()
     mock_exit.assert_called_once_with(1)
@@ -215,7 +212,7 @@ def test_main_no_creds_exits(mock_exit: MagicMock) -> None:
 @patch("fia_api.scripts.pearl_automation.Path.open", new_callable=unittest.mock.mock_open)
 def test_download_results_list_input(mock_open: MagicMock, mock_get: MagicMock, get_automation: PearlAutomation) -> None:
     automation = get_automation
-    automation.token = "valid_token"
+    automation.token = "valid_token"  # noqa: S105
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.iter_content.return_value = [b"data"]
@@ -227,14 +224,13 @@ def test_download_results_list_input(mock_open: MagicMock, mock_get: MagicMock, 
 
 
 def test_main_entry_point() -> None:
-    import subprocess
-
     # Run the script as a subprocess to cover the if __name__ == "__main__": block
     # We provide invalid args so it exits quickly
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, "-m", "fia_api.scripts.pearl_automation", "--username", ""],
         capture_output=True,
         text=True,
+        check=False,
     )
     assert result.returncode == 1
     assert "Username and password must be provided" in result.stderr
