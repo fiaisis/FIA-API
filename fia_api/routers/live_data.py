@@ -1,4 +1,5 @@
 # Live Data Script router
+import os
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends
@@ -6,7 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.cache import cache_get, cache_set_json
+from fia_api.core.cache import cache_get, cache_get_json, cache_set_json
 from fia_api.core.exceptions import AuthError
 from fia_api.core.request_models import LiveDataScriptUpdateRequest
 from fia_api.core.services.instrument import (
@@ -18,6 +19,8 @@ from fia_api.core.session import get_db_session
 
 LiveDataRouter = APIRouter(tags=["live-data"])
 jwt_api_security = JWTAPIBearer()
+LIVE_DATA_INSTRUMENTS_CACHE_TTL_SECONDS = int(os.environ.get("LIVE_DATA_INSTRUMENTS_CACHE_TTL_SECONDS", "120"))
+LIVE_DATA_SCRIPT_CACHE_TTL_SECONDS = int(os.environ.get("LIVE_DATA_SCRIPT_CACHE_TTL_SECONDS", "60"))
 
 
 @LiveDataRouter.get("/live-data/instruments")
@@ -28,7 +31,18 @@ async def get_live_data_instruments(session: Annotated[Session, Depends(get_db_s
     :param session: The current session of the request
     :return: List of instrument names with live data support enabled
     """
-    return get_instruments_with_live_data_support(session)
+    cache_key = "fia_api:live_data:instruments"
+    if LIVE_DATA_INSTRUMENTS_CACHE_TTL_SECONDS > 0:
+        cached = cache_get_json(cache_key)
+        if isinstance(cached, list):
+            return cached
+
+    instruments = get_instruments_with_live_data_support(session)
+
+    if LIVE_DATA_INSTRUMENTS_CACHE_TTL_SECONDS > 0:
+        cache_set_json(cache_key, instruments, LIVE_DATA_INSTRUMENTS_CACHE_TTL_SECONDS)
+
+    return instruments
 
 
 def _get_traceback_key(instrument: str) -> str:
@@ -46,6 +60,10 @@ async def get_instrument_traceback(instrument: str) -> str | None:
     return cache_get(_get_traceback_key(instrument.lower()))
 
 
+def _get_script_cache_key(instrument: str) -> str:
+    return f"fia_api:live_data:script:{instrument.upper()}"
+
+
 @LiveDataRouter.get("/live-data/{instrument}/script")
 async def get_instrument_script(instrument: str, session: Annotated[Session, Depends(get_db_session)]) -> str | None:
     """
@@ -55,7 +73,17 @@ async def get_instrument_script(instrument: str, session: Annotated[Session, Dep
     :param session: The current session of the request
     :return: The live data script or None
     """
-    return get_live_data_script_by_instrument_name(instrument.upper(), session)
+    if LIVE_DATA_SCRIPT_CACHE_TTL_SECONDS > 0:
+        cached = cache_get_json(_get_script_cache_key(instrument))
+        if isinstance(cached, dict):
+            return cached.get("script")
+
+    script = get_live_data_script_by_instrument_name(instrument.upper(), session)
+
+    if LIVE_DATA_SCRIPT_CACHE_TTL_SECONDS > 0:
+        cache_set_json(_get_script_cache_key(instrument), {"script": script}, LIVE_DATA_SCRIPT_CACHE_TTL_SECONDS)
+
+    return script
 
 
 @LiveDataRouter.put("/live-data/{instrument}/script")
@@ -79,6 +107,7 @@ async def update_instrument_script(
         raise AuthError("Only Staff can update Live Data Scripts")
 
     update_live_data_script_for_instrument(instrument.upper(), script_request.value, session)
-    # Clear traceback when script is updated
+    # Clear traceback and script cache when script is updated
     cache_set_json(_get_traceback_key(instrument), None, 1)
+    cache_set_json(_get_script_cache_key(instrument), None, 1)
     return "ok"
