@@ -48,7 +48,9 @@ async def get_instrument_specification(
     specification = get_specification_by_instrument_name(instrument_name.upper(), session)
 
     if INSTRUMENT_SPEC_CACHE_TTL_SECONDS > 0:
-        cache_set_json(_spec_cache_key(instrument_name), {"specification": specification}, INSTRUMENT_SPEC_CACHE_TTL_SECONDS)
+        cache_set_json(
+            _spec_cache_key(instrument_name), {"specification": specification}, INSTRUMENT_SPEC_CACHE_TTL_SECONDS
+        )
 
     return specification
 
