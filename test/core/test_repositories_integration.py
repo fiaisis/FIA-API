@@ -16,7 +16,8 @@ from sqlalchemy import NullPool, create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from fia_api.core.models import Base, Instrument, Job, JobOwner, JobType, Run, Script, State
-from fia_api.core.repositories import ENGINE, SESSION, Repo, ensure_db_connection
+from fia_api.core.repositories import Repo
+from fia_api.core.session import ENGINE, SESSION, ensure_db_connection
 from fia_api.core.specifications.job import JobSpecification
 
 DB_USERNAME = os.environ.get("DB_USERNAME", "postgres")
@@ -204,7 +205,7 @@ def test_jobs_by_instrument_sort_by_job_field(job_repo):
     assert result == expected
 
 
-@mock.patch("fia_api.core.repositories.select")
+@mock.patch("fia_api.core.session.select")
 def test_ensure_db_connection_raises_httpexception(mock_select):
     """Test exception raised when runtime error occurs"""
     mock_session_object = MagicMock()

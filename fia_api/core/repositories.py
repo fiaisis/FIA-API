@@ -1,13 +1,12 @@
 """Provides a generic repository class for performing database operations."""
 
 import logging
-import os
 from collections.abc import Sequence
 from typing import Generic, TypeVar
 
-from sqlalchemy import NullPool, create_engine, func, select
+from sqlalchemy import func, select
 from sqlalchemy.exc import MultipleResultsFound, NoResultFound
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
 from fia_api.core.exceptions import NonUniqueRecordError
 from fia_api.core.models import Base
@@ -16,23 +15,6 @@ from fia_api.core.specifications.base import Specification
 T = TypeVar("T", bound=Base)
 
 logger = logging.getLogger(__name__)
-
-DB_USERNAME = os.environ.get("DB_USERNAME", "postgres")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "password")
-DB_IP = os.environ.get("DB_IP", "localhost")
-
-ENGINE = create_engine(
-    f"postgresql+psycopg2://{DB_USERNAME}:{DB_PASSWORD}@{DB_IP}:5432/fia",
-    poolclass=NullPool,
-)
-
-SESSION = sessionmaker(ENGINE)
-
-
-def ensure_db_connection(db: Session) -> None:
-    """Test connection to database."""
-    with db as session:
-        session.execute(select(1))
 
 
 class Repo(Generic[T]):
