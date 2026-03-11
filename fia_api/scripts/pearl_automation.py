@@ -121,7 +121,8 @@ class PearlAutomation:
                 f"{self.auth_url}/login", json={"username": self.username, "password": self.password}, timeout=30
             )
             response.raise_for_status()
-            self.token = response.json().get("token")
+            body = response.json()
+            self.token = body if isinstance(body, str) else body.get("token")
             if not self.token:
                 raise ValueError("No token found in login response")
             logger.info("Authentication successful")
@@ -146,7 +147,8 @@ class PearlAutomation:
         # Select latest version if possible, or just the first one
         latest_version = sorted(runners.keys())[-1]
         logger.info(f"Selected Mantid runner: {latest_version}")
-        return str(latest_version)
+        self.runner_image = str(latest_version)
+        return self.runner_image
 
     def submit_job(self, script: str, runner_image: str) -> int:
         logger.info(f"Submitting simple job with runner {runner_image}")

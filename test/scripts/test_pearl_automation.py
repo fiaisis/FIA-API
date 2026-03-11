@@ -42,6 +42,19 @@ def test_authenticate_success(mock_post, get_automation):
 
 
 @patch("fia_api.scripts.pearl_automation.requests.post")
+def test_authenticate_success_string_token(mock_post, get_automation):
+    """Auth APIs that return a bare string token (not a dict) are also handled."""
+    automation = get_automation
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = "valid_token"  # noqa: S105 — bare string response
+    mock_post.return_value = mock_response
+
+    automation.authenticate()
+    assert automation.token == "valid_token"  # noqa: S105
+
+
+@patch("fia_api.scripts.pearl_automation.requests.post")
 def test_authenticate_no_token_raises_error(mock_post, get_automation):
     automation = get_automation
     mock_response = MagicMock()
