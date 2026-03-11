@@ -47,7 +47,7 @@ def test_authenticate_success_string_token(mock_post, get_automation):
     automation = get_automation
     mock_response = MagicMock()
     mock_response.status_code = 200
-    mock_response.json.return_value = "valid_token"  # noqa: S105 — bare string response
+    mock_response.json.return_value = "valid_token"
     mock_post.return_value = mock_response
 
     automation.authenticate()
