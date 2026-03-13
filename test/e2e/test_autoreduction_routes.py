@@ -6,8 +6,8 @@ import pytest
 from sqlalchemy import delete, select
 
 from fia_api.core.models import Job, Run
-from fia_api.core.repositories import SESSION
 from fia_api.core.responses import JobResponse
+from fia_api.core.session import SESSION
 from test.e2e.constants import API_KEY_HEADER, STAFF_HEADER, TEST_JOB, USER_HEADER
 from test.e2e.test_core import client
 

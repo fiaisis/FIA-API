@@ -4,8 +4,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from fia_api.core.repositories import ensure_db_connection
-from fia_api.core.session import get_db_session
+from fia_api.core.session import ensure_db_connection, get_db_session
 
 health_router = APIRouter()
 
