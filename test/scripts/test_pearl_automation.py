@@ -77,7 +77,7 @@ def test_get_runner_image_success(mock_get, get_automation):
     mock_get.return_value = mock_response
 
     runner = automation.get_runner_image()
-    assert runner == "gchr.io/fiaisis/mantid@6.15.0"
+    assert runner == "ghcr.io/fiaisis/mantid@6.15.0"
     mock_get.assert_called_once()
 
 
