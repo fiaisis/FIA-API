@@ -141,13 +141,14 @@ class PearlAutomation:
         response = requests.get(f"{self.fia_url}/jobs/runners", headers=self.get_headers(), timeout=30)
         response.raise_for_status()
         runners = response.json()
+        logger.info(f"mantid runners: {runners}")
         if not runners:
             raise ValueError("No Mantid runners found")
 
         # Select latest version if possible, or just the first one
-        latest_version = sorted(runners.keys())[-1]
+        latest_version = next(iter(runners))
         logger.info(f"Selected Mantid runner: {latest_version}")
-        self.runner_image = str(latest_version)
+        self.runner_image = f"ghcr.io/fiaisis/mantid@{str(latest_version)}"
         return self.runner_image
 
     def submit_job(self, script: str, runner_image: str) -> int:
