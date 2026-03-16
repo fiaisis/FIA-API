@@ -148,7 +148,7 @@ class PearlAutomation:
         # Select latest version if possible, or just the first one
         latest_version = next(iter(runners))
         logger.info(f"Selected Mantid runner: {latest_version}")
-        self.runner_image = f"ghcr.io/fiaisis/mantid@{str(latest_version)}"
+        self.runner_image = f"ghcr.io/fiaisis/mantid@{latest_version!s}"
         return self.runner_image
 
     def submit_job(self, script: str, runner_image: str) -> int:
