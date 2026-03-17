@@ -223,9 +223,7 @@ def test_main_no_creds_exits(mock_exit: MagicMock) -> None:
 
 @patch("fia_api.scripts.pearl_automation.requests.get")
 @patch("fia_api.scripts.pearl_automation.Path.open", new_callable=unittest.mock.mock_open)
-def test_download_results_list_input(
-    mock_open: MagicMock, mock_get: MagicMock, get_fast_start: PearlFastStart
-) -> None:
+def test_download_results_list_input(mock_open: MagicMock, mock_get: MagicMock, get_fast_start: PearlFastStart) -> None:
     automation = get_fast_start
     automation.token = "valid_token"  # noqa: S105
     mock_response = MagicMock()
