@@ -24,7 +24,7 @@ def get_fast_start():
     return PearlFastStart(fia_url, auth_url, username, password, output_dir)
 
 
-@patch("fia_api.scripts.pearl_automation.requests.post")
+@patch("fia_api.scripts.pearl_fast_jobs.requests.post")
 def test_authenticate_success(mock_post, get_fast_start):
     automation = get_fast_start
     mock_response = MagicMock()
@@ -41,7 +41,7 @@ def test_authenticate_success(mock_post, get_fast_start):
     )
 
 
-@patch("fia_api.scripts.pearl_automation.requests.post")
+@patch("fia_api.scripts.pearl_fast_jobs.requests.post")
 def test_authenticate_success_string_token(mock_post, get_fast_start):
     """Auth APIs that return a bare string token (not a dict) are also handled."""
     automation = get_fast_start
@@ -54,7 +54,7 @@ def test_authenticate_success_string_token(mock_post, get_fast_start):
     assert automation.token == "valid_token"  # noqa: S105
 
 
-@patch("fia_api.scripts.pearl_automation.requests.post")
+@patch("fia_api.scripts.pearl_fast_jobs.requests.post")
 def test_authenticate_no_token_raises_error(mock_post, get_fast_start):
     automation = get_fast_start
     mock_response = MagicMock()
@@ -66,7 +66,7 @@ def test_authenticate_no_token_raises_error(mock_post, get_fast_start):
         automation.authenticate()
 
 
-@patch("fia_api.scripts.pearl_automation.requests.get")
+@patch("fia_api.scripts.pearl_fast_jobs.requests.get")
 def test_get_runner_image_success(mock_get, get_fast_start):
     automation = get_fast_start
     automation.token = "valid_token"  # noqa S105
@@ -88,7 +88,7 @@ def test_get_runner_image_already_set(get_fast_start):
     assert runner == "custom-runner"
 
 
-@patch("fia_api.scripts.pearl_automation.requests.get")
+@patch("fia_api.scripts.pearl_fast_jobs.requests.get")
 def test_get_runner_image_empty_raises_error(mock_get, get_fast_start):
     automation = get_fast_start
     automation.token = "valid_token"  # noqa S105
@@ -102,7 +102,7 @@ def test_get_runner_image_empty_raises_error(mock_get, get_fast_start):
         automation.get_runner_image()
 
 
-@patch("fia_api.scripts.pearl_automation.requests.post")
+@patch("fia_api.scripts.pearl_fast_jobs.requests.post")
 def test_submit_job_success(mock_post, get_fast_start):
     automation = get_fast_start
     automation.token = "valid_token"  # noqa S105
@@ -117,8 +117,8 @@ def test_submit_job_success(mock_post, get_fast_start):
     mock_post.assert_called_once()
 
 
-@patch("fia_api.scripts.pearl_automation.requests.get")
-@patch("fia_api.scripts.pearl_automation.time.sleep", return_value=None)
+@patch("fia_api.scripts.pearl_fast_jobs.requests.get")
+@patch("fia_api.scripts.pearl_fast_jobs.time.sleep", return_value=None)
 def test_monitor_job_success(mock_sleep, mock_get, get_fast_start):
     automation = get_fast_start
     automation.token = "valid_token"  # noqa S105
@@ -141,7 +141,7 @@ def test_monitor_job_success(mock_sleep, mock_get, get_fast_start):
 
 
 @pytest.mark.parametrize("state", [State.ERROR.value, State.UNSUCCESSFUL.value])
-@patch("fia_api.scripts.pearl_automation.requests.get")
+@patch("fia_api.scripts.pearl_fast_jobs.requests.get")
 def test_monitor_job_failure_raises_error(mock_get, get_fast_start, state):
     automation = get_fast_start
     automation.token = "valid_token"  # noqa S105
@@ -154,8 +154,8 @@ def test_monitor_job_failure_raises_error(mock_get, get_fast_start, state):
         automation.monitor_job(12345)
 
 
-@patch("fia_api.scripts.pearl_automation.requests.get")
-@patch("fia_api.scripts.pearl_automation.Path.open", new_callable=unittest.mock.mock_open)
+@patch("fia_api.scripts.pearl_fast_jobs.requests.get")
+@patch("fia_api.scripts.pearl_fast_jobs.Path.open", new_callable=unittest.mock.mock_open)
 def test_download_results(mock_open, mock_get, get_fast_start):
     automation = get_fast_start
     automation.token = "valid_token"  # noqa S105
@@ -173,16 +173,16 @@ def test_download_results(mock_open, mock_get, get_fast_start):
 
 def test_download_results_no_outputs(get_fast_start):
     automation = get_fast_start
-    with patch("fia_api.scripts.pearl_automation.logger.warning") as mock_log:
+    with patch("fia_api.scripts.pearl_fast_jobs.logger.warning") as mock_log:
         automation.download_results(12345, None)
         mock_log.assert_called_with("No outputs found for job 12345")
 
 
-@patch("fia_api.scripts.pearl_automation.PearlFastStart.authenticate")
-@patch("fia_api.scripts.pearl_automation.PearlFastStart.get_runner_image")
-@patch("fia_api.scripts.pearl_automation.PearlFastStart.submit_job")
-@patch("fia_api.scripts.pearl_automation.PearlFastStart.monitor_job")
-@patch("fia_api.scripts.pearl_automation.PearlFastStart.download_results")
+@patch("fia_api.scripts.pearl_fast_jobs.PearlFastStart.authenticate")
+@patch("fia_api.scripts.pearl_fast_jobs.PearlFastStart.get_runner_image")
+@patch("fia_api.scripts.pearl_fast_jobs.PearlFastStart.submit_job")
+@patch("fia_api.scripts.pearl_fast_jobs.PearlFastStart.monitor_job")
+@patch("fia_api.scripts.pearl_fast_jobs.PearlFastStart.download_results")
 def test_run_success(mock_dl, mock_mon, mock_sub, mock_get_img, mock_auth, get_fast_start):
     automation = get_fast_start
     mock_get_img.return_value = "img"
@@ -198,31 +198,31 @@ def test_run_success(mock_dl, mock_mon, mock_sub, mock_get_img, mock_auth, get_f
     mock_dl.assert_called_once_with(1, "out")
 
 
-@patch("fia_api.scripts.pearl_automation.PearlFastStart.authenticate", side_effect=Exception("Auth fail"))
-@patch("fia_api.scripts.pearl_automation.sys.exit")
+@patch("fia_api.scripts.pearl_fast_jobs.PearlFastStart.authenticate", side_effect=Exception("Auth fail"))
+@patch("fia_api.scripts.pearl_fast_jobs.sys.exit")
 def test_run_failure(mock_exit: MagicMock, mock_auth: MagicMock, get_fast_start: PearlFastStart) -> None:
     automation = get_fast_start
     automation.run()
     mock_exit.assert_called_once_with(1)
 
 
-@patch("fia_api.scripts.pearl_automation.sys.argv", ["pearl_automation.py", "--username", "u", "--password", "p"])
-@patch("fia_api.scripts.pearl_automation.PearlFastStart.run")
+@patch("fia_api.scripts.pearl_fast_jobs.sys.argv", ["pearl_fast_jobs.py", "--username", "u", "--password", "p"])
+@patch("fia_api.scripts.pearl_fast_jobs.PearlFastStart.run")
 def test_main_success(mock_run: MagicMock) -> None:
     main()
     mock_run.assert_called_once()
 
 
-@patch("fia_api.scripts.pearl_automation.sys.argv", ["pearl_automation.py", "--username", "", "--password", ""])
-@patch("fia_api.scripts.pearl_automation.sys.exit", side_effect=SystemExit)
+@patch("fia_api.scripts.pearl_fast_jobs.sys.argv", ["pearl_fast_jobs.py", "--username", "", "--password", ""])
+@patch("fia_api.scripts.pearl_fast_jobs.sys.exit", side_effect=SystemExit)
 def test_main_no_creds_exits(mock_exit: MagicMock) -> None:
     with patch.dict(os.environ, {}, clear=True), pytest.raises(SystemExit):
         main()
     mock_exit.assert_called_once_with(1)
 
 
-@patch("fia_api.scripts.pearl_automation.requests.get")
-@patch("fia_api.scripts.pearl_automation.Path.open", new_callable=unittest.mock.mock_open)
+@patch("fia_api.scripts.pearl_fast_jobs.requests.get")
+@patch("fia_api.scripts.pearl_fast_jobs.Path.open", new_callable=unittest.mock.mock_open)
 def test_download_results_list_input(
     mock_open: MagicMock, mock_get: MagicMock, get_fast_start: PearlFastStart
 ) -> None:
@@ -242,7 +242,7 @@ def test_main_entry_point() -> None:
     # Run the script as a subprocess to cover the if __name__ == "__main__": block
     # We provide invalid args so it exits quickly
     result = subprocess.run(  # noqa: S603
-        [sys.executable, "-m", "fia_api.scripts.pearl_automation", "--username", ""],
+        [sys.executable, "-m", "fia_api.scripts.pearl_fast_jobs", "--username", ""],
         capture_output=True,
         text=True,
         check=False,
