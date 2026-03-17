@@ -95,15 +95,16 @@ for cycle in Cycles2Run:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+
 class PearlFastStart:
     def __init__(
-            self,
-            fia_url: str,
-            auth_url: str,
-            username: str | None,
-            password: str | None,
-            output_dir: str | Path,
-            runner_image: str | None = None,
+        self,
+        fia_url: str,
+        auth_url: str,
+        username: str | None,
+        password: str | None,
+        output_dir: str | Path,
+        runner_image: str | None = None,
     ) -> None:
         self.fia_url = fia_url.rstrip("/")
         self.auth_url = auth_url.rstrip("/")
@@ -112,7 +113,6 @@ class PearlFastStart:
         self.output_dir = Path(output_dir)
         self.runner_image = runner_image
         self.token: str | None = None
-
 
     def authenticate(self) -> None:
         logger.info(f"Authenticating user {self.username} at {self.auth_url}")
@@ -245,9 +245,7 @@ def main() -> None:
         logger.error(err_msg)
         sys.exit(1)
 
-    automation = PearlFastStart(
-        args.fia_url, args.auth_url, args.username, args.password, args.output_dir, args.runner
-    )
+    automation = PearlFastStart(args.fia_url, args.auth_url, args.username, args.password, args.output_dir, args.runner)
     automation.run()
 
 
