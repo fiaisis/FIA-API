@@ -11,6 +11,7 @@ from fia_api.core.session import get_db_session
 health_router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 @health_router.get("/healthz", tags=["health"])
 async def get() -> Literal["ok"]:
     """Health Check endpoint."""
