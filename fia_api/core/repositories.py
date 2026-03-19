@@ -20,10 +20,9 @@ logger = logging.getLogger(__name__)
 DB_USERNAME = os.environ.get("DB_USERNAME", "postgres")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "password")
 DB_IP = os.environ.get("DB_IP", "localhost")
-DB_PORT = os.environ.get("DB_PORT", "5432")
 
 ENGINE = create_engine(
-    f"postgresql+psycopg2://{DB_USERNAME}:{DB_PASSWORD}@{DB_IP}:{DB_PORT}/fia",
+    f"postgresql+psycopg2://{DB_USERNAME}:{DB_PASSWORD}@{DB_IP}:5432/fia",
     poolclass=NullPool,
 )
 
