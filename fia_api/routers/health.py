@@ -24,5 +24,5 @@ async def ready(db: Annotated[Session, Depends(get_db_session)]) -> Literal["ok"
         ensure_db_connection(db)
         return "ok"
     except Exception as err:
-        logger.exception("Database connection failed", err)
+        logger.exception("Database connection failed", exc_info=err)
         raise HTTPException(status_code=HTTPStatus.SERVICE_UNAVAILABLE) from err
