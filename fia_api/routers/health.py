@@ -1,3 +1,4 @@
+import logging
 from http import HTTPStatus
 from typing import Annotated, Literal
 
@@ -8,6 +9,7 @@ from fia_api.core.repositories import ensure_db_connection
 from fia_api.core.session import get_db_session
 
 health_router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @health_router.get("/healthz", tags=["health"])
@@ -22,4 +24,5 @@ async def ready(db: Annotated[Session, Depends(get_db_session)]) -> Literal["ok"
         ensure_db_connection(db)
         return "ok"
     except Exception as err:
+        logger.exception("Database connection failed", err)
         raise HTTPException(status_code=HTTPStatus.SERVICE_UNAVAILABLE) from err
