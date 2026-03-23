@@ -5,7 +5,7 @@ version = "0.0.1"
 requires-python = ">= 3.11"
 dependencies = [
     "fastapi[all]==0.135.1",
-    "PyGithub==2.8.1",
+    "PyGithub==2.9.0",
     "PyJWT==2.12.1",
     "psycopg2==2.9.11",
     "SQLAlchemy==2.0.48",
@@ -27,7 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 formatting = [
-    "ruff==0.15.6",
+    "ruff==0.15.7",
     "mypy==1.19.1",
     "fia-api[test]",
     "types-requests==2.32.4.20260107",
@@ -39,7 +39,7 @@ test = [
     "pytest==9.0.2",
     "requests==2.32.5",
     "httpx==0.28.1",
-    "pytest-cov==7.0.0",
+    "pytest-cov==7.1.0",
     "pytest-random-order==1.2.0",
     "Faker==40.11.0",
     "pytest-env==1.6.0",
