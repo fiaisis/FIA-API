@@ -34,7 +34,7 @@ As you can see, there are a few environment variables required to authenticate a
 You can also run the individual methods of this script in a venv: 
 
 ```
-from fia_api.scripts.pearl_automation import PearlAutomation
+from examples.job_scripts.pearl_automation import PearlAutomation
 
 pa = PearlAutomation(
     fia_url="http://localhost:8080/api",
@@ -55,7 +55,7 @@ pa.download_results(job_id, job_data.get("outputs"))  # Confirm files land in ./
 Or you can simple do the following, also in a venv: 
 
 ```
-from fia_api.scripts.pearl_automation import PearlAutomation
+from examples.job_scripts.pearl_automation import PearlAutomation
 
 pa = PearlAutomation(
     fia_url="http://localhost:8080/api",
