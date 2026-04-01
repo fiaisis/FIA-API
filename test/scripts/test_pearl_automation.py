@@ -10,8 +10,8 @@ import pytest
 # Add the project root to sys.path to import the script
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from fia_api.core.models import State
 from examples.job_scripts.pearl_automation import PearlAutomation, main
+from fia_api.core.models import State
 
 
 @pytest.fixture(scope="session")
