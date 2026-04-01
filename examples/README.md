@@ -69,3 +69,8 @@ pa.run()
 ```
 
 ## Using pearl_fast_jobs in command line
+
+
+
+
+These examples scripts were written in part with Antigravity, specifically Claude Opus 4.6, and Gemini 3 Flash
