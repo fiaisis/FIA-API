@@ -11,7 +11,7 @@ import pytest
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from fia_api.core.models import State
-from fia_api.scripts.pearl_automation import PearlAutomation, main
+from examples.job_scripts.pearl_automation import PearlAutomation, main
 
 
 @pytest.fixture(scope="session")
