@@ -73,11 +73,11 @@ def test_get_runner_image_success(mock_get, get_automation):
     automation.runner_image = None
     mock_response = MagicMock()
     mock_response.status_code = 200
-    mock_response.json.return_value = {"6.15.0": "sha1", "6.9.0": "sha2"}
+    mock_response.json.return_value = {"sha1": "6.15.0", "sha2": "6.9.0"}
     mock_get.return_value = mock_response
 
     runner = automation.get_runner_image()
-    assert runner == "ghcr.io/fiaisis/mantid@6.15.0"
+    assert runner == "ghcr.io/fiaisis/mantid@sha1"
     mock_get.assert_called_once()
 
 
