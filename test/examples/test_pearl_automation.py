@@ -11,7 +11,6 @@ import pytest
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from examples.job_scripts.pearl_automation import PearlAutomation, main
-
 from fia_api.core.models import State
 
 
@@ -207,14 +206,20 @@ def test_run_failure(mock_exit: MagicMock, mock_auth: MagicMock, get_automation:
     mock_exit.assert_called_once_with(1)
 
 
-@patch("examples.job_scripts.pearl_automation.sys.argv", ["examples.job_scripts.pearl_automation.py", "--username", "u", "--password", "p"])
+@patch(
+    "examples.job_scripts.pearl_automation.sys.argv",
+    ["examples.job_scripts.pearl_automation.py", "--username", "u", "--password", "p"],
+)
 @patch("examples.job_scripts.pearl_automation.PearlAutomation.run")
 def test_main_success(mock_run: MagicMock) -> None:
     main()
     mock_run.assert_called_once()
 
 
-@patch("examples.job_scripts.pearl_automation.sys.argv", ["examples.job_scripts.pearl_automation.py", "--username", "", "--password", ""])
+@patch(
+    "examples.job_scripts.pearl_automation.sys.argv",
+    ["examples.job_scripts.pearl_automation.py", "--username", "", "--password", ""],
+)
 @patch("examples.job_scripts.pearl_automation.sys.exit", side_effect=SystemExit)
 def test_main_no_creds_exits(mock_exit: MagicMock) -> None:
     with patch.dict(os.environ, {}, clear=True), pytest.raises(SystemExit):
