@@ -10,7 +10,7 @@ import pytest
 # Add the project root to sys.path to import the script
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from job_scripts.pearl_automation import PearlAutomation, main
+from examples.job_scripts.pearl_automation import PearlAutomation, main
 
 from fia_api.core.models import State
 
@@ -25,7 +25,7 @@ def get_automation():
     return PearlAutomation(fia_url, auth_url, username, password, output_dir)
 
 
-@patch("pearl_automation.requests.post")
+@patch("examples.job_scripts.pearl_automation.requests.post")
 def test_authenticate_success(mock_post, get_automation):
     automation = get_automation
     mock_response = MagicMock()
@@ -42,7 +42,7 @@ def test_authenticate_success(mock_post, get_automation):
     )
 
 
-@patch("pearl_automation.requests.post")
+@patch("examples.job_scripts.pearl_automation.requests.post")
 def test_authenticate_success_string_token(mock_post, get_automation):
     """Auth APIs that return a bare string token (not a dict) are also handled."""
     automation = get_automation
@@ -55,7 +55,7 @@ def test_authenticate_success_string_token(mock_post, get_automation):
     assert automation.token == "valid_token"  # noqa: S105
 
 
-@patch("pearl_automation.requests.post")
+@patch("examples.job_scripts.pearl_automation.requests.post")
 def test_authenticate_no_token_raises_error(mock_post, get_automation):
     automation = get_automation
     mock_response = MagicMock()
@@ -67,7 +67,7 @@ def test_authenticate_no_token_raises_error(mock_post, get_automation):
         automation.authenticate()
 
 
-@patch("pearl_automation.requests.get")
+@patch("examples.job_scripts.pearl_automation.requests.get")
 def test_get_runner_image_success(mock_get, get_automation):
     automation = get_automation
     automation.token = "valid_token"  # noqa S105
@@ -89,7 +89,7 @@ def test_get_runner_image_already_set(get_automation):
     assert runner == "custom-runner"
 
 
-@patch("pearl_automation.requests.get")
+@patch("examples.job_scripts.pearl_automation.requests.get")
 def test_get_runner_image_empty_raises_error(mock_get, get_automation):
     automation = get_automation
     automation.token = "valid_token"  # noqa S105
@@ -103,7 +103,7 @@ def test_get_runner_image_empty_raises_error(mock_get, get_automation):
         automation.get_runner_image()
 
 
-@patch("pearl_automation.requests.post")
+@patch("examples.job_scripts.pearl_automation.requests.post")
 def test_submit_job_success(mock_post, get_automation):
     automation = get_automation
     automation.token = "valid_token"  # noqa S105
@@ -118,8 +118,8 @@ def test_submit_job_success(mock_post, get_automation):
     mock_post.assert_called_once()
 
 
-@patch("pearl_automation.requests.get")
-@patch("pearl_automation.time.sleep", return_value=None)
+@patch("examples.job_scripts.pearl_automation.requests.get")
+@patch("examples.job_scripts.pearl_automation.time.sleep", return_value=None)
 def test_monitor_job_success(mock_sleep, mock_get, get_automation):
     automation = get_automation
     automation.token = "valid_token"  # noqa S105
@@ -142,7 +142,7 @@ def test_monitor_job_success(mock_sleep, mock_get, get_automation):
 
 
 @pytest.mark.parametrize("state", [State.ERROR.value, State.UNSUCCESSFUL.value])
-@patch("pearl_automation.requests.get")
+@patch("examples.job_scripts.pearl_automation.requests.get")
 def test_monitor_job_failure_raises_error(mock_get, get_automation, state):
     automation = get_automation
     automation.token = "valid_token"  # noqa S105
@@ -155,8 +155,8 @@ def test_monitor_job_failure_raises_error(mock_get, get_automation, state):
         automation.monitor_job(12345)
 
 
-@patch("pearl_automation.requests.get")
-@patch("pearl_automation.Path.open", new_callable=unittest.mock.mock_open)
+@patch("examples.job_scripts.pearl_automation.requests.get")
+@patch("examples.job_scripts.pearl_automation.Path.open", new_callable=unittest.mock.mock_open)
 def test_download_results(mock_open, mock_get, get_automation):
     automation = get_automation
     automation.token = "valid_token"  # noqa S105
@@ -174,16 +174,16 @@ def test_download_results(mock_open, mock_get, get_automation):
 
 def test_download_results_no_outputs(get_automation):
     automation = get_automation
-    with patch("pearl_automation.logger.warning") as mock_log:
+    with patch("examples.job_scripts.pearl_automation.logger.warning") as mock_log:
         automation.download_results(12345, None)
         mock_log.assert_called_with("No outputs found for job 12345")
 
 
-@patch("pearl_automation.PearlAutomation.authenticate")
-@patch("pearl_automation.PearlAutomation.get_runner_image")
-@patch("pearl_automation.PearlAutomation.submit_job")
-@patch("pearl_automation.PearlAutomation.monitor_job")
-@patch("pearl_automation.PearlAutomation.download_results")
+@patch("examples.job_scripts.pearl_automation.PearlAutomation.authenticate")
+@patch("examples.job_scripts.pearl_automation.PearlAutomation.get_runner_image")
+@patch("examples.job_scripts.pearl_automation.PearlAutomation.submit_job")
+@patch("examples.job_scripts.pearl_automation.PearlAutomation.monitor_job")
+@patch("examples.job_scripts.pearl_automation.PearlAutomation.download_results")
 def test_run_success(mock_dl, mock_mon, mock_sub, mock_get_img, mock_auth, get_automation):
     automation = get_automation
     mock_get_img.return_value = "img"
@@ -199,31 +199,31 @@ def test_run_success(mock_dl, mock_mon, mock_sub, mock_get_img, mock_auth, get_a
     mock_dl.assert_called_once_with(1, "out")
 
 
-@patch("pearl_automation.PearlAutomation.authenticate", side_effect=Exception("Auth fail"))
-@patch("pearl_automation.sys.exit")
+@patch("examples.job_scripts.pearl_automation.PearlAutomation.authenticate", side_effect=Exception("Auth fail"))
+@patch("examples.job_scripts.pearl_automation.sys.exit")
 def test_run_failure(mock_exit: MagicMock, mock_auth: MagicMock, get_automation: PearlAutomation) -> None:
     automation = get_automation
     automation.run()
     mock_exit.assert_called_once_with(1)
 
 
-@patch("pearl_automation.sys.argv", ["pearl_automation.py", "--username", "u", "--password", "p"])
-@patch("pearl_automation.PearlAutomation.run")
+@patch("examples.job_scripts.pearl_automation.sys.argv", ["examples.job_scripts.pearl_automation.py", "--username", "u", "--password", "p"])
+@patch("examples.job_scripts.pearl_automation.PearlAutomation.run")
 def test_main_success(mock_run: MagicMock) -> None:
     main()
     mock_run.assert_called_once()
 
 
-@patch("pearl_automation.sys.argv", ["pearl_automation.py", "--username", "", "--password", ""])
-@patch("pearl_automation.sys.exit", side_effect=SystemExit)
+@patch("examples.job_scripts.pearl_automation.sys.argv", ["examples.job_scripts.pearl_automation.py", "--username", "", "--password", ""])
+@patch("examples.job_scripts.pearl_automation.sys.exit", side_effect=SystemExit)
 def test_main_no_creds_exits(mock_exit: MagicMock) -> None:
     with patch.dict(os.environ, {}, clear=True), pytest.raises(SystemExit):
         main()
     mock_exit.assert_called_once_with(1)
 
 
-@patch("pearl_automation.requests.get")
-@patch("pearl_automation.Path.open", new_callable=unittest.mock.mock_open)
+@patch("examples.job_scripts.pearl_automation.requests.get")
+@patch("examples.job_scripts.pearl_automation.Path.open", new_callable=unittest.mock.mock_open)
 def test_download_results_list_input(
     mock_open: MagicMock, mock_get: MagicMock, get_automation: PearlAutomation
 ) -> None:
@@ -243,7 +243,7 @@ def test_main_entry_point() -> None:
     # Run the script as a subprocess to cover the if __name__ == "__main__": block
     # We provide invalid args so it exits quickly
     result = subprocess.run(  # noqa: S603
-        [sys.executable, "-m", "pearl_automation", "--username", ""],
+        [sys.executable, "-m", "examples.job_scripts.pearl_automation", "--username", ""],
         capture_output=True,
         text=True,
         check=False,
