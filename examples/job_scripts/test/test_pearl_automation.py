@@ -11,6 +11,7 @@ import pytest
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from pearl_automation import PearlAutomation, main
+
 from fia_api.core.models import State
 
 
