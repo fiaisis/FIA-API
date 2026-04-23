@@ -67,7 +67,7 @@ def test_authenticate_no_token_raises_error(mock_post, get_automation):
 
 
 @patch("examples.job_scripts.pearl_automation.requests.get")
-def test_get_runner_image_success(mock_get, get_automation):
+def test_get_runner_image_sha_success(mock_get, get_automation):
     automation = get_automation
     automation.token = "valid_token"  # noqa S105
     automation.runner_image = None
@@ -81,7 +81,7 @@ def test_get_runner_image_success(mock_get, get_automation):
     mock_get.assert_called_once()
 
 
-def test_get_runner_image_already_set(get_automation):
+def test_get_runner_image_sha_already_set(get_automation):
     automation = get_automation
     automation.runner_image = "custom-runner"
     runner = automation.get_runner_image_sha()
@@ -89,7 +89,7 @@ def test_get_runner_image_already_set(get_automation):
 
 
 @patch("examples.job_scripts.pearl_automation.requests.get")
-def test_get_runner_image_empty_raises_error(mock_get, get_automation):
+def test_get_runner_image_sha_empty_raises_error(mock_get, get_automation):
     automation = get_automation
     automation.token = "valid_token"  # noqa S105
     automation.runner_image = None
@@ -179,7 +179,7 @@ def test_download_results_no_outputs(get_automation):
 
 
 @patch("examples.job_scripts.pearl_automation.PearlAutomation.authenticate")
-@patch("examples.job_scripts.pearl_automation.PearlAutomation.get_runner_image")
+@patch("examples.job_scripts.pearl_automation.PearlAutomation.get_runner_image_sha")
 @patch("examples.job_scripts.pearl_automation.PearlAutomation.submit_job")
 @patch("examples.job_scripts.pearl_automation.PearlAutomation.monitor_job")
 @patch("examples.job_scripts.pearl_automation.PearlAutomation.download_results")
