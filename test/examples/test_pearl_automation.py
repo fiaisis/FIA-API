@@ -70,7 +70,7 @@ def test_authenticate_no_token_raises_error(mock_post, get_automation):
 def test_get_runner_image_sha_success(mock_get, get_automation):
     automation = get_automation
     automation.token = "valid_token"  # noqa S105
-    automation.runner_image = None
+    automation.runner_image_sha = None
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"sha1": "6.15.0", "sha2": "6.9.0"}
@@ -83,7 +83,7 @@ def test_get_runner_image_sha_success(mock_get, get_automation):
 
 def test_get_runner_image_sha_already_set(get_automation):
     automation = get_automation
-    automation.runner_image = "custom-runner"
+    automation.runner_image_sha = "custom-runner"
     runner = automation.get_runner_image_sha()
     assert runner == "custom-runner"
 
@@ -92,7 +92,7 @@ def test_get_runner_image_sha_already_set(get_automation):
 def test_get_runner_image_sha_empty_raises_error(mock_get, get_automation):
     automation = get_automation
     automation.token = "valid_token"  # noqa S105
-    automation.runner_image = None
+    automation.runner_image_sha = None
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {}
