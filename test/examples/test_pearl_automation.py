@@ -76,7 +76,7 @@ def test_get_runner_image_success(mock_get, get_automation):
     mock_response.json.return_value = {"sha1": "6.15.0", "sha2": "6.9.0"}
     mock_get.return_value = mock_response
 
-    runner = automation.get_runner_image()
+    runner = automation.get_runner_image_sha()
     assert runner == "ghcr.io/fiaisis/mantid@sha1"
     mock_get.assert_called_once()
 
@@ -84,7 +84,7 @@ def test_get_runner_image_success(mock_get, get_automation):
 def test_get_runner_image_already_set(get_automation):
     automation = get_automation
     automation.runner_image = "custom-runner"
-    runner = automation.get_runner_image()
+    runner = automation.get_runner_image_sha()
     assert runner == "custom-runner"
 
 
@@ -99,7 +99,7 @@ def test_get_runner_image_empty_raises_error(mock_get, get_automation):
     mock_get.return_value = mock_response
 
     with pytest.raises(ValueError, match="No Mantid runners found"):
-        automation.get_runner_image()
+        automation.get_runner_image_sha()
 
 
 @patch("examples.job_scripts.pearl_automation.requests.post")
