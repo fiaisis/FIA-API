@@ -104,14 +104,14 @@ class PearlAutomation:
         username: str | None,
         password: str | None,
         output_dir: str | Path,
-        runner_image: str | None = None,
+        runner_image_sha: str | None = None,
     ) -> None:
         self.fia_url = fia_url.rstrip("/")
         self.auth_url = auth_url.rstrip("/")
         self.username = username
         self.password = password
         self.output_dir = Path(output_dir)
-        self.runner_image = runner_image
+        self.runner_image_sha = runner_image_sha
         self.token: str | None = None
 
     def authenticate(self) -> None:
@@ -133,9 +133,9 @@ class PearlAutomation:
     def get_headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.token}"}
 
-    def get_runner_image(self) -> str:
-        if self.runner_image:
-            return self.runner_image
+    def get_runner_image_sha(self) -> str:
+        if self.runner_image_sha:
+            return self.runner_image_sha
 
         logger.info("Fetching available Mantid runners")
         response = requests.get(f"{self.fia_url}/jobs/runners", headers=self.get_headers(), timeout=30)
@@ -148,12 +148,12 @@ class PearlAutomation:
         # Select latest version if possible, or just the first one
         latest_version = next(iter(runners))
         logger.info(f"Selected Mantid runner: {latest_version}")
-        self.runner_image = f"ghcr.io/fiaisis/mantid@{latest_version!s}"
-        return self.runner_image
+        self.runner_image_sha = f"ghcr.io/fiaisis/mantid@{latest_version!s}"
+        return self.runner_image_sha
 
-    def submit_job(self, script: str, runner_image: str) -> int:
-        logger.info(f"Submitting simple job with runner {runner_image}")
-        payload = {"runner_image": runner_image, "script": script}
+    def submit_job(self, script: str, runner_image_sha: str) -> int:
+        logger.info(f"Submitting simple job with runner {runner_image_sha}")
+        payload = {"runner_image_sha": runner_image_sha, "script": script}
         response = requests.post(f"{self.fia_url}/job/simple", json=payload, headers=self.get_headers(), timeout=30)
         response.raise_for_status()
         job_id = int(response.json())
@@ -210,8 +210,8 @@ class PearlAutomation:
     def run(self) -> None:
         try:
             self.authenticate()
-            runner_image = self.get_runner_image()
-            job_id = self.submit_job(PEARL_SCRIPT, runner_image)
+            runner_image_sha = self.get_runner_image_sha()
+            job_id = self.submit_job(PEARL_SCRIPT, runner_image_sha)
             job_data = self.monitor_job(job_id)
             self.download_results(job_id, job_data.get("outputs"))
             logger.info("PEARL automation completed successfully")
