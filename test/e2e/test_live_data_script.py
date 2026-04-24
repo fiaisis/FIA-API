@@ -89,7 +89,7 @@ def test_stream_logs_success():
                 client.close()
 
 
-@patch("fia_api.core.cache.live_data.get_valkey_client")  # Adjust path as needed
+@patch("fia_api.core.cache.get_valkey_client")  # Adjust path as needed
 def test_stream_logs_valkey_error(mock_get_client):
     """
     Test that a Valkey exception is caught and yielded to the client safely.
