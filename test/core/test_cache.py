@@ -299,3 +299,15 @@ async def test_log_stream_generator_disconnect():
 
         with pytest.raises(asyncio.CancelledError):
             await anext(gen)
+
+
+@pytest.mark.asyncio
+async def test_log_stream_generator_no_client():
+    """
+    Tests that RuntimeError is raised when Valkey client is not available.
+    """
+    with patch("fia_api.core.cache.get_valkey_client", return_value=None):
+        gen = log_stream_generator("test_instrument")
+
+        with pytest.raises(RuntimeError, match="Valkey client is not available"):
+            await anext(gen)

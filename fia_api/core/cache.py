@@ -7,6 +7,7 @@ import hashlib
 import json
 import logging
 import os
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from functools import cache
 from typing import Any
@@ -178,7 +179,7 @@ def hash_key(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
-async def log_stream_generator(instrument_name: str):
+async def log_stream_generator(instrument_name: str) -> AsyncGenerator[str, None]:
     """
     Asynchronously generate log messages from a Valkey stream.
 
@@ -187,6 +188,8 @@ async def log_stream_generator(instrument_name: str):
     :param valkey_client: The Redis client instance for Valkey operations
     """
     valkey_client = get_valkey_client()
+    if valkey_client is None:
+        raise RuntimeError("Valkey client is not available")
     stream_key = f"{instrument_name}_live_data_processor_logs"
 
     # Start tailing from the beginning i.e., last_id = 0
