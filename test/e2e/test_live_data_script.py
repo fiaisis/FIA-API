@@ -40,7 +40,7 @@ def test_live_data_script_updating_bad_creds(mock_post):
 
 def test_stream_logs_unauthorized():
     response = client.get("/live-data/test/logs")
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 def test_stream_logs_success():
@@ -89,7 +89,7 @@ def test_stream_logs_success():
                 client.close()
 
 
-@patch("fia_api.routes.live_data.get_valkey_client")  # Adjust path as needed
+@patch("fia_api.core.cache.live_data.get_valkey_client")  # Adjust path as needed
 def test_stream_logs_valkey_error(mock_get_client):
     """
     Test that a Valkey exception is caught and yielded to the client safely.
