@@ -1,6 +1,7 @@
 """
 e2e for live data script fetching/editing
 """
+
 import asyncio
 import json
 from http import HTTPStatus
@@ -69,8 +70,6 @@ def test_stream_logs_success():
                 assert payload["level"] == test_message["level"]
 
                 break
-
-
 
 
 @patch("fia_api.routes.live_data.get_valkey_client")  # Adjust path as needed
