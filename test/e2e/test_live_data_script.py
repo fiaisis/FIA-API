@@ -45,31 +45,48 @@ def test_stream_logs_unauthorized():
 
 def test_stream_logs_success():
     """
-    Test streaming logs using the real Valkey instance in CI.
+    Test streaming logs using the real Valkey instance in CI,
+    but forcefully stopping the loop to prevent TestClient hangs.
     """
-    valkey_client = get_valkey_client()
+    real_valkey_client = get_valkey_client()
     instrument = "test"
     stream_key = f"{instrument}_live_data_processor_logs"
 
-    # Clear the stream to ensure isolation between test runs
-    valkey_client.delete(stream_key)
+    real_valkey_client.delete(stream_key)
 
-    # Seed a test log message into the stream
+    # Seed a test message
     test_message = {"msg": "E2E integration test log", "level": "INFO"}
-    valkey_client.xadd(stream_key, test_message)
+    real_valkey_client.xadd(stream_key, test_message)
 
-    with client.stream("GET", f"/live-data/{instrument}/logs", headers=API_KEY_HEADER) as response:
+    real_xread = real_valkey_client.xread
+
+    call_count = 0
+
+    def xread_side_effect(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            # First loop: Execute the REAL database call
+            return real_xread(*args, **kwargs)
+        # Second loop: Kill the generator cleanly
+        raise asyncio.CancelledError("Force kill to prevent TestClient hang")
+
+    with (
+        patch.object(real_valkey_client, "xread", side_effect=xread_side_effect),
+        patch("fia_api.routes.live_data.get_valkey_client", return_value=real_valkey_client),
+        client.stream("GET", f"/live-data/{instrument}/logs", headers=API_KEY_HEADER) as response,
+    ):
         assert response.status_code == HTTPStatus.OK
 
         for line in response.iter_lines():
             if line and line.startswith("data: "):
                 payload = json.loads(line[6:])
 
-                # Verify we got our seeded message
+                # Verify we retrieved the real seeded message from Valkey
                 assert payload["msg"] == test_message["msg"]
                 assert payload["level"] == test_message["level"]
 
-                break
+                client.close()
 
 
 @patch("fia_api.routes.live_data.get_valkey_client")  # Adjust path as needed
