@@ -179,7 +179,7 @@ def hash_key(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
-async def log_stream_generator(instrument_name: str, request: Request):
+async def log_stream_generator(instrument_name: str):
     """
     Asynchronously generate log messages from a Valkey stream.
 
@@ -194,11 +194,6 @@ async def log_stream_generator(instrument_name: str, request: Request):
     last_id = "0"
 
     while True:
-        # Stop generating logs if the client closes the connection
-        if await request.is_disconnected():
-            logger.info(f"Client disconnected from log stream: {stream_key}")
-            break
-
         try:
             # Offload the synchronous blocking read to a thread to prevent freezing the event loop.
             # block=1000 means to wait for 1 second before returning an empty list if no messages are available.
