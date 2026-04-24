@@ -73,7 +73,7 @@ def test_stream_logs_success():
 
     with (
         patch.object(real_valkey_client, "xread", side_effect=xread_side_effect),
-        patch("fia_api.routes.live_data.get_valkey_client", return_value=real_valkey_client),
+        patch("fia_api.core.cache.get_valkey_client", return_value=real_valkey_client),
         client.stream("GET", f"/live-data/{instrument}/logs", headers=API_KEY_HEADER) as response,
     ):
         assert response.status_code == HTTPStatus.OK
