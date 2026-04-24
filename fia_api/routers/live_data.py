@@ -4,9 +4,11 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+from starlette.requests import Request
+from starlette.responses import StreamingResponse
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.cache import cache_get, cache_set_json
+from fia_api.core.cache import cache_get, cache_set_json, log_stream_generator
 from fia_api.core.exceptions import AuthError
 from fia_api.core.request_models import LiveDataScriptUpdateRequest
 from fia_api.core.services.instrument import (
@@ -29,6 +31,26 @@ async def get_live_data_instruments(session: Annotated[Session, Depends(get_db_s
     :return: List of instrument names with live data support enabled
     """
     return get_instruments_with_live_data_support(session)
+
+
+@LiveDataRouter.get("/live-data/{instrument_name}/logs")
+async def stream_logs(
+    _: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+    instrument_name: str,
+    request: Request,
+):
+    """
+    Server-Sent Events (SSE) endpoint to stream live logs from Valkey.
+    """
+    return StreamingResponse(
+        log_stream_generator(instrument_name, request),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 def _get_traceback_key(instrument: str) -> str:

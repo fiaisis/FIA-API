@@ -2,6 +2,7 @@
 e2e for live data script fetching/editing
 """
 
+import json
 from http import HTTPStatus
 from unittest.mock import patch
 
@@ -61,3 +62,33 @@ def test_live_data_traceback_fetching_and_clearing(mock_post):
 
     # Revert for safety
     client.put("/live-data/test/script", json={"value": "Reverted"}, headers=API_KEY_HEADER)
+
+
+def test_stream_logs_success():
+    client_cache = get_valkey_client()
+    stream_key = "test_live_data_processor_logs"
+    client_cache.delete(stream_key)  # Ensure clean slate
+    client_cache.xadd(stream_key, {"msg": "test_log_1"})
+    client_cache.xadd(stream_key, {"msg": "test_log_2"})
+
+    with client.stream("GET", "/live-data/test/logs", headers=API_KEY_HEADER) as response:
+        assert response.status_code == HTTPStatus.OK
+
+        # Read two events from the SSE stream
+        lines = []
+        for line in response.iter_lines():
+            if line.startswith("data: "):
+                lines.append(line)
+            if len(lines) == 2:
+                break
+
+        assert len(lines) == 2
+        data1 = json.loads(lines[0][6:])
+        data2 = json.loads(lines[1][6:])
+        assert data1["msg"] == "test_log_1"
+        assert data2["msg"] == "test_log_2"
+
+
+def test_stream_logs_unauthorized():
+    response = client.get("/live-data/test/logs")
+    assert response.status_code == HTTPStatus.FORBIDDEN

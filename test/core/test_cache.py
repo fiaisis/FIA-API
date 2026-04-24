@@ -2,7 +2,9 @@
 
 import json
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from redis.exceptions import RedisError
 
@@ -13,6 +15,7 @@ from fia_api.core.cache import (
     cache_set_json,
     get_valkey_client,
     hash_key,
+    log_stream_generator,
 )
 
 TTL_SECONDS = 30
@@ -200,3 +203,75 @@ def test_cache_get_json_returns_none_if_raw_is_none():
 
 def test_hash_key_returns_sha256_hex():
     assert hash_key("abc") == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+
+
+@pytest.mark.asyncio
+async def test_log_stream_generator_yields_data():
+    mock_client = Mock()
+    mock_request = Mock()
+    # is_disconnected returns False first loop, True second loop to exit
+    mock_request.is_disconnected = AsyncMock(side_effect=[False, True])
+
+    mock_xread_response = [
+        [
+            "test_stream",
+            [
+                ("1-0", {"msg": "hello"}),
+                ("2-0", {"msg": "world"}),
+            ],
+        ]
+    ]
+
+    with (
+        patch("fia_api.core.cache.get_valkey_client", return_value=mock_client),
+        patch("asyncio.to_thread", new_callable=AsyncMock) as mock_to_thread,
+    ):
+        mock_to_thread.return_value = mock_xread_response
+
+        generator = log_stream_generator("test_instrument", mock_request)
+        results = [item async for item in generator]
+
+        assert len(results) == 2
+        assert results[0] == 'data: {"msg": "hello"}\n\n'
+        assert results[1] == 'data: {"msg": "world"}\n\n'
+
+
+@pytest.mark.asyncio
+async def test_log_stream_generator_keep_alive():
+    mock_client = Mock()
+    mock_request = Mock()
+    mock_request.is_disconnected = AsyncMock(side_effect=[False, True])
+
+    with (
+        patch("fia_api.core.cache.get_valkey_client", return_value=mock_client),
+        patch("asyncio.to_thread", new_callable=AsyncMock) as mock_to_thread,
+    ):
+        mock_to_thread.return_value = []  # Empty response
+
+        generator = log_stream_generator("test", mock_request)
+        results = [item async for item in generator]
+
+        assert len(results) == 1
+        assert results[0] == ": keep-alive\n\n"
+
+
+@pytest.mark.asyncio
+async def test_log_stream_generator_handles_error():
+    mock_client = Mock()
+    mock_request = Mock()
+    mock_request.is_disconnected = AsyncMock(side_effect=[False, True])
+
+    with (
+        patch("fia_api.core.cache.get_valkey_client", return_value=mock_client),
+        patch("asyncio.to_thread", new_callable=AsyncMock) as mock_to_thread,
+        patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep,
+    ):
+        mock_to_thread.side_effect = Exception("test error")
+
+        generator = log_stream_generator("test", mock_request)
+        results = [item async for item in generator]
+
+        assert len(results) == 1
+        assert "error" in results[0]
+        assert "test error" in results[0]
+        mock_sleep.assert_awaited_once_with(2)
