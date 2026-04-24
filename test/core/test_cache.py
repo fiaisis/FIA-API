@@ -1,9 +1,11 @@
 """Tests for cache helpers."""
 
+import asyncio
 import json
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
 from redis.exceptions import RedisError
 
 from fia_api.core.cache import (
@@ -13,6 +15,7 @@ from fia_api.core.cache import (
     cache_set_json,
     get_valkey_client,
     hash_key,
+    log_stream_generator,
 )
 
 TTL_SECONDS = 30
@@ -200,3 +203,111 @@ def test_cache_get_json_returns_none_if_raw_is_none():
 
 def test_hash_key_returns_sha256_hex():
     assert hash_key("abc") == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+
+
+@pytest.mark.asyncio
+async def test_log_stream_generator_yields_data():
+    """
+    Tests that the generator properly yields SSE formatted JSON data.
+    """
+    mock_valkey_client = MagicMock()
+
+    # Simulate a response from xread (assuming decode_responses=True on client)
+    mock_data = {"msg": "Test log", "level": "INFO"}
+    mock_valkey_client.xread.return_value = [
+        ["test_instrument_live_data_processor_logs", [("1620000000-0", mock_data)]]
+    ]
+
+    with patch("fia_api.core.cache.get_valkey_client", return_value=mock_valkey_client):
+        gen = log_stream_generator("test_instrument")
+
+        # Manually get the next yielded value (runs one iteration of the while loop)
+        result = await anext(gen)
+
+        # Verify the payload
+        expected_payload = json.dumps(mock_data)
+        assert result == f"data: {expected_payload}\n\n"
+
+        # Safely shut down the infinite generator
+        await gen.aclose()
+
+
+@pytest.mark.asyncio
+async def test_log_stream_generator_keepalive():
+    """
+    Tests that the generator yields a keep-alive ping when no data is returned.
+    """
+    mock_valkey_client = MagicMock()
+
+    # Simulate an empty response from xread (block timeout reached)
+    mock_valkey_client.xread.return_value = []
+
+    with patch("fia_api.core.cache.get_valkey_client", return_value=mock_valkey_client):
+        gen = log_stream_generator("test_instrument")
+
+        # Step through once
+        result = await anext(gen)
+
+        # Verify keep-alive format
+        assert result == ": keep-alive\n\n"
+
+        # Safely shut down
+        await gen.aclose()
+
+
+@pytest.mark.asyncio
+async def test_log_stream_generator_valkey_error():
+    """
+    Tests the exception handling block when Valkey raises an error.
+    """
+    mock_valkey_client = MagicMock()
+
+    # Force xread to raise a standard exception
+    error_message = "Connection refused"
+    mock_valkey_client.xread.side_effect = Exception(error_message)
+
+    with (
+        patch("fia_api.core.cache.get_valkey_client", return_value=mock_valkey_client),
+        patch("fia_api.core.cache.logger.error") as mock_logger,
+    ):
+        gen = log_stream_generator("test_instrument")
+
+        result = await anext(gen)
+
+        expected_payload = json.dumps({"error": error_message})
+        assert result == f"data: {expected_payload}\n\n"
+
+        mock_logger.assert_called_once()
+        assert "Error reading from Valkey stream" in mock_logger.call_args[0][0]
+
+        await gen.aclose()
+
+
+@pytest.mark.asyncio
+async def test_log_stream_generator_disconnect():
+    """
+    Simulates a FastAPI client disconnect by raising asyncio.CancelledError
+    where the generator awaits the thread.
+    """
+    mock_valkey_client = MagicMock()
+
+    with (
+        patch("fia_api.core.cache.get_valkey_client", return_value=mock_valkey_client),
+        patch("asyncio.to_thread", side_effect=asyncio.CancelledError("Client disconnected")),
+    ):
+        gen = log_stream_generator("test_instrument")
+
+        with pytest.raises(asyncio.CancelledError):
+            await anext(gen)
+
+
+@pytest.mark.asyncio
+async def test_log_stream_generator_no_client():
+    """
+    Tests that RuntimeError is raised when Valkey client is not available.
+    """
+    with patch("fia_api.core.cache.get_valkey_client", return_value=None):
+        gen = log_stream_generator("test_instrument")
+
+        with pytest.raises(RuntimeError, match="Valkey client is not available"):
+            await anext(gen)

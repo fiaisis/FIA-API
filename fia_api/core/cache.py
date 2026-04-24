@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import logging
 import os
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from functools import cache
 from typing import Any
@@ -35,7 +37,7 @@ def _create_client() -> Redis | None:
         url,
         decode_responses=True,
         socket_connect_timeout=0.5,
-        socket_timeout=1,
+        socket_timeout=1.5,  # timeout needs to be > 1 second for streaming
         retry_on_timeout=False,
     )
 
@@ -175,3 +177,48 @@ def hash_key(value: str) -> str:
     :return: Hexadecimal SHA-256 digest as a string
     """
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+async def log_stream_generator(instrument_name: str, since: str = "0") -> AsyncGenerator[str, None]:
+    """
+    Asynchronously generate log messages from a Valkey stream.
+
+    :param instrument_name: The instrument name to stream logs for
+    :param since: The Valkey stream ID to start reading from. Defaults to "0" (beginning).
+    """
+    valkey_client = get_valkey_client()
+    if valkey_client is None:
+        raise RuntimeError("Valkey client is not available")
+
+    stream_key = f"{instrument_name}_live_data_processor_logs"
+
+    # Start tailing from the ID provided by the frontend
+    last_id = since
+
+    while True:
+        try:
+            # Offload the synchronous blocking read to a thread to prevent freezing the event loop.
+            # block=1000 means to wait for 1 second before returning an empty list if no messages are available.
+            response = await asyncio.to_thread(valkey_client.xread, {stream_key: last_id}, count=50, block=1000)
+
+            if response:
+                # response format: [[b'stream_key', [(b'id', {b'msg': b'...', b'level': b'...'}), ...]]]
+                for _, messages in response:  # type: ignore[union-attr]
+                    for message_id, message_data in messages:
+                        last_id = message_id.decode("utf-8") if isinstance(message_id, bytes) else message_id
+
+                        if isinstance(message_data, dict):
+                            message_data["valkey_id"] = last_id
+
+                        payload = json.dumps(message_data)
+
+                        # Yield the standard SSE "id:" field alongside the data
+                        yield f"id: {last_id}\ndata: {payload}\n\n"
+            else:
+                # Send an empty SSE comment as a keep-alive ping to prevent proxy timeouts
+                yield ": keep-alive\n\n"
+
+        except Exception as e:
+            logger.error(f"Error reading from Valkey stream {stream_key}: {e}")
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            await asyncio.sleep(2)
