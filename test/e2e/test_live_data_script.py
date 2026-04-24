@@ -78,13 +78,15 @@ def test_stream_logs_success(mock_post):
 
         # Read two events from the SSE stream
         lines = []
+        iterations = 0
         for line in response.iter_lines():
+            iterations += 1
             if line.startswith("data: "):
                 lines.append(line)
-            if len(lines) == 2:
+            if len(lines) == 2 or iterations > 20:
                 break
 
-        assert len(lines) == 2
+        assert len(lines) == 2, f"Hanging error: Only found lines: {lines} across {iterations} iterations"
         data1 = json.loads(lines[0][6:])
         data2 = json.loads(lines[1][6:])
         assert data1["msg"] == "test_log_1"
