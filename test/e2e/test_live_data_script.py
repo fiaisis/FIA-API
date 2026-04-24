@@ -64,7 +64,9 @@ def test_live_data_traceback_fetching_and_clearing(mock_post):
     client.put("/live-data/test/script", json={"value": "Reverted"}, headers=API_KEY_HEADER)
 
 
-def test_stream_logs_success():
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_stream_logs_success(mock_post):
+    mock_post.return_value.status_code = HTTPStatus.OK
     client_cache = get_valkey_client()
     stream_key = "test_live_data_processor_logs"
     client_cache.delete(stream_key)  # Ensure clean slate
