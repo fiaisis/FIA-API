@@ -1,7 +1,7 @@
 """
 e2e for live data script fetching/editing
 """
-
+import asyncio
 import json
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
@@ -71,8 +71,6 @@ def test_stream_logs_success():
                 break
 
 
-import asyncio
-from unittest.mock import patch
 
 
 @patch("fia_api.routes.live_data.get_valkey_client")  # Adjust path as needed
@@ -82,7 +80,6 @@ def test_stream_logs_valkey_error(mock_get_client):
     """
     mock_client = MagicMock()
     error_msg = "Simulated Valkey Connection Refused"
-
 
     mock_client.xread.side_effect = [Exception(error_msg), asyncio.CancelledError("Force kill test loop")]
 
