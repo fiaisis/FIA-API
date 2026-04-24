@@ -179,21 +179,21 @@ def hash_key(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
-async def log_stream_generator(instrument_name: str) -> AsyncGenerator[str, None]:
+async def log_stream_generator(instrument_name: str, since: str = "0") -> AsyncGenerator[str, None]:
     """
     Asynchronously generate log messages from a Valkey stream.
 
     :param instrument_name: The instrument name to stream logs for
-    :param request: The Starlette request object
-    :param valkey_client: The Redis client instance for Valkey operations
+    :param since: The Valkey stream ID to start reading from. Defaults to "0" (beginning).
     """
     valkey_client = get_valkey_client()
     if valkey_client is None:
         raise RuntimeError("Valkey client is not available")
+
     stream_key = f"{instrument_name}_live_data_processor_logs"
 
-    # Start tailing from the beginning i.e., last_id = 0
-    last_id = "0"
+    # Start tailing from the ID provided by the frontend
+    last_id = since
 
     while True:
         try:
@@ -205,11 +205,15 @@ async def log_stream_generator(instrument_name: str) -> AsyncGenerator[str, None
                 # response format: [[b'stream_key', [(b'id', {b'msg': b'...', b'level': b'...'}), ...]]]
                 for _, messages in response:  # type: ignore[union-attr]
                     for message_id, message_data in messages:
-                        last_id = message_id
+                        last_id = message_id.decode("utf-8") if isinstance(message_id, bytes) else message_id
 
-                        # Serialize the dictionary payload to JSON and format as SSE
+                        if isinstance(message_data, dict):
+                            message_data["valkey_id"] = last_id
+
                         payload = json.dumps(message_data)
-                        yield f"data: {payload}\n\n"
+
+                        # Yield the standard SSE "id:" field alongside the data
+                        yield f"id: {last_id}\ndata: {payload}\n\n"
             else:
                 # Send an empty SSE comment as a keep-alive ping to prevent proxy timeouts
                 yield ": keep-alive\n\n"
@@ -217,6 +221,4 @@ async def log_stream_generator(instrument_name: str) -> AsyncGenerator[str, None
         except Exception as e:
             logger.error(f"Error reading from Valkey stream {stream_key}: {e}")
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
-
-            # Back off slightly before retrying if there's a connection/redis error
             await asyncio.sleep(2)
