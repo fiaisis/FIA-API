@@ -203,7 +203,7 @@ async def log_stream_generator(instrument_name: str) -> AsyncGenerator[str, None
 
             if response:
                 # response format: [[b'stream_key', [(b'id', {b'msg': b'...', b'level': b'...'}), ...]]]
-                for _, messages in response:
+                for _, messages in response:  # type: ignore[union-attr]
                     for message_id, message_data in messages:
                         last_id = message_id
 

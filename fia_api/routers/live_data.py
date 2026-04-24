@@ -33,7 +33,9 @@ async def get_live_data_instruments(session: Annotated[Session, Depends(get_db_s
 
 
 @LiveDataRouter.get("/live-data/{instrument_name}/logs")
-async def stream_logs(_: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)], instrument_name: str):
+async def stream_logs(
+    _: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)], instrument_name: str
+) -> StreamingResponse:
     """
     Server-Sent Events (SSE) endpoint to stream live logs from Valkey.
     """
