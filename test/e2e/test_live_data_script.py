@@ -4,7 +4,7 @@ e2e for live data script fetching/editing
 
 import json
 from http import HTTPStatus
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from starlette.testclient import TestClient
 
@@ -69,8 +69,6 @@ def test_stream_logs_success():
                 assert payload["level"] == test_message["level"]
 
                 break
-
-
 
 
 @patch("fia_api.core.cache.get_valkey_client")
