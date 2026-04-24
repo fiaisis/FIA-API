@@ -1,11 +1,11 @@
 """Tests for cache helpers."""
 
+import asyncio
 import json
 import os
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-
 from redis.exceptions import RedisError
 
 from fia_api.core.cache import (
@@ -207,71 +207,95 @@ def test_hash_key_returns_sha256_hex():
 
 @pytest.mark.asyncio
 async def test_log_stream_generator_yields_data():
-    mock_client = Mock()
-    mock_request = Mock()
-    # is_disconnected returns False first loop, True second loop to exit
-    mock_request.is_disconnected = AsyncMock(side_effect=[False, True])
+    """
+    Tests that the generator properly yields SSE formatted JSON data.
+    """
+    mock_valkey_client = MagicMock()
 
-    mock_xread_response = [
-        [
-            "test_stream",
-            [
-                ("1-0", {"msg": "hello"}),
-                ("2-0", {"msg": "world"}),
-            ],
-        ]
+    # Simulate a response from xread (assuming decode_responses=True on client)
+    mock_data = {"msg": "Test log", "level": "INFO"}
+    mock_valkey_client.xread.return_value = [
+        ["test_instrument_live_data_processor_logs", [("1620000000-0", mock_data)]]
     ]
 
-    with (
-        patch("fia_api.core.cache.get_valkey_client", return_value=mock_client),
-        patch("asyncio.to_thread", new_callable=AsyncMock) as mock_to_thread,
-    ):
-        mock_to_thread.return_value = mock_xread_response
+    with patch("fia_api.core.cache.get_valkey_client", return_value=mock_valkey_client):
+        gen = log_stream_generator("test_instrument")
 
-        generator = log_stream_generator("test_instrument", mock_request)
-        results = [item async for item in generator]
+        # Manually get the next yielded value (runs one iteration of the while loop)
+        result = await anext(gen)
 
-        assert len(results) == 2
-        assert results[0] == 'data: {"msg": "hello"}\n\n'
-        assert results[1] == 'data: {"msg": "world"}\n\n'
+        # Verify the payload
+        expected_payload = json.dumps(mock_data)
+        assert result == f"data: {expected_payload}\n\n"
 
-
-@pytest.mark.asyncio
-async def test_log_stream_generator_keep_alive():
-    mock_client = Mock()
-    mock_request = Mock()
-    mock_request.is_disconnected = AsyncMock(side_effect=[False, True])
-
-    with (
-        patch("fia_api.core.cache.get_valkey_client", return_value=mock_client),
-        patch("asyncio.to_thread", new_callable=AsyncMock) as mock_to_thread,
-    ):
-        mock_to_thread.return_value = []  # Empty response
-
-        generator = log_stream_generator("test", mock_request)
-        results = [item async for item in generator]
-
-        assert len(results) == 1
-        assert results[0] == ": keep-alive\n\n"
+        # Safely shut down the infinite generator
+        await gen.aclose()
 
 
 @pytest.mark.asyncio
-async def test_log_stream_generator_handles_error():
-    mock_client = Mock()
-    mock_request = Mock()
-    mock_request.is_disconnected = AsyncMock(side_effect=[False, True])
+async def test_log_stream_generator_keepalive():
+    """
+    Tests that the generator yields a keep-alive ping when no data is returned.
+    """
+    mock_valkey_client = MagicMock()
+
+    # Simulate an empty response from xread (block timeout reached)
+    mock_valkey_client.xread.return_value = []
+
+    with patch("fia_api.core.cache.get_valkey_client", return_value=mock_valkey_client):
+        gen = log_stream_generator("test_instrument")
+
+        # Step through once
+        result = await anext(gen)
+
+        # Verify keep-alive format
+        assert result == ": keep-alive\n\n"
+
+        # Safely shut down
+        await gen.aclose()
+
+
+@pytest.mark.asyncio
+async def test_log_stream_generator_valkey_error():
+    """
+    Tests the exception handling block when Valkey raises an error.
+    """
+    mock_valkey_client = MagicMock()
+
+    # Force xread to raise a standard exception
+    error_message = "Connection refused"
+    mock_valkey_client.xread.side_effect = Exception(error_message)
 
     with (
-        patch("fia_api.core.cache.get_valkey_client", return_value=mock_client),
-        patch("asyncio.to_thread", new_callable=AsyncMock) as mock_to_thread,
-        patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep,
+        patch("fia_api.core.cache.get_valkey_client", return_value=mock_valkey_client),
+        patch("fia_api.core.cache.logger.error") as mock_logger,
     ):
-        mock_to_thread.side_effect = Exception("test error")
+        gen = log_stream_generator("test_instrument")
 
-        generator = log_stream_generator("test", mock_request)
-        results = [item async for item in generator]
+        result = await anext(gen)
 
-        assert len(results) == 1
-        assert "error" in results[0]
-        assert "test error" in results[0]
-        mock_sleep.assert_awaited_once_with(2)
+        expected_payload = json.dumps({"error": error_message})
+        assert result == f"data: {expected_payload}\n\n"
+
+        mock_logger.assert_called_once()
+        assert "Error reading from Valkey stream" in mock_logger.call_args[0][0]
+
+        await gen.aclose()
+
+
+@pytest.mark.asyncio
+async def test_log_stream_generator_disconnect():
+    """
+    Simulates a FastAPI client disconnect by raising asyncio.CancelledError
+    where the generator awaits the thread.
+    """
+    mock_valkey_client = MagicMock()
+
+    with (
+        patch("fia_api.core.cache.get_valkey_client", return_value=mock_valkey_client),
+        patch("asyncio.to_thread", side_effect=asyncio.CancelledError("Client disconnected")),
+    ):
+        gen = log_stream_generator("test_instrument")
+
+        with pytest.raises(asyncio.CancelledError):
+            await anext(gen)

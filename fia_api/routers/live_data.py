@@ -4,11 +4,10 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from starlette.requests import Request
 from starlette.responses import StreamingResponse
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.cache import cache_get, cache_set_json, log_stream_generator
+from fia_api.core.cache import log_stream_generator
 from fia_api.core.exceptions import AuthError
 from fia_api.core.request_models import LiveDataScriptUpdateRequest
 from fia_api.core.services.instrument import (
@@ -34,16 +33,12 @@ async def get_live_data_instruments(session: Annotated[Session, Depends(get_db_s
 
 
 @LiveDataRouter.get("/live-data/{instrument_name}/logs")
-async def stream_logs(
-    _: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
-    instrument_name: str,
-    request: Request,
-):
+async def stream_logs(_: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)], instrument_name: str):
     """
     Server-Sent Events (SSE) endpoint to stream live logs from Valkey.
     """
     return StreamingResponse(
-        log_stream_generator(instrument_name, request),
+        log_stream_generator(instrument_name),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -51,21 +46,6 @@ async def stream_logs(
             "X-Accel-Buffering": "no",
         },
     )
-
-
-def _get_traceback_key(instrument: str) -> str:
-    return f"live_data:{instrument.upper()}:traceback"
-
-
-@LiveDataRouter.get("/live-data/{instrument}/traceback")
-async def get_instrument_traceback(instrument: str) -> str | None:
-    """
-    Given an instrument string, return the live data traceback for that instrument if one exists
-    \f
-    :param instrument: The instrument string
-    :return: The live data traceback or None
-    """
-    return cache_get(_get_traceback_key(instrument.lower()))
 
 
 @LiveDataRouter.get("/live-data/{instrument}/script")
@@ -101,6 +81,5 @@ async def update_instrument_script(
         raise AuthError("Only Staff can update Live Data Scripts")
 
     update_live_data_script_for_instrument(instrument.upper(), script_request.value, session)
-    # Clear traceback when script is updated
-    cache_set_json(_get_traceback_key(instrument), None, 1)
+
     return "ok"
