@@ -13,7 +13,6 @@ from typing import Any
 
 from redis import Redis
 from redis.exceptions import RedisError
-from starlette.requests import Request
 
 logger = logging.getLogger(__name__)
 
