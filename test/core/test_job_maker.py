@@ -5,7 +5,7 @@ from unittest import mock
 import pytest  # type: ignore
 from requests.exceptions import RequestException
 
-from fia_api.core.exceptions import JobRequestError
+from fia_api.core.exceptions import JobRequestError, LLSPSubmissionFailureError
 from fia_api.core.job_maker import JobMaker
 
 
@@ -230,5 +230,5 @@ def test_create_fast_start_job_failure(mock_post, mock_connect, faker):
 
     mock_post.side_effect = RequestException("Connection error")
 
-    with pytest.raises(JobRequestError, match="Failed to submit fast start job"):
+    with pytest.raises(LLSPSubmissionFailureError, match="Failed to submit fast start job"):
         job_maker.create_fast_start_job(runner_image="img", script="print('fail')", user_number=123)
