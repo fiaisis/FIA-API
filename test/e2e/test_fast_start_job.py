@@ -1,6 +1,7 @@
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
+import pytest
 from starlette.testclient import TestClient
 
 from fia_api.core.auth.tokens import User
@@ -8,9 +9,15 @@ from fia_api.fia_api import app
 from test.e2e.constants import STAFF_HEADER, USER_HEADER
 
 
-@patch("fia_api.core.job_maker.BlockingConnection")
+@pytest.fixture
+def mock_blocking_connection():
+    with patch("fia_api.core.job_maker.BlockingConnection"):
+        yield
+
+
 @patch("requests.post")
-def test_fast_start_job_lifecycle(mock_post, _, faker):
+@pytest.mark.usefixtures("mock_blocking_connection")
+def test_fast_start_job_lifecycle(mock_post):
     client = TestClient(app)
     """
     Test the lifecycle of a fast start job:
