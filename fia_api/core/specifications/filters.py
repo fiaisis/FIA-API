@@ -11,7 +11,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from fia_api.core.exceptions import BadRequestError
-from fia_api.core.models import Instrument, Job, JobOwner, Run
+from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run
 from fia_api.core.specifications.base import Specification, T
 
 logger = logging.getLogger(__name__)
@@ -47,6 +47,24 @@ class ExperimentNumberInFilter(Filter):
 
     def apply(self, specification: Specification[T]) -> Specification[T]:
         specification.value = specification.value.where(JobOwner.experiment_number.in_(self.value))
+        return specification
+
+
+class JobTypeInFilter(Filter):
+    """Filter implementation that checks if job types are included in the query."""
+
+    def apply(self, specification: Specification[T]) -> Specification[T]:
+        job_types = [JobType(val) for val in self.value]
+        specification.value = specification.value.where(Job.job_type.in_(job_types))
+        return specification
+
+
+class JobTypeNotInFilter(Filter):
+    """Filter implementation that checks if job types are NOT included in the query."""
+
+    def apply(self, specification: Specification[T]) -> Specification[T]:
+        job_types = [JobType(val) for val in self.value]
+        specification.value = specification.value.where(Job.job_type.notin_(job_types))
         return specification
 
 
@@ -170,6 +188,10 @@ def get_filter(key: str, value: Any) -> Filter:  # noqa: C901, PLR0911, PLR0912
             return JobStateFilter(value)
         case "experiment_number_in":
             return ExperimentNumberInFilter(value)
+        case "job_type_in":
+            return JobTypeInFilter(value)
+        case "job_type_not_in":
+            return JobTypeNotInFilter(value)
         case "title":
             return TitleFilter(value)
         case "filename":

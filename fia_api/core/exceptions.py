@@ -72,3 +72,7 @@ class DataIntegrityError(Exception):
 
 class JobOwnerError(DataIntegrityError):
     """Job has no owner"""
+
+
+class LLSPSubmissionFailureError(Exception):
+    """LLSP submission failed"""

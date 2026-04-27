@@ -134,9 +134,13 @@ class FIAProvider(BaseProvider):
         )
         job.state = state
         job.stacktrace = "some stacktrace"
-        job.owner = JobOwner(experiment_number=faker.unique.pyint(min_value=10000, max_value=999999))
+        job_type = faker.enum(JobType)
+        if job_type == JobType.FAST_START:
+            job.owner = JobOwner(user_number=faker.unique.pyint(min_value=10000, max_value=999999))
+        else:
+            job.owner = JobOwner(experiment_number=faker.unique.pyint(min_value=10000, max_value=999999))
         job.instrument = instrument
-        job.job_type = faker.enum(JobType)
+        job.job_type = job_type
         return job
 
     def script(self, faker: Faker) -> Script:

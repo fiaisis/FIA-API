@@ -33,6 +33,7 @@ class JobType(enum.Enum):
     RERUN = "RERUN"
     SIMPLE = "SIMPLE"
     AUTOREDUCTION = "AUTOREDUCTION"
+    FAST_START = "FAST_START"
 
 
 class Base(DeclarativeBase):
