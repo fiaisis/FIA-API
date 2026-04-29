@@ -73,63 +73,42 @@ for cycle in Cycles2Run:
         paramTable = fit_output.OutputParameters
 
         if paramTable.column(1)[1] < 4600.0 or paramTable.column(1)[1] > 5200.0:
-            
             uAmps.append(pcharge)
             peak_centres.append(paramTable.column(1)[1])
             peak_centres_error.append(paramTable.column(2)[1])
             peak_intensity.append(paramTable.column(1)[0])
             peak_intensity_error.append(paramTable.column(2)[0])
             RunNo.append(str(i))
-            print("Combined data components if: ", flush=True)
-            print(RunNo, flush=True)
-            print(uAmps, flush=True)
-            print(peak_intensity, flush=True)
-            print(peak_intensity_error, flush=True)
-            print(peak_centres, flush=True)
-            print(peak_centres_error, flush=True)
             DeleteWorkspace(str(i)+'_0_fit_Parameters')
             DeleteWorkspace(str(i)+'_0_fit_Workspace')
             DeleteWorkspace(str(i)+'_0')
             DeleteWorkspace(str(i)+'_0_fit_NormalisedCovarianceMatrix')
             continue
         else:
-            
             uAmps.append(pcharge)
             peak_centres.append(paramTable.column(1)[1])
             peak_centres_error.append(paramTable.column(2)[1])
             peak_intensity.append(paramTable.column(1)[0])
             peak_intensity_error.append(paramTable.column(2)[0])
             RunNo.append(str(i))
-            print("Combined data components else: ", flush=True)
-            print(RunNo, flush=True)
-            print(uAmps, flush=True)
-            print(peak_intensity, flush=True)
-            print(peak_intensity_error, flush=True)
-            print(peak_centres, flush=True)
-            print(peak_centres_error, flush=True)
             DeleteWorkspace(str(i)+'_0')
             DeleteWorkspace(str(i)+'_0_fit_Parameters')
             DeleteWorkspace(str(i)+'_0_fit_Workspace')
             DeleteWorkspace(str(i)+'_0_fit_NormalisedCovarianceMatrix')
 
-    print("Combined data component outside of if/else: ")
-    print(RunNo)
-    print(uAmps)
-    print(peak_intensity)
-    print(peak_intensity_error)
-    print(peak_centres)
-    print(peak_centres_error)
     combined_data=np.column_stack(
         (RunNo, uAmps, peak_intensity, peak_intensity_error, peak_centres, peak_centres_error)
     )
-    
+
     output += f"peak_centres_{cycle}.csv, "
-    print("combined data: ")
+    print(f"combined data for {cycle}: ")
     print(combined_data)
     np.savetxt('/output/peak_centres_'+cycle+'.csv', combined_data, delimiter=", ", fmt='% s',)
 
 print("Outputting files")
-print(json.dumps({"status": "Successful", "status_message":"Simple job run successfully.", "output_files": output, "stacktrace": ""}))
+print(json.dumps({"status": "Successful",
+    "status_message":"Simple job run successfully.",
+    "output_files": output, "stacktrace": ""}))
 """
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -227,8 +206,6 @@ class PearlAutomation:
 
         # Outputs is expected to be a string or list of filenames
         filenames = outputs.split(",") if isinstance(outputs, str) else outputs
-
-        print(filenames)
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
