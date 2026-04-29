@@ -14,15 +14,20 @@ from fia_api.core.models import State
 PEARL_SCRIPT = """
 from mantid.simpleapi import *
 import numpy as np
+import json
 
-Cycles2Run=['25_4']
+Cycles2Run=['25_3','25_4']
 Path2Save = r'E:\\\\Data\\\\Moderator'
-Path2Data = r'X:\\\\data'
+Path2Data = r'/archive/NDXPEARL/Instrument/data'
 
 CycleDict = {
+    "start_25_3": 124935,
+    "end_25_3": 124946,
     "start_25_4": 124987,
-    "end_25_4": 124526,
+    "end_25_4": 125000,
 }
+
+output = ""
 
 for cycle in Cycles2Run:
     reject=[]
@@ -38,7 +43,7 @@ for cycle in Cycles2Run:
     for i in range(start,end+1):
         if i == 95382:
             continue
-        Load(Filename=Path2Data+'\\\\cycle_'+cycle+'\\\\PEARL00'+ str(i)+'.nxs', OutputWorkspace=str(i))
+        Load(Filename=Path2Data+'/cycle_'+cycle+'/PEARL00'+ str(i)+'.nxs', OutputWorkspace=str(i))
         ws = mtd[str(i)]
         run = ws.getRun()
         pcharge = run.getProtonCharge()
@@ -68,11 +73,16 @@ for cycle in Cycles2Run:
         paramTable = fit_output.OutputParameters
 
         if paramTable.column(1)[1] < 4600.0 or paramTable.column(1)[1] > 5200.0:
+            uAmps.append(pcharge)
+            peak_centres.append(paramTable.column(1)[1])
+            peak_centres_error.append(paramTable.column(2)[1])
+            peak_intensity.append(paramTable.column(1)[0])
+            peak_intensity_error.append(paramTable.column(2)[0])
+            RunNo.append(str(i))
             DeleteWorkspace(str(i)+'_0_fit_Parameters')
             DeleteWorkspace(str(i)+'_0_fit_Workspace')
             DeleteWorkspace(str(i)+'_0')
             DeleteWorkspace(str(i)+'_0_fit_NormalisedCovarianceMatrix')
-            reject.append(str(i))
             continue
         else:
             uAmps.append(pcharge)
@@ -89,7 +99,16 @@ for cycle in Cycles2Run:
     combined_data=np.column_stack(
         (RunNo, uAmps, peak_intensity, peak_intensity_error, peak_centres, peak_centres_error)
     )
-    np.savetxt(Path2Save+'\\\\peak_centres_'+cycle+'.csv', combined_data, delimiter=", ", fmt='% s',)
+
+    output += f"peak_centres_{cycle}.csv, "
+    print(f"combined data for {cycle}: ")
+    print(combined_data)
+    np.savetxt('/output/peak_centres_'+cycle+'.csv', combined_data, delimiter=", ", fmt='% s',)
+
+print("Outputting files")
+print(json.dumps({"status": "Successful",
+    "status_message":"Simple job run successfully.",
+    "output_files": output, "stacktrace": ""}))
 """
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
