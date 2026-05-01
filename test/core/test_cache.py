@@ -212,21 +212,24 @@ async def test_log_stream_generator_yields_data():
     """
     mock_valkey_client = MagicMock()
 
-    # Simulate a response from xread (assuming decode_responses=True on client)
+    # Simulate a response from xread
     mock_data = {"msg": "Test log", "level": "INFO"}
-    mock_valkey_client.xread.return_value = [
-        ["test_instrument_live_data_processor_logs", [("1620000000-0", mock_data)]]
-    ]
+    stream_id = "1620000000-0"
+
+    mock_valkey_client.xread.return_value = [["test_instrument_live_data_processor_logs", [(stream_id, mock_data)]]]
 
     with patch("fia_api.core.cache.get_valkey_client", return_value=mock_valkey_client):
         gen = log_stream_generator("test_instrument")
 
-        # Manually get the next yielded value (runs one iteration of the while loop)
+        # Manually get the next yielded value
         result = await anext(gen)
 
-        # Verify the payload
-        expected_payload = json.dumps(mock_data)
-        assert result == f"data: {expected_payload}\n\n"
+        expected_dict = {"msg": "Test log", "level": "INFO", "valkey_id": stream_id}
+        expected_json = json.dumps(expected_dict)
+
+        expected_sse = f"id: {stream_id}\ndata: {expected_json}\n\n"
+
+        assert result == expected_sse
 
         # Safely shut down the infinite generator
         await gen.aclose()
