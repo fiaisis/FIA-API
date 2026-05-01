@@ -247,7 +247,7 @@ def test_download_results_list_input(
 def test_main_entry_point() -> None:
     # Run the script as a subprocess to cover the if __name__ == "__main__": block
     # We provide invalid args so it exits quickly
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         [sys.executable, "-m", "examples.job_scripts.pearl_automation", "--username", ""],
         capture_output=True,
         text=True,
