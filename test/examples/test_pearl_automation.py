@@ -364,7 +364,8 @@ def test_monitor_job_reauths_on_404(mock_sleep, mock_get, mock_post, get_automat
 @patch("examples.job_scripts.pearl_automation.PearlAutomation.authenticate")
 @patch("examples.job_scripts.pearl_automation.requests.get")
 @patch("examples.job_scripts.pearl_automation.time.sleep", return_value=None)
-def test_monitor_job_proactive_refresh(mock_sleep, mock_get, mock_auth, get_automation):
+@patch("examples.job_scripts.pearl_automation.time.monotonic", return_value=1000.0)
+def test_monitor_job_proactive_refresh(mock_monotonic, mock_sleep, mock_get, mock_auth, get_automation):
     """When the token is nearing expiry, monitor_job proactively refreshes before polling."""
     automation = get_automation
     automation.token = "valid_token"  # noqa: S105
