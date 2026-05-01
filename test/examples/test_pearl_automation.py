@@ -122,6 +122,7 @@ def test_submit_job_success(mock_post, get_automation):
 def test_monitor_job_success(mock_sleep, mock_get, get_automation):
     automation = get_automation
     automation.token = "valid_token"  # noqa S105
+    automation._token_acquired_at = 9999999999.0  # Far future to avoid refresh
 
     # Mock responses for polling: 1st NOT_STARTED, 2nd SUCCESSFUL
     mock_response_1 = MagicMock()
@@ -145,6 +146,7 @@ def test_monitor_job_success(mock_sleep, mock_get, get_automation):
 def test_monitor_job_failure_raises_error(mock_get, get_automation, state):
     automation = get_automation
     automation.token = "valid_token"  # noqa S105
+    automation._token_acquired_at = 9999999999.0  # Far future to avoid refresh
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"state": state, "status_message": "Something went wrong"}
@@ -255,3 +257,142 @@ def test_main_entry_point() -> None:
     )
     assert result.returncode == 1
     assert "Username and password must be provided" in result.stderr
+
+
+@patch("examples.job_scripts.pearl_automation.time.monotonic")
+def test_is_token_expiring_true(mock_monotonic, get_automation):
+    automation = get_automation
+    automation.token_refresh_interval = 300
+    automation._token_acquired_at = 100.0
+    mock_monotonic.return_value = 500.0  # 400 seconds elapsed, >= 300 interval
+    assert automation._is_token_expiring() is True
+
+
+@patch("examples.job_scripts.pearl_automation.time.monotonic")
+def test_is_token_expiring_false(mock_monotonic, get_automation):
+    automation = get_automation
+    automation.token_refresh_interval = 300
+    automation._token_acquired_at = 100.0
+    mock_monotonic.return_value = 200.0  # 100 seconds elapsed, < 300 interval
+    assert automation._is_token_expiring() is False
+
+
+@patch("examples.job_scripts.pearl_automation.PearlAutomation.authenticate")
+@patch("examples.job_scripts.pearl_automation.time.monotonic")
+def test_refresh_token_if_needed_refreshes_when_expiring(mock_monotonic, mock_auth, get_automation):
+    automation = get_automation
+    automation.token_refresh_interval = 300
+    automation._token_acquired_at = 100.0
+    mock_monotonic.return_value = 500.0  # Token is expiring
+    automation._refresh_token_if_needed()
+    mock_auth.assert_called_once()
+
+
+@patch("examples.job_scripts.pearl_automation.PearlAutomation.authenticate")
+@patch("examples.job_scripts.pearl_automation.time.monotonic")
+def test_refresh_token_if_needed_skips_when_fresh(mock_monotonic, mock_auth, get_automation):
+    automation = get_automation
+    automation.token_refresh_interval = 300
+    automation._token_acquired_at = 100.0
+    mock_monotonic.return_value = 200.0  # Token is still fresh
+    automation._refresh_token_if_needed()
+    mock_auth.assert_not_called()
+
+
+@patch("examples.job_scripts.pearl_automation.requests.post")
+@patch("examples.job_scripts.pearl_automation.requests.get")
+@patch("examples.job_scripts.pearl_automation.time.sleep", return_value=None)
+def test_monitor_job_reauths_on_401(mock_sleep, mock_get, mock_post, get_automation):
+    """When a 401 is received, monitor_job re-authenticates and retries the request."""
+    automation = get_automation
+    automation.token = "old_token"  # noqa: S105
+    automation._token_acquired_at = 9999999999.0
+
+    # First GET returns 401, then re-auth succeeds, retry GET returns success
+    mock_401 = MagicMock()
+    mock_401.status_code = 401
+
+    mock_success = MagicMock()
+    mock_success.status_code = 200
+    mock_success.json.return_value = {"state": State.SUCCESSFUL.value, "outputs": "out.csv"}
+
+    mock_get.side_effect = [mock_401, mock_success]
+
+    # Mock re-authentication
+    mock_auth_response = MagicMock()
+    mock_auth_response.status_code = 200
+    mock_auth_response.json.return_value = {"token": "new_token"}
+    mock_post.return_value = mock_auth_response
+
+    job_data = automation.monitor_job(12345, poll_interval=0)
+    assert job_data["state"] == State.SUCCESSFUL.value
+    # One re-auth POST should have been made
+    mock_post.assert_called_once()
+    # Two GETs: the 401 and the retry
+    expected_get_count = 2
+    assert mock_get.call_count == expected_get_count
+
+
+@patch("examples.job_scripts.pearl_automation.requests.post")
+@patch("examples.job_scripts.pearl_automation.requests.get")
+@patch("examples.job_scripts.pearl_automation.time.sleep", return_value=None)
+def test_monitor_job_reauths_on_404(mock_sleep, mock_get, mock_post, get_automation):
+    """When a 404 is received (expired token), monitor_job re-authenticates and retries."""
+    automation = get_automation
+    automation.token = "old_token"  # noqa: S105
+    automation._token_acquired_at = 9999999999.0
+
+    mock_404 = MagicMock()
+    mock_404.status_code = 404
+
+    mock_success = MagicMock()
+    mock_success.status_code = 200
+    mock_success.json.return_value = {"state": State.SUCCESSFUL.value, "outputs": "out.csv"}
+
+    mock_get.side_effect = [mock_404, mock_success]
+
+    mock_auth_response = MagicMock()
+    mock_auth_response.status_code = 200
+    mock_auth_response.json.return_value = {"token": "new_token"}
+    mock_post.return_value = mock_auth_response
+
+    job_data = automation.monitor_job(12345, poll_interval=0)
+    assert job_data["state"] == State.SUCCESSFUL.value
+    mock_post.assert_called_once()
+
+
+@patch("examples.job_scripts.pearl_automation.PearlAutomation.authenticate")
+@patch("examples.job_scripts.pearl_automation.requests.get")
+@patch("examples.job_scripts.pearl_automation.time.sleep", return_value=None)
+def test_monitor_job_proactive_refresh(mock_sleep, mock_get, mock_auth, get_automation):
+    """When the token is nearing expiry, monitor_job proactively refreshes before polling."""
+    automation = get_automation
+    automation.token = "valid_token"  # noqa: S105
+    automation.token_refresh_interval = 300
+    automation._token_acquired_at = 0.0  # Token acquired at time 0, will be expired
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"state": State.SUCCESSFUL.value, "outputs": "out.csv"}
+    mock_get.return_value = mock_response
+
+    job_data = automation.monitor_job(12345, poll_interval=0)
+    assert job_data["state"] == State.SUCCESSFUL.value
+    # Proactive refresh should have been called
+    mock_auth.assert_called_once()
+
+
+@patch("examples.job_scripts.pearl_automation.requests.post")
+@patch("examples.job_scripts.pearl_automation.time.monotonic")
+def test_authenticate_sets_token_acquired_at(mock_monotonic, mock_post, get_automation):
+    """Verify that authenticate() records the token acquisition timestamp."""
+    automation = get_automation
+    mock_monotonic.return_value = 42.0
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"token": "fresh_token"}
+    mock_post.return_value = mock_response
+
+    automation.authenticate()
+    assert automation._token_acquired_at == 42.0
+
