@@ -395,5 +395,6 @@ def test_authenticate_sets_token_acquired_at(mock_monotonic, mock_post, get_auto
     mock_post.return_value = mock_response
 
     automation.authenticate()
-    assert automation._token_acquired_at == 42.0
+    expected_acquired_value = 42.0
+    assert automation._token_acquired_at == expected_acquired_value
 
