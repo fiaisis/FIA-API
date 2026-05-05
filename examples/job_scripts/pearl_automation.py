@@ -85,6 +85,7 @@ for cycle in Cycles2Run:
             DeleteWorkspace(str(i)+'_0_fit_Workspace')
             DeleteWorkspace(str(i)+'_0')
             DeleteWorkspace(str(i)+'_0_fit_NormalisedCovarianceMatrix')
+            reject.append(str(i))
             continue
         else:
             uAmps.append(pcharge)
