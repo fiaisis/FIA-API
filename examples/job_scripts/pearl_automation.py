@@ -17,7 +17,6 @@ import numpy as np
 import json
 
 Cycles2Run=['15_2','25_3','25_4']
-Path2Save = r'E:\\\\Data\\\\Moderator'
 Path2Data = r'/archive/NDXPEARL/Instrument/data'
 
 CycleDict = {
@@ -73,14 +72,9 @@ for cycle in Cycles2Run:
             EndX=6850,
             Normalise=True)
         paramTable = fit_output.OutputParameters
-
+        #  This catches some fits where the fit constraints are ignored,
+        #   allowing the peak to fall far outside the nominal range
         if paramTable.column(1)[1] < 4600.0 or paramTable.column(1)[1] > 5200.0:
-            uAmps.append(pcharge)
-            peak_centres.append(paramTable.column(1)[1])
-            peak_centres_error.append(paramTable.column(2)[1])
-            peak_intensity.append(paramTable.column(1)[0])
-            peak_intensity_error.append(paramTable.column(2)[0])
-            RunNo.append(str(i))
             DeleteWorkspace(str(i)+'_0_fit_Parameters')
             DeleteWorkspace(str(i)+'_0_fit_Workspace')
             DeleteWorkspace(str(i)+'_0')
