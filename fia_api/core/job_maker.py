@@ -60,7 +60,7 @@ class JobMaker:
         self.channel = None
         self._connect_to_broker()
 
-    def _connect_to_broker(self, queue_name: str) -> None:
+    def _connect_to_broker(self, queue_name: str | None = None) -> None:
         """
         Use this to connect to the broker
         :return: None
@@ -81,7 +81,8 @@ class JobMaker:
         self.channel.queue_bind(self.queue_name, self.queue_name, routing_key="")  # type: ignore[attr-defined]
     
     def _publish(self, message: str, queue_name: str) -> None:
-        #This method allows us to publish to a different queue if needed, but defaults to the main queue if not specified
+        #This method allows us to publish to a different queue if needed,
+        #but defaults to the main queue if not specified
         self._connect_to_broker(queue_name)
         # Assuming channel is set in _connect_to_broker()
         self.channel.basic_publish(exchange=queue_name, routing_key="", body=message)  # type: ignore
@@ -181,13 +182,8 @@ class JobMaker:
         filename = job.run.filename
         if filename is None:
             raise JobRequestError("Cannot resubmit job that does not have a filename associated with its run.")
-        
-        instrument_upper = job.run.instrument.instrument_name.upper()
-        cycle = job.run.cycle
 
-        filepath = f'/archive/NDX{instrument_upper}/data/{cycle}/{filename}'
-
-        self._publish(filepath, queue_name="watched-files")
+        self._publish(filename, queue_name="watched-files")
         return job.id
 
 

@@ -96,7 +96,7 @@ def test_post_resubmit_job_success(mock_blocking_connection):
 
     assert response.status_code == HTTPStatus.OK
     mock_channel.basic_publish.assert_called_once()
-    args, kwargs = mock_channel.basic_publish.call_args
+    _, kwargs = mock_channel.basic_publish.call_args
     assert kwargs['exchange'] == 'watched-files'
     assert 'full/path/to/file.nxs' in kwargs['body']
 
