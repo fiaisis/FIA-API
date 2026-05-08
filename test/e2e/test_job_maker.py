@@ -99,6 +99,7 @@ def test_post_resubmit_job_success(mock_blocking_connection):
     _, kwargs = mock_channel.basic_publish.call_args
     assert kwargs["exchange"] == "watched-files"
     assert kwargs["body"].startswith("/archive/")
+    assert kwargs["body"].endswith(".nxs")
 
 
 def test_post_resubmit_job_not_found():
