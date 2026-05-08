@@ -12,7 +12,7 @@ from pika.connection import ConnectionParameters  # type: ignore[import-untyped]
 from pika.credentials import PlainCredentials  # type: ignore[import-untyped]
 from sqlalchemy.orm import Session
 
-from fia_api.core.exceptions import JobRequestError
+from fia_api.core.exceptions import JobRequestError, MissingRecordError
 from fia_api.core.models import Job, JobOwner, JobType, Script, State
 from fia_api.core.repositories import Repo
 from fia_api.core.specifications.job import JobSpecification
@@ -177,7 +177,7 @@ class JobMaker:
 
         job = self._job_repo.find_one(JobSpecification().by_id(job_id))
         if job is None:
-            raise JobRequestError("Cannot resubmit job that does not exist.")
+            raise MissingRecordError(f"No Job for id {job_id}.")
         if job.run is None:
             raise JobRequestError("Cannot resubmit job that does not have an associated run.")
         filename = job.run.filename
