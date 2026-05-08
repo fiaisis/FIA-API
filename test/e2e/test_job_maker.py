@@ -85,7 +85,7 @@ def test_post_rerun_job(producer_channel):
     ]
 
 
-@patch('fia_api.core.job_maker.BlockingConnection')
+@patch("fia_api.core.job_maker.BlockingConnection")
 def test_post_resubmit_job_success(mock_blocking_connection):
     mock_connection = MagicMock()
     mock_channel = MagicMock()
@@ -97,8 +97,8 @@ def test_post_resubmit_job_success(mock_blocking_connection):
     assert response.status_code == HTTPStatus.OK
     mock_channel.basic_publish.assert_called_once()
     _, kwargs = mock_channel.basic_publish.call_args
-    assert kwargs['exchange'] == 'watched-files'
-    assert 'full/path/to/file.nxs' in kwargs['body']
+    assert kwargs["exchange"] == "watched-files"
+    assert "full/path/to/file.nxs" in kwargs["body"]
 
 
 def test_post_resubmit_job_not_found():
@@ -113,42 +113,33 @@ def test_resubmit_unauthorized(mock_get_experiments, mock_auth_post):
     # Setup: Mock auth as a regular user (user_number 1234)
     mock_auth_post.return_value.status_code = HTTPStatus.OK
     # Mock user experiments to NOT include the experiment for the target job
-    mock_get_experiments.return_value = [999] 
-    
+    mock_get_experiments.return_value = [999]
+
     # 1. Target a job ID that belongs to experiment 1820497 (which the user doesn't have)
-    target_job_id = 5001 
-    
+    target_job_id = 5001
+
     # 2. Call the endpoint as a non-staff user
-    response = client.post(
-        "/job/resubmit", 
-        json={"job_id": target_job_id}, 
-        headers=USER_HEADER
-    )
-    
+    response = client.post("/job/resubmit", json={"job_id": target_job_id}, headers=USER_HEADER)
+
     # 3. Assert the response is 403 Forbidden
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert "User does not have permission" in response.json()["detail"]
-    
+
 
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_resubmit_job_not_found(mock_auth_post):
     # Setup: Mock auth to allow the request as staff
     mock_auth_post.return_value.status_code = HTTPStatus.OK
-    
+
     # 1. Choose an ID that definitely doesn't exist
     non_existent_id = 999999
-    
+
     # 2. Call the endpoint
-    response = client.post(
-        "/job/resubmit", 
-        json={"job_id": non_existent_id}, 
-        headers=STAFF_HEADER
-    )
-    
+    response = client.post("/job/resubmit", json={"job_id": non_existent_id}, headers=STAFF_HEADER)
+
     # 3. Assert the response is 404
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert "No Job for id" in response.json()["detail"]
-    
 
 
 def test_post_simple_job(producer_channel):

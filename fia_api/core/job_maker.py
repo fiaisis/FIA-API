@@ -79,14 +79,14 @@ class JobMaker:
             arguments={"x-queue-type": "quorum"},
         )
         self.channel.queue_bind(self.queue_name, self.queue_name, routing_key="")  # type: ignore[attr-defined]
-    
+
     def _publish(self, message: str, queue_name: str) -> None:
-        #This method allows us to publish to a different queue if needed,
-        #but defaults to the main queue if not specified
+        # This method allows us to publish to a different queue if needed,
+        # but defaults to the main queue if not specified
         self._connect_to_broker(queue_name)
         # Assuming channel is set in _connect_to_broker()
         self.channel.basic_publish(exchange=queue_name, routing_key="", body=message)  # type: ignore
-    
+
     def _send_message(self, message: str) -> None:
         self._connect_to_broker()
         # Assuming channel is set in _connect_to_broker()
@@ -163,9 +163,10 @@ class JobMaker:
         if job_owner is None:
             job_owner = JobOwner(experiment_number=experiment_number, user_number=user_number)
         return job_owner
-    
+
     def resubmit_job_to_watched_files(
-            self, job_id: int,
+        self,
+        job_id: int,
     ):
         """
         Resubmit a job to the watched-files queue. It will extract the job_id from and its run from the db,
@@ -185,7 +186,6 @@ class JobMaker:
 
         self._publish(filename, queue_name="watched-files")
         return job.id
-
 
     @require_owner
     def create_simple_job(
