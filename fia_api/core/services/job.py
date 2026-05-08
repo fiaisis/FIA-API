@@ -59,6 +59,10 @@ class RerunJob(BaseModel):
     script: str
 
 
+class ResubmitJob(BaseModel):
+    job_id: int
+
+
 OrderField = Literal[
     "start",
     "end",
