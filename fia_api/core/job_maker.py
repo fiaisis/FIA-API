@@ -60,11 +60,12 @@ class JobMaker:
         self.channel = None
         self._connect_to_broker()
 
-    def _connect_to_broker(self) -> None:
+    def _connect_to_broker(self, queue_name: str) -> None:
         """
         Use this to connect to the broker
         :return: None
         """
+        queue_name = queue_name or self.queue_name
         self.connection = BlockingConnection(self.connection_parameters)
         self.channel = self.connection.channel()  # type: ignore[attr-defined]
         self.channel.exchange_declare(  # type: ignore[attr-defined]
@@ -78,7 +79,13 @@ class JobMaker:
             arguments={"x-queue-type": "quorum"},
         )
         self.channel.queue_bind(self.queue_name, self.queue_name, routing_key="")  # type: ignore[attr-defined]
-
+    
+    def _publish(self, message: str, queue_name: str) -> None:
+        #This method allows us to publish to a different queue if needed, but defaults to the main queue if not specified
+        self._connect_to_broker(queue_name)
+        # Assuming channel is set in _connect_to_broker()
+        self.channel.basic_publish(exchange=queue_name, routing_key="", body=message)  # type: ignore
+    
     def _send_message(self, message: str) -> None:
         self._connect_to_broker()
         # Assuming channel is set in _connect_to_broker()
@@ -155,6 +162,34 @@ class JobMaker:
         if job_owner is None:
             job_owner = JobOwner(experiment_number=experiment_number, user_number=user_number)
         return job_owner
+    
+    def resubmit_job_to_watched_files(
+            self, job_id: int,
+    ):
+        """
+        Resubmit a job to the watched-files queue. It will extract the job_id from and its run from the db,
+        extract the run.filename, and then submit this to the watched-files queue with the same job_id.
+        :param job_id: The id of the job to be resubmitted
+        :return: None
+        """
+
+        job = self._job_repo.find_one(JobSpecification().by_id(job_id))
+        if job is None:
+            raise JobRequestError("Cannot resubmit job that does not exist.")
+        if job.run is None:
+            raise JobRequestError("Cannot resubmit job that does not have an associated run.")
+        filename = job.run.filename
+        if filename is None:
+            raise JobRequestError("Cannot resubmit job that does not have a filename associated with its run.")
+        
+        instrument_upper = job.run.instrument.instrument_name.upper()
+        cycle = job.run.cycle
+
+        filepath = f'/archive/NDX{instrument_upper}/data/{cycle}/{filename}'
+
+        self._publish(filepath, queue_name="watched-files")
+        return job.id
+
 
     @require_owner
     def create_simple_job(

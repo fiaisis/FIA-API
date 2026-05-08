@@ -52,6 +52,27 @@ async def make_rerun_job(
     )
 
 
+@JobCreationRouter.post("/job/resubmit", tags=["job creation"])
+async def resubmit_job(
+    job_id: int,
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+    job_maker: Annotated[JobMaker, Depends(job_maker)],
+):
+    """
+    Resubmit a job to the watched-files queue.
+    \f
+    :param job_id: The ID of the job to be resubmitted.
+    :param credentials: HTTPAuthorizationCredentials
+    :param job_maker: Dependency injected job maker
+    :return: The job id
+    """
+    user = get_user_from_token(credentials.credentials)
+    if user.role != "staff":
+        # If not staff this is not allowed
+        raise AuthError("User not authorised for this action")
+    return job_maker.resubmit_job_to_watched_files(job_id=job_id)
+
+
 @JobCreationRouter.post("/job/simple", tags=["job creation"])
 async def make_simple_job(
     simple_job: SimpleJob,
