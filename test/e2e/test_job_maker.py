@@ -103,8 +103,8 @@ def test_post_resubmit_job_success(mock_blocking_connection):
 
 def test_post_resubmit_job_not_found():
     response = client.post("/job/resubmit", json={"job_id": 9999}, headers=API_KEY_HEADER)
-    assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert response.json() == {"message": "Cannot rerun job that does not exist."}
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {"message": "Resource not found"}
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -123,7 +123,7 @@ def test_resubmit_unauthorized(mock_get_experiments, mock_auth_post):
 
     # 3. Assert the response is 403 Forbidden
     assert response.status_code == HTTPStatus.FORBIDDEN
-    assert "User does not have permission" in response.json()["message"]
+    assert response.json()["message"] == "Forbidden"
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -139,7 +139,7 @@ def test_resubmit_job_not_found(mock_auth_post):
 
     # 3. Assert the response is 404
     assert response.status_code == HTTPStatus.NOT_FOUND
-    assert "No Job for id" in response.json()["message"]
+    assert response.json()["message"] == "Resource not found"
 
 
 def test_post_simple_job(producer_channel):
