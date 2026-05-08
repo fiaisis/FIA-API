@@ -58,7 +58,7 @@ async def resubmit_job(
     resubmit: ResubmitJob,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
     job_maker: Annotated[JobMaker, Depends(job_maker)],
-):
+) -> int:
     """
     Resubmit a job to the watched-files queue.
     \f

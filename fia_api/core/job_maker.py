@@ -167,12 +167,12 @@ class JobMaker:
     def resubmit_job_to_watched_files(
         self,
         job_id: int,
-    ):
+    ) -> int:
         """
         Resubmit a job to the watched-files queue. It will extract the job_id from and its run from the db,
         extract the run.filename, and then submit this to the watched-files queue with the same job_id.
         :param job_id: The id of the job to be resubmitted
-        :return: None
+        :return: The id of the resubmitted job
         """
 
         job = self._job_repo.find_one(JobSpecification().by_id(job_id))
