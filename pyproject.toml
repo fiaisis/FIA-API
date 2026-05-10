@@ -46,6 +46,11 @@ test = [
     "pytest-env==1.6.0",
 ]
 
+all = [
+    "fia-api[formatting]",
+    "fia-api[test]",
+]
+
 [tool.setuptools]
 packages = ["fia_api"]
 
