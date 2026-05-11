@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 import json
 from http import HTTPStatus
 from pathlib import Path
@@ -165,7 +165,7 @@ def test_resubmit_job_no_run(mock_auth_post):
     response = client.post("/job/resubmit", json={"job_id": job_id}, headers=STAFF_HEADER)
     
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert "does not have an associated run" in response.json()["message"]
+    assert "The job request was malformed and could not be processed" in response.json()["message"]
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
@@ -184,8 +184,8 @@ def test_resubmit_job_missing_filename(mock_auth_post):
             owner_id=owner.id,
             title="Empty Run",
             users="User",
-            run_start=datetime.now(),
-            run_end=datetime.now(),
+            run_start=datetime.now(UTC),
+            run_end=datetime.now(UTC),
             good_frames=0,
             raw_frames=0
         )
@@ -205,7 +205,7 @@ def test_resubmit_job_missing_filename(mock_auth_post):
     response = client.post("/job/resubmit", json={"job_id": job_id}, headers=STAFF_HEADER)
     # 3. Assert 400 Bad Request and the specific message
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert "does not have a filename associated" in response.json()["message"]
+    assert "The job request was malformed and could not be processed" in response.json()["message"]
 
 
 def test_post_simple_job(producer_channel):
