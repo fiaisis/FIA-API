@@ -1,5 +1,5 @@
-from datetime import UTC, datetime
 import json
+from datetime import UTC, datetime
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any
@@ -147,23 +147,17 @@ def test_resubmit_job_not_found(mock_auth_post):
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_resubmit_job_no_run(mock_auth_post):
     mock_auth_post.return_value.status_code = HTTPStatus.OK
-    
+
     # 1. Create a job with NO run_id in the database
     with SESSION() as session:
         owner = session.query(JobOwner).first()
-        job = Job(
-            owner_id=owner.id,
-            job_type=JobType.SIMPLE,
-            state=State.NOT_STARTED,
-            run_id=None,
-            inputs={}
-        )
+        job = Job(owner_id=owner.id, job_type=JobType.SIMPLE, state=State.NOT_STARTED, run_id=None, inputs={})
         session.add(job)
         session.commit()
         job_id = job.id
-    
+
     response = client.post("/job/resubmit", json={"job_id": job_id}, headers=STAFF_HEADER)
-    
+
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert "The job request was malformed and could not be processed" in response.json()["message"]
 
@@ -171,12 +165,12 @@ def test_resubmit_job_no_run(mock_auth_post):
 @patch("fia_api.core.auth.tokens.requests.post")
 def test_resubmit_job_missing_filename(mock_auth_post):
     mock_auth_post.return_value.status_code = HTTPStatus.OK
-    
+
     # 1. Create a job and a run with NO filename
     with SESSION() as session:
         owner = session.query(JobOwner).first()
         instrument = session.query(Instrument).first()
-        
+
         # Create a run with filename as None
         run = Run(
             filename="",
@@ -187,17 +181,12 @@ def test_resubmit_job_missing_filename(mock_auth_post):
             run_start=datetime.now(UTC),
             run_end=datetime.now(UTC),
             good_frames=0,
-            raw_frames=0
+            raw_frames=0,
         )
         session.add(run)
-        session.flush() # get the run.id
-        
-        job = Job(
-            owner_id=owner.id,
-            job_type=JobType.SIMPLE,
-            state=State.NOT_STARTED,
-            run_id=run.id
-        )
+        session.flush()  # get the run.id
+
+        job = Job(owner_id=owner.id, job_type=JobType.SIMPLE, state=State.NOT_STARTED, run_id=run.id)
         session.add(job)
         session.commit()
         job_id = job.id
