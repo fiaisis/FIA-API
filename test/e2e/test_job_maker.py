@@ -155,7 +155,7 @@ def test_resubmit_job_no_run(mock_auth_post):
             owner_id=owner.id,
             job_type=JobType.SIMPLE,
             state=State.NOT_STARTED,
-            run_id=None
+            run_id=None,
             inputs={}
         )
         session.add(job)
