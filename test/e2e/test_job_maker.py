@@ -186,7 +186,7 @@ def test_resubmit_job_missing_filename(mock_auth_post):
         session.add(run)
         session.flush()  # get the run.id
 
-        job = Job(owner_id=owner.id, job_type=JobType.SIMPLE, state=State.NOT_STARTED, run_id=run.id)
+        job = Job(owner_id=owner.id, job_type=JobType.SIMPLE, state=State.NOT_STARTED, run_id=run.id, inputs={})
         session.add(job)
         session.commit()
         job_id = job.id
