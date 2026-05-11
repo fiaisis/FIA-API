@@ -181,7 +181,7 @@ class JobMaker:
         if job.run is None:
             raise JobRequestError("Cannot resubmit job that does not have an associated run.")
         filename = job.run.filename
-        if filename is None:
+        if not filename:
             raise JobRequestError("Cannot resubmit job that does not have a filename associated with its run.")
 
         self._publish(filename, queue_name="watched-files")

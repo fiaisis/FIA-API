@@ -156,6 +156,7 @@ def test_resubmit_job_no_run(mock_auth_post):
             job_type=JobType.SIMPLE,
             state=State.NOT_STARTED,
             run_id=None
+            inputs={}
         )
         session.add(job)
         session.commit()
@@ -178,7 +179,7 @@ def test_resubmit_job_missing_filename(mock_auth_post):
         
         # Create a run with filename as None
         run = Run(
-            filename=None, # This triggers the second red line
+            filename="",
             instrument_id=instrument.id,
             owner_id=owner.id,
             title="Empty Run",
