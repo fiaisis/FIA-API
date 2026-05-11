@@ -69,16 +69,16 @@ class JobMaker:
         self.connection = BlockingConnection(self.connection_parameters)
         self.channel = self.connection.channel()  # type: ignore[attr-defined]
         self.channel.exchange_declare(  # type: ignore[attr-defined]
-            self.queue_name,
+            queue_name,
             exchange_type="direct",
             durable=True,
         )
         self.channel.queue_declare(  # type: ignore[attr-defined]
-            self.queue_name,
+            queue_name,
             durable=True,
             arguments={"x-queue-type": "quorum"},
         )
-        self.channel.queue_bind(self.queue_name, self.queue_name, routing_key="")  # type: ignore[attr-defined]
+        self.channel.queue_bind(queue_name, queue_name, routing_key="")  # type: ignore[attr-defined]
 
     def _publish(self, message: str, queue_name: str) -> None:
         # This method allows us to publish to a different queue if needed,
