@@ -93,7 +93,7 @@ def test_post_resubmit_job_success(mock_blocking_connection):
     mock_blocking_connection.return_value = mock_connection
     mock_connection.channel.return_value = mock_channel
 
-    response = client.post("/job/resubmit", json={"job_id": 1}, headers=API_KEY_HEADER)
+    response = client.post(f"/job/{1}/resubmit", json={"job_id": 1}, headers=API_KEY_HEADER)
 
     assert response.status_code == HTTPStatus.OK
     mock_channel.basic_publish.assert_called_once()
@@ -104,7 +104,7 @@ def test_post_resubmit_job_success(mock_blocking_connection):
 
 
 def test_post_resubmit_job_not_found():
-    response = client.post("/job/resubmit", json={"job_id": 9999}, headers=API_KEY_HEADER)
+    response = client.post(f"/job/9999/resubmit", json={"job_id": 9999}, headers=API_KEY_HEADER)
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {"message": "Resource not found"}
 
@@ -121,7 +121,7 @@ def test_resubmit_unauthorized(mock_get_experiments, mock_auth_post):
     target_job_id = 5001
 
     # 2. Call the endpoint as a non-staff user
-    response = client.post("/job/resubmit", json={"job_id": target_job_id}, headers=USER_HEADER)
+    response = client.post(f"/job/{target_job_id}/resubmit", json={"job_id": target_job_id}, headers=USER_HEADER)
 
     # 3. Assert the response is 403 Forbidden
     assert response.status_code == HTTPStatus.FORBIDDEN
@@ -137,7 +137,7 @@ def test_resubmit_job_not_found(mock_auth_post):
     non_existent_id = 999999
 
     # 2. Call the endpoint
-    response = client.post("/job/resubmit", json={"job_id": non_existent_id}, headers=STAFF_HEADER)
+    response = client.post(f"/job/{non_existent_id}/resubmit", json={"job_id": non_existent_id}, headers=STAFF_HEADER)
 
     # 3. Assert the response is 404
     assert response.status_code == HTTPStatus.NOT_FOUND
@@ -156,7 +156,7 @@ def test_resubmit_job_no_run(mock_auth_post):
         session.commit()
         job_id = job.id
 
-    response = client.post("/job/resubmit", json={"job_id": job_id}, headers=STAFF_HEADER)
+    response = client.post(f"/job/{job_id}/resubmit", json={"job_id": job_id}, headers=STAFF_HEADER)
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert "The job request was malformed and could not be processed" in response.json()["message"]
@@ -191,7 +191,7 @@ def test_resubmit_job_missing_filename(mock_auth_post):
         session.commit()
         job_id = job.id
     # 2. Call the endpoint
-    response = client.post("/job/resubmit", json={"job_id": job_id}, headers=STAFF_HEADER)
+    response = client.post(f"/job/{job_id}/resubmit", json={"job_id": job_id}, headers=STAFF_HEADER)
     # 3. Assert 400 Bad Request and the specific message
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert "The job request was malformed and could not be processed" in response.json()["message"]
