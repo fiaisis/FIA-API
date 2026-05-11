@@ -10,7 +10,6 @@ from fia_api.core.exceptions import AuthError
 from fia_api.core.job_maker import JobMaker
 from fia_api.core.services.job import (
     RerunJob,
-    ResubmitJob,
     SimpleJob,
     get_experiment_number_for_job_id,
     job_maker,
@@ -53,25 +52,26 @@ async def make_rerun_job(
     )
 
 
-@JobCreationRouter.post("/job/resubmit", tags=["job creation"])
+@JobCreationRouter.post(f"/job/{id}/resubmit", tags=["job creation"])
 async def resubmit_job(
-    resubmit: ResubmitJob,
+    id: int,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
     job_maker: Annotated[JobMaker, Depends(job_maker)],
 ) -> int:
     """
     Resubmit a job to the watched-files queue.
     \f
-    :param resubmit: The job to be resubmitted.
+    :param id: The ID of the job to resubmit from path parameter.
     :param credentials: HTTPAuthorizationCredentials
     :param job_maker: Dependency injected job maker
     :return: The job id
     """
+    job_id = id
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         # If not staff this is not allowed
         raise AuthError("User not authorised for this action")
-    return job_maker.resubmit_job_to_watched_files(job_id=resubmit.job_id)
+    return job_maker.resubmit_job_to_watched_files(job_id=job_id)
 
 
 @JobCreationRouter.post("/job/simple", tags=["job creation"])
