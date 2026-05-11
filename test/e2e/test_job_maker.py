@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 from http import HTTPStatus
 from pathlib import Path
@@ -9,7 +10,7 @@ from pika.adapters.blocking_connection import BlockingChannel, BlockingConnectio
 from sqlalchemy import func, select
 from starlette.testclient import TestClient
 
-from fia_api.core.models import Job
+from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, State
 from fia_api.fia_api import app
 from utils.db_generator import SESSION
 
@@ -141,6 +142,69 @@ def test_resubmit_job_not_found(mock_auth_post):
     # 3. Assert the response is 404
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json()["message"] == "Resource not found"
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_resubmit_job_no_run(mock_auth_post):
+    mock_auth_post.return_value.status_code = HTTPStatus.OK
+    
+    # 1. Create a job with NO run_id in the database
+    with SESSION() as session:
+        owner = session.query(JobOwner).first()
+        job = Job(
+            owner_id=owner.id,
+            job_type=JobType.SIMPLE,
+            state=State.NOT_STARTED,
+            run_id=None
+        )
+        session.add(job)
+        session.commit()
+        job_id = job.id
+    
+    response = client.post("/job/resubmit", json={"job_id": job_id}, headers=STAFF_HEADER)
+    
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert "does not have an associated run" in response.json()["message"]
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_resubmit_job_missing_filename(mock_auth_post):
+    mock_auth_post.return_value.status_code = HTTPStatus.OK
+    
+    # 1. Create a job and a run with NO filename
+    with SESSION() as session:
+        owner = session.query(JobOwner).first()
+        instrument = session.query(Instrument).first()
+        
+        # Create a run with filename as None
+        run = Run(
+            filename=None, # This triggers the second red line
+            instrument_id=instrument.id,
+            owner_id=owner.id,
+            title="Empty Run",
+            users="User",
+            run_start=datetime.now(),
+            run_end=datetime.now(),
+            good_frames=0,
+            raw_frames=0
+        )
+        session.add(run)
+        session.flush() # get the run.id
+        
+        job = Job(
+            owner_id=owner.id,
+            job_type=JobType.SIMPLE,
+            state=State.NOT_STARTED,
+            run_id=run.id
+        )
+        session.add(job)
+        session.commit()
+        job_id = job.id
+    # 2. Call the endpoint
+    response = client.post("/job/resubmit", json={"job_id": job_id}, headers=STAFF_HEADER)
+    # 3. Assert 400 Bad Request and the specific message
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert "does not have a filename associated" in response.json()["message"]
 
 
 def test_post_simple_job(producer_channel):
