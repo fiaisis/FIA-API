@@ -104,7 +104,7 @@ def test_post_resubmit_job_success(mock_blocking_connection):
 
 
 def test_post_resubmit_job_not_found():
-    response = client.post(f"/job/9999/resubmit", json={"job_id": 9999}, headers=API_KEY_HEADER)
+    response = client.post("/job/9999/resubmit", json={"job_id": 9999}, headers=API_KEY_HEADER)
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {"message": "Resource not found"}
 
