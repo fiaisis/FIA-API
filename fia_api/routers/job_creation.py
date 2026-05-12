@@ -52,21 +52,20 @@ async def make_rerun_job(
     )
 
 
-@JobCreationRouter.post("/job/{id}/resubmit", tags=["job creation"])
+@JobCreationRouter.post("/job/{job_id}/resubmit", tags=["job creation"])
 async def resubmit_job(
-    id: int,
+    job_id: int,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
     job_maker: Annotated[JobMaker, Depends(job_maker)],
 ) -> int:
     """
     Resubmit a job to the watched-files queue.
     \f
-    :param id: The ID of the job to resubmit from path parameter.
+    :param job_id: The ID of the job to resubmit from path parameter.
     :param credentials: HTTPAuthorizationCredentials
     :param job_maker: Dependency injected job maker
     :return: The job id
     """
-    job_id = id
     user = get_user_from_token(credentials.credentials)
     if user.role != "staff":
         # If not staff this is not allowed
