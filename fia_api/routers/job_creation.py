@@ -52,7 +52,7 @@ async def make_rerun_job(
     )
 
 
-@JobCreationRouter.post(f"/job/{id}/resubmit", tags=["job creation"])
+@JobCreationRouter.post("/job/{id}/resubmit", tags=["job creation"])
 async def resubmit_job(
     id: int,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
