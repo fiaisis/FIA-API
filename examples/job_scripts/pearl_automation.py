@@ -14,15 +14,21 @@ from fia_api.core.models import State
 PEARL_SCRIPT = """
 from mantid.simpleapi import *
 import numpy as np
+import json
 
-Cycles2Run=['25_4']
-Path2Save = r'E:\\\\Data\\\\Moderator'
-Path2Data = r'X:\\\\data'
+Cycles2Run=['15_2','25_3','25_4']
+Path2Data = r'/archive/NDXPEARL/Instrument/data'
 
 CycleDict = {
+    "start_15_2": 90482,
+    "end_15_2": 91528,
+    "start_25_3": 124935,
+    "end_25_3": 124946,
     "start_25_4": 124987,
-    "end_25_4": 124526,
+    "end_25_4": 125000,
 }
+
+output = ""
 
 for cycle in Cycles2Run:
     reject=[]
@@ -38,7 +44,7 @@ for cycle in Cycles2Run:
     for i in range(start,end+1):
         if i == 95382:
             continue
-        Load(Filename=Path2Data+'\\\\cycle_'+cycle+'\\\\PEARL00'+ str(i)+'.nxs', OutputWorkspace=str(i))
+        Load(Filename=Path2Data+'/cycle_'+cycle+'/PEARL00'+ str(i)+'.nxs', OutputWorkspace=str(i))
         ws = mtd[str(i)]
         run = ws.getRun()
         pcharge = run.getProtonCharge()
@@ -66,7 +72,8 @@ for cycle in Cycles2Run:
             EndX=6850,
             Normalise=True)
         paramTable = fit_output.OutputParameters
-
+        #  This catches some fits where the fit constraints are ignored,
+        #   allowing the peak to fall far outside the nominal range
         if paramTable.column(1)[1] < 4600.0 or paramTable.column(1)[1] > 5200.0:
             DeleteWorkspace(str(i)+'_0_fit_Parameters')
             DeleteWorkspace(str(i)+'_0_fit_Workspace')
@@ -89,7 +96,16 @@ for cycle in Cycles2Run:
     combined_data=np.column_stack(
         (RunNo, uAmps, peak_intensity, peak_intensity_error, peak_centres, peak_centres_error)
     )
-    np.savetxt(Path2Save+'\\\\peak_centres_'+cycle+'.csv', combined_data, delimiter=", ", fmt='% s',)
+
+    output += f"peak_centres_{cycle}.csv, "
+    print(f"combined data for {cycle}: ")
+    print(combined_data)
+    np.savetxt('/output/peak_centres_'+cycle+'.csv', combined_data, delimiter=", ", fmt='% s',)
+
+print("Outputting files")
+print(json.dumps({"status": "Successful",
+    "status_message":"Simple job run successfully.",
+    "output_files": output, "stacktrace": ""}))
 """
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -105,6 +121,7 @@ class PearlAutomation:
         password: str | None,
         output_dir: str | Path,
         runner_image: str | None = None,
+        token_refresh_interval: int = 300,
     ) -> None:
         self.fia_url = fia_url.rstrip("/")
         self.auth_url = auth_url.rstrip("/")
@@ -113,6 +130,8 @@ class PearlAutomation:
         self.output_dir = Path(output_dir)
         self.runner_image = runner_image
         self.token: str | None = None
+        self.token_refresh_interval = token_refresh_interval
+        self._token_acquired_at: float = 0.0
 
     def authenticate(self) -> None:
         logger.info(f"Authenticating user {self.username} at {self.auth_url}")
@@ -125,10 +144,21 @@ class PearlAutomation:
             self.token = body if isinstance(body, str) else body.get("token")
             if not self.token:
                 raise ValueError("No token found in login response")
+            self._token_acquired_at = time.monotonic()
             logger.info("Authentication successful")
         except Exception as e:
             logger.error(f"Authentication failed: {e}")
             raise
+
+    def _is_token_expiring(self) -> bool:
+        """Check if the token is due for a proactive refresh."""
+        return (time.monotonic() - self._token_acquired_at) >= self.token_refresh_interval
+
+    def _refresh_token_if_needed(self) -> None:
+        """Re-authenticate proactively if the token is close to expiring."""
+        if self._is_token_expiring():
+            logger.info("Token nearing expiry, refreshing authentication")
+            self.authenticate()
 
     def get_headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.token}"}
@@ -160,12 +190,25 @@ class PearlAutomation:
         logger.info(f"Job submitted successfully. Job ID: {job_id}")
         return job_id
 
+    def _poll_job_status(self, job_id: int) -> dict[str, Any]:
+        """Poll the job status endpoint, re-authenticating on auth-related HTTP errors."""
+        self._refresh_token_if_needed()
+        response = requests.get(f"{self.fia_url}/job/{job_id}", headers=self.get_headers(), timeout=30)
+
+        if response.status_code in (401, 403, 404):
+            logger.warning(
+                f"Received HTTP {response.status_code} while polling job {job_id}, re-authenticating and retrying"
+            )
+            self.authenticate()
+            response = requests.get(f"{self.fia_url}/job/{job_id}", headers=self.get_headers(), timeout=30)
+
+        response.raise_for_status()
+        return response.json()
+
     def monitor_job(self, job_id: int, poll_interval: int = 5) -> dict[str, Any]:
         logger.info(f"Monitoring job {job_id}")
         while True:
-            response = requests.get(f"{self.fia_url}/job/{job_id}", headers=self.get_headers(), timeout=30)
-            response.raise_for_status()
-            job_data: dict[str, Any] = response.json()
+            job_data: dict[str, Any] = self._poll_job_status(job_id)
             state = job_data.get("state")
 
             logger.info(f"Job {job_id} current state: {state}")
