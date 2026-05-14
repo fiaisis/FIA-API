@@ -81,8 +81,7 @@ class JobMaker:
         self.channel.queue_bind(queue_name, queue_name, routing_key="")  # type: ignore[attr-defined]
 
     def _publish(self, message: str, queue_name: str) -> None:
-        # This method allows us to publish to a different queue if needed,
-        # but defaults to the main queue if not specified
+        # This method allows us to publish to a different queue
         self._connect_to_broker(queue_name)
         # Assuming channel is set in _connect_to_broker()
         self.channel.basic_publish(exchange=queue_name, routing_key="", body=message)  # type: ignore
