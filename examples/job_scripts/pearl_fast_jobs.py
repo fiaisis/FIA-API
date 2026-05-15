@@ -133,7 +133,7 @@ class PearlFastStart:
     def get_headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.token}"}
 
-    def get_runner_image(self) -> str:
+    def get_runner_image(self) -> str: #remove this, we won't have control over fast jobs runner image
         if self.runner_image:
             return self.runner_image
 
@@ -151,10 +151,11 @@ class PearlFastStart:
         self.runner_image = f"ghcr.io/fiaisis/mantid@{latest_version!s}"
         return self.runner_image
 
-    def submit_job(self, script: str, runner_image: str) -> int:
-        logger.info(f"Submitting fast-start job with runner {runner_image}")
-        payload = {"runner_image": runner_image, "script": script}
-        response = requests.post(f"{self.fia_url}/job/fast-start", json=payload, headers=self.get_headers(), timeout=30)
+    def submit_job(self, script: str) -> int:
+        logger.info(f"Submitting fast-start job script to {self.fia_url}")
+        payload = {"script": script}
+        #post /job/fast-start
+        response = requests.post(f"{self.fia_url}/execute", json=payload, headers=self.get_headers(), timeout=30)
         response.raise_for_status()
         job_id = int(response.json())
         logger.info(f"Job submitted successfully. Job ID: {job_id}")
@@ -163,6 +164,8 @@ class PearlFastStart:
     def monitor_job(self, job_id: int, poll_interval: int = 5) -> dict[str, Any]:
         logger.info(f"Monitoring job {job_id}")
         while True:
+            # this won't work until FIA-API supports job status for fast-start jobs,
+            # but we want to include it here for when that is implemented
             response = requests.get(f"{self.fia_url}/job/{job_id}", headers=self.get_headers(), timeout=30)
             response.raise_for_status()
             job_data: dict[str, Any] = response.json()

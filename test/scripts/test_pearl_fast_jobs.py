@@ -11,7 +11,7 @@ import pytest
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from fia_api.core.models import State
-from fia_api.scripts.pearl_fast_jobs import PearlFastStart, main
+from examples.job_scripts.pearl_fast_jobs import PearlFastStart, main
 
 
 @pytest.fixture(scope="session")
