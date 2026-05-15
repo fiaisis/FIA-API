@@ -133,7 +133,7 @@ class PearlFastStart:
     def get_headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.token}"}
 
-    def get_runner_image(self) -> str: #remove this, we won't have control over fast jobs runner image
+    def get_runner_image(self) -> str:  # remove this, we won't have control over fast jobs runner image
         if self.runner_image:
             return self.runner_image
 
@@ -154,7 +154,7 @@ class PearlFastStart:
     def submit_job(self, script: str) -> int:
         logger.info(f"Submitting fast-start job script to {self.fia_url}")
         payload = {"script": script}
-        #post /job/fast-start
+        # post /job/fast-start
         response = requests.post(f"{self.fia_url}/execute", json=payload, headers=self.get_headers(), timeout=30)
         response.raise_for_status()
         job_id = int(response.json())
