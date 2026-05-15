@@ -1,18 +1,20 @@
 import json
+from datetime import UTC, datetime
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pika.adapters.blocking_connection import BlockingChannel, BlockingConnection
 from sqlalchemy import func, select
 from starlette.testclient import TestClient
 
-from fia_api.core.models import Job
+from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, State
 from fia_api.fia_api import app
 from utils.db_generator import SESSION
 
-from .constants import API_KEY_HEADER
+from .constants import API_KEY_HEADER, STAFF_HEADER, USER_HEADER
 
 client = TestClient(app)
 
@@ -82,6 +84,117 @@ def test_post_rerun_job(producer_channel):
             "instrument": original_job.instrument.instrument_name,
         }
     ]
+
+
+@patch("fia_api.core.job_maker.BlockingConnection")
+def test_post_resubmit_job_success(mock_blocking_connection):
+    mock_connection = MagicMock()
+    mock_channel = MagicMock()
+    mock_blocking_connection.return_value = mock_connection
+    mock_connection.channel.return_value = mock_channel
+
+    response = client.post(f"/job/{1}/resubmit", json={"job_id": 1}, headers=API_KEY_HEADER)
+
+    assert response.status_code == HTTPStatus.OK
+    mock_channel.basic_publish.assert_called_once()
+    _, kwargs = mock_channel.basic_publish.call_args
+    assert kwargs["exchange"] == "watched-files"
+    assert kwargs["body"].startswith("/archive/")
+    assert kwargs["body"].endswith(".nxs")
+
+
+def test_post_resubmit_job_not_found():
+    response = client.post("/job/9999/resubmit", json={"job_id": 9999}, headers=API_KEY_HEADER)
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {"message": "Resource not found"}
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+@patch("fia_api.core.services.job.get_experiments_for_user_number")
+def test_resubmit_unauthorized(mock_get_experiments, mock_auth_post):
+    # Setup: Mock auth as a regular user (user_number 1234)
+    mock_auth_post.return_value.status_code = HTTPStatus.OK
+    # Mock user experiments to NOT include the experiment for the target job
+    mock_get_experiments.return_value = [999]
+
+    # 1. Target a job ID that belongs to experiment 1820497 (which the user doesn't have)
+    target_job_id = 5001
+
+    # 2. Call the endpoint as a non-staff user
+    response = client.post(f"/job/{target_job_id}/resubmit", json={"job_id": target_job_id}, headers=USER_HEADER)
+
+    # 3. Assert the response is 403 Forbidden
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json()["message"] == "Forbidden"
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_resubmit_job_not_found(mock_auth_post):
+    # Setup: Mock auth to allow the request as staff
+    mock_auth_post.return_value.status_code = HTTPStatus.OK
+
+    # 1. Choose an ID that definitely doesn't exist
+    non_existent_id = 999999
+
+    # 2. Call the endpoint
+    response = client.post(f"/job/{non_existent_id}/resubmit", json={"job_id": non_existent_id}, headers=STAFF_HEADER)
+
+    # 3. Assert the response is 404
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json()["message"] == "Resource not found"
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_resubmit_job_no_run(mock_auth_post):
+    mock_auth_post.return_value.status_code = HTTPStatus.OK
+
+    # 1. Create a job with NO run_id in the database
+    with SESSION() as session:
+        owner = session.query(JobOwner).first()
+        job = Job(owner_id=owner.id, job_type=JobType.SIMPLE, state=State.NOT_STARTED, run_id=None, inputs={})
+        session.add(job)
+        session.commit()
+        job_id = job.id
+
+    response = client.post(f"/job/{job_id}/resubmit", json={"job_id": job_id}, headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert "The job request was malformed and could not be processed" in response.json()["message"]
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_resubmit_job_missing_filename(mock_auth_post):
+    mock_auth_post.return_value.status_code = HTTPStatus.OK
+
+    # 1. Create a job and a run with NO filename
+    with SESSION() as session:
+        owner = session.query(JobOwner).first()
+        instrument = session.query(Instrument).first()
+
+        # Create a run with filename as None
+        run = Run(
+            filename="",
+            instrument_id=instrument.id,
+            owner_id=owner.id,
+            title="Empty Run",
+            users="User",
+            run_start=datetime.now(UTC),
+            run_end=datetime.now(UTC),
+            good_frames=0,
+            raw_frames=0,
+        )
+        session.add(run)
+        session.flush()  # get the run.id
+
+        job = Job(owner_id=owner.id, job_type=JobType.SIMPLE, state=State.NOT_STARTED, run_id=run.id, inputs={})
+        session.add(job)
+        session.commit()
+        job_id = job.id
+    # 2. Call the endpoint
+    response = client.post(f"/job/{job_id}/resubmit", json={"job_id": job_id}, headers=STAFF_HEADER)
+    # 3. Assert 400 Bad Request and the specific message
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert "The job request was malformed and could not be processed" in response.json()["message"]
 
 
 def test_post_simple_job(producer_channel):

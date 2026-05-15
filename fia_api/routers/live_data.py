@@ -4,9 +4,10 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+from starlette.responses import StreamingResponse
 
 from fia_api.core.auth.tokens import JWTAPIBearer, get_user_from_token
-from fia_api.core.cache import cache_get, cache_set_json
+from fia_api.core.cache import log_stream_generator
 from fia_api.core.exceptions import AuthError
 from fia_api.core.request_models import LiveDataScriptUpdateRequest
 from fia_api.core.services.instrument import (
@@ -31,19 +32,24 @@ async def get_live_data_instruments(session: Annotated[Session, Depends(get_db_s
     return get_instruments_with_live_data_support(session)
 
 
-def _get_traceback_key(instrument: str) -> str:
-    return f"live_data:{instrument.upper()}:traceback"
-
-
-@LiveDataRouter.get("/live-data/{instrument}/traceback")
-async def get_instrument_traceback(instrument: str) -> str | None:
+@LiveDataRouter.get("/live-data/{instrument_name}/logs")
+async def stream_logs(
+    _: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+    instrument_name: str,
+    since: str = "0",
+) -> StreamingResponse:
     """
-    Given an instrument string, return the live data traceback for that instrument if one exists
-    \f
-    :param instrument: The instrument string
-    :return: The live data traceback or None
+    Server-Sent Events (SSE) endpoint to stream live logs from Valkey.
     """
-    return cache_get(_get_traceback_key(instrument.lower()))
+    return StreamingResponse(
+        log_stream_generator(instrument_name, since),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @LiveDataRouter.get("/live-data/{instrument}/script")
@@ -79,6 +85,5 @@ async def update_instrument_script(
         raise AuthError("Only Staff can update Live Data Scripts")
 
     update_live_data_script_for_instrument(instrument.upper(), script_request.value, session)
-    # Clear traceback when script is updated
-    cache_set_json(_get_traceback_key(instrument), None, 1)
+
     return "ok"
