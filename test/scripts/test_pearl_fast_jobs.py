@@ -239,7 +239,7 @@ def test_download_results_list_input(mock_open: MagicMock, mock_get: MagicMock, 
 def test_main_entry_point() -> None:
     # Run the script as a subprocess to cover the if __name__ == "__main__": block
     # We provide invalid args so it exits quickly
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         [sys.executable, "-m", "fia_api.scripts.pearl_fast_jobs", "--username", ""],
         capture_output=True,
         text=True,
