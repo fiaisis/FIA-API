@@ -146,26 +146,18 @@ class PearlFastStart:
             logger.error(f"Authentication failed: {e}")
             raise
 
+    def _is_token_expiring(self) -> bool:
+        """Check if the token is due for a proactive refresh."""
+        return (time.monotonic() - self._token_acquired_at) >= self.token_refresh_interval
+
+    def _refresh_token_if_needed(self) -> None:
+        """Re-authenticate proactively if the token is close to expiring."""
+        if self._is_token_expiring():
+            logger.info("Token nearing expiry, refreshing authentication")
+            self.authenticate()
+
     def get_headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.token}"}
-
-    def get_runner_image(self) -> str:  # remove this, we won't have control over fast jobs runner image
-        if self.runner_image:
-            return self.runner_image
-
-        logger.info("Fetching available Mantid runners")
-        response = requests.get(f"{self.fia_url}/jobs/runners", headers=self.get_headers(), timeout=30)
-        response.raise_for_status()
-        runners = response.json()
-        logger.info(f"mantid runners: {runners}")
-        if not runners:
-            raise ValueError("No Mantid runners found")
-
-        # Select latest version if possible, or just the first one
-        latest_version = next(iter(runners))
-        logger.info(f"Selected Mantid runner: {latest_version}")
-        self.runner_image = f"ghcr.io/fiaisis/mantid@{latest_version!s}"
-        return self.runner_image
 
     def submit_job(self, script: str) -> int:
         logger.info(f"Submitting fast-start job script to {self.fia_url}")
@@ -177,14 +169,27 @@ class PearlFastStart:
         logger.info(f"Job submitted successfully. Job ID: {job_id}")
         return job_id
 
+    def _poll_job_status(self, job_id: int) -> dict[str, Any]:
+        """Poll the job status endpoint, re-authenticating on auth-related HTTP errors."""
+        self._refresh_token_if_needed()
+        response = requests.get(f"{self.fia_url}/job/{job_id}", headers=self.get_headers(), timeout=30)
+
+        if response.status_code in (401, 403, 404):
+            logger.warning(
+                f"Received HTTP {response.status_code} while polling job {job_id}, re-authenticating and retrying"
+            )
+            self.authenticate()
+            response = requests.get(f"{self.fia_url}/job/{job_id}", headers=self.get_headers(), timeout=30)
+
+        response.raise_for_status()
+        return response.json()
+    
     def monitor_job(self, job_id: int, poll_interval: int = 5) -> dict[str, Any]:
         logger.info(f"Monitoring job {job_id}")
         while True:
             # this won't work until FIA-API supports job status for fast-start jobs,
             # but we want to include it here for when that is implemented
-            response = requests.get(f"{self.fia_url}/job/{job_id}", headers=self.get_headers(), timeout=30)
-            response.raise_for_status()
-            job_data: dict[str, Any] = response.json()
+            job_data: dict[str, Any] = self._poll_job_status(job_id)
             state = job_data.get("state")
 
             logger.info(f"Job {job_id} current state: {state}")
@@ -229,8 +234,7 @@ class PearlFastStart:
     def run(self) -> None:
         try:
             self.authenticate()
-            runner_image = self.get_runner_image()
-            job_id = self.submit_job(PEARL_SCRIPT, runner_image)
+            job_id = self.submit_job(PEARL_SCRIPT)
             job_data = self.monitor_job(job_id)
             self.download_results(job_id, job_data.get("outputs"))
             logger.info("PEARL automation completed successfully")
