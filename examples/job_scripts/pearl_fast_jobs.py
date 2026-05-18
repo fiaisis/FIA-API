@@ -260,8 +260,10 @@ def main() -> None:
         "--runner", default=os.environ.get("MANTID_RUNNER_IMAGE"), help="Specific Mantid runner image to use"
     )
     parser.add_argument(
-        "--token-refresh-interval", type=int, default=3600,
-        help="Interval (in seconds) to refresh the authentication token"
+        "--token-refresh-interval",
+        type=int,
+        default=3600,
+        help="Interval (in seconds) to refresh the authentication token",
     )
 
     args = parser.parse_args()
@@ -281,7 +283,7 @@ def main() -> None:
         args.password,
         args.output_dir,
         args.runner,
-        args.token_refresh_interval
+        args.token_refresh_interval,
     )
     automation.run()
 
