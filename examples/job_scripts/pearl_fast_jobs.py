@@ -183,7 +183,7 @@ class PearlFastStart:
 
         response.raise_for_status()
         return response.json()
-    
+
     def monitor_job(self, job_id: int, poll_interval: int = 5) -> dict[str, Any]:
         logger.info(f"Monitoring job {job_id}")
         while True:
