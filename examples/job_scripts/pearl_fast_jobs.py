@@ -120,15 +120,16 @@ class PearlFastStart:
         username: str | None,
         password: str | None,
         output_dir: str | Path,
-        runner_image: str | None = None,
+        token_refresh_interval: int = 3600,  # Default to 1 hour
     ) -> None:
         self.fia_url = fia_url.rstrip("/")
         self.auth_url = auth_url.rstrip("/")
         self.username = username
         self.password = password
         self.output_dir = Path(output_dir)
-        self.runner_image = runner_image
         self.token: str | None = None
+        self.token_refresh_interval = token_refresh_interval
+        self._token_acquired_at: float = 0.0
 
     def authenticate(self) -> None:
         logger.info(f"Authenticating user {self.username} at {self.auth_url}")
@@ -141,6 +142,7 @@ class PearlFastStart:
             self.token = body if isinstance(body, str) else body.get("token")
             if not self.token:
                 raise ValueError("No token found in login response")
+            self._token_acquired_at = time.monotonic()
             logger.info("Authentication successful")
         except Exception as e:
             logger.error(f"Authentication failed: {e}")
@@ -245,7 +247,7 @@ class PearlFastStart:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Automate PEARL Mantid jobs via FIA API")
-    parser.add_argument("--fia-url", default=os.environ.get("FIA_API_URL", "http://localhost:8080"), help="FIA API URL")
+    parser.add_argument("--fia-url", default=os.environ.get("FIA_API_URL", "http://localhost:8000"), help="FIA API URL")
     parser.add_argument(
         "--auth-url", default=os.environ.get("AUTH_API_URL", "http://localhost:8001"), help="Auth API URL"
     )
@@ -256,6 +258,10 @@ def main() -> None:
     )
     parser.add_argument(
         "--runner", default=os.environ.get("MANTID_RUNNER_IMAGE"), help="Specific Mantid runner image to use"
+    )
+    parser.add_argument(
+        "--token-refresh-interval", type=int, default=3600,
+        help="Interval (in seconds) to refresh the authentication token"
     )
 
     args = parser.parse_args()
@@ -268,7 +274,15 @@ def main() -> None:
         logger.error(err_msg)
         sys.exit(1)
 
-    automation = PearlFastStart(args.fia_url, args.auth_url, args.username, args.password, args.output_dir, args.runner)
+    automation = PearlFastStart(
+        args.fia_url,
+        args.auth_url,
+        args.username,
+        args.password,
+        args.output_dir,
+        args.runner,
+        args.token_refresh_interval
+    )
     automation.run()
 
 
