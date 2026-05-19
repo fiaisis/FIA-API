@@ -111,7 +111,7 @@ def test_post_resubmit_job_not_found():
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.routers.job_creation.get_experiments_for_user_number")
 def test_resubmit_unauthorized(mock_get_experiments, mock_auth_post):
     # Setup: Mock auth as a regular user (user_number 1234)
     mock_auth_post.return_value.status_code = HTTPStatus.OK
