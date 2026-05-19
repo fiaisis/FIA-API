@@ -218,8 +218,8 @@ def get_experiment_number_for_job_id(job_id: int, session: Session) -> int:
         owner = job.owner
         if owner is not None and owner.experiment_number is not None:
             return owner.experiment_number
-        raise ValueError("Job has no owner or owner does not have an experiment number in the DB")
-    raise ValueError("No job found with ID in the DB")
+        raise MissingRecordError("Job has no owner or owner does not have an experiment number in the DB")
+    raise MissingRecordError("No job found with ID in the DB")
 
 
 def update_job_by_id(id_: int, job: PartialJobUpdateRequest, session: Session) -> Job:
