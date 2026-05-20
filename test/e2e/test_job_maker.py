@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pika.adapters.blocking_connection import BlockingChannel, BlockingConnection
 from sqlalchemy import func, select
+from sqlalchemy.orm import joinedload
 from starlette.testclient import TestClient
 
 from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, State
@@ -110,7 +111,7 @@ def test_post_resubmit_job_not_found():
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
-@patch("fia_api.core.services.job.get_experiments_for_user_number")
+@patch("fia_api.routers.job_creation.get_experiments_for_user_number")
 def test_resubmit_unauthorized(mock_get_experiments, mock_auth_post):
     # Setup: Mock auth as a regular user (user_number 1234)
     mock_auth_post.return_value.status_code = HTTPStatus.OK
@@ -195,6 +196,67 @@ def test_resubmit_job_missing_filename(mock_auth_post):
     # 3. Assert 400 Bad Request and the specific message
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert "The job request was malformed and could not be processed" in response.json()["message"]
+
+
+@patch("fia_api.core.job_maker.BlockingConnection")
+@patch("fia_api.routers.job_creation.get_experiments_for_user_number")
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_resubmit_authorized_user(mock_auth_post, mock_get_experiments, mock_blocking_connection):
+    """Non-staff user whose experiments include the target job's experiment can successfully resubmit."""
+    mock_auth_post.return_value.status_code = HTTPStatus.OK
+    mock_connection = MagicMock()
+    mock_channel = MagicMock()
+    mock_blocking_connection.return_value = mock_connection
+    mock_connection.channel.return_value = mock_channel
+
+    # Get the experiment number for job 1 (seeded data with a valid run and filename)
+    with SESSION() as session:
+        job = session.query(Job).options(joinedload(Job.owner)).filter(Job.id == 1).first()
+        experiment_number = job.owner.experiment_number
+
+    # Mock experiments to include the target job's experiment number
+    mock_get_experiments.return_value = [experiment_number]
+
+    response = client.post("/job/1/resubmit", headers=USER_HEADER)
+
+    assert response.status_code == HTTPStatus.OK
+    mock_channel.basic_publish.assert_called_once()
+    _, kwargs = mock_channel.basic_publish.call_args
+    assert kwargs["exchange"] == "watched-files"
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_resubmit_invalid_token(mock_auth_post):
+    """An invalid token that fails both API key and JWT verification returns 403."""
+    mock_auth_post.return_value.status_code = HTTPStatus.UNAUTHORIZED
+
+    invalid_header = {"Authorization": "Bearer invalidtoken123"}
+    response = client.post("/job/1/resubmit", headers=invalid_header)
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json()["message"] == "Forbidden"
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_resubmit_job_owner_no_experiment_number(mock_auth_post):
+    """Job exists but owner has no experiment_number — get_experiment_number_for_job_id raises MissingRecordError."""
+    mock_auth_post.return_value.status_code = HTTPStatus.OK
+
+    # Create a job whose owner has no experiment_number
+    with SESSION() as session:
+        owner = JobOwner(experiment_number=None, user_number=9999)
+        session.add(owner)
+        session.flush()
+        job = Job(owner_id=owner.id, job_type=JobType.SIMPLE, state=State.NOT_STARTED, run_id=None, inputs={})
+        session.add(job)
+        session.commit()
+        job_id = job.id
+
+    response = client.post(f"/job/{job_id}/resubmit", headers=STAFF_HEADER)
+
+    # get_experiment_number_for_job_id raises MissingRecordError → 404
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {"message": "Resource not found"}
 
 
 def test_post_simple_job(producer_channel):

@@ -57,6 +57,7 @@ async def resubmit_job(
     job_id: int,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
     job_maker: Annotated[JobMaker, Depends(job_maker)],
+    session: Annotated[Session, Depends(get_db_session)],
 ) -> int:
     """
     Resubmit a job to the watched-files queue.
@@ -67,9 +68,12 @@ async def resubmit_job(
     :return: The job id
     """
     user = get_user_from_token(credentials.credentials)
+    experiment_number = get_experiment_number_for_job_id(job_id, session)
     if user.role != "staff":
-        # If not staff this is not allowed
-        raise AuthError("User not authorised for this action")
+        experiment_numbers = get_experiments_for_user_number(user.user_number)
+        if experiment_number not in experiment_numbers:
+            # If not staff this is not allowed
+            raise AuthError("User not authorised for this action")
     return job_maker.resubmit_job_to_watched_files(job_id=job_id)
 
 
