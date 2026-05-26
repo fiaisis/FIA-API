@@ -143,6 +143,51 @@ def test_download_results_no_outputs(get_fast_start):
 
 
 @patch("examples.job_scripts.pearl_fast_jobs.PearlFastStart.authenticate")
+@patch("examples.job_scripts.pearl_fast_jobs.time.monotonic")
+def test_refresh_token_if_needed_refreshes_when_expiring(mock_monotonic, mock_auth, get_fast_start):
+    automation = get_fast_start
+    automation.token_refresh_interval = 300
+    automation._token_acquired_at = 100.0
+    mock_monotonic.return_value = 500.0  # Token is expiring
+    automation._refresh_token_if_needed()
+    mock_auth.assert_called_once()
+
+
+@patch("examples.job_scripts.pearl_fast_jobs.requests.post")
+@patch("examples.job_scripts.pearl_fast_jobs.requests.get")
+@patch("examples.job_scripts.pearl_fast_jobs.time.sleep", return_value=None)
+def test_monitor_job_reauths_on_401(mock_sleep, mock_get, mock_post, get_fast_start):
+    """When a 401 is received, monitor_job re-authenticates and retries the request."""
+    automation = get_fast_start
+    automation.token = "old_token"  # noqa: S105
+    automation._token_acquired_at = 9999999999.0
+
+    # First GET returns 401, then re-auth succeeds, retry GET returns success
+    mock_401 = MagicMock()
+    mock_401.status_code = 401
+
+    mock_success = MagicMock()
+    mock_success.status_code = 200
+    mock_success.json.return_value = {"state": State.SUCCESSFUL.value, "outputs": "out.csv"}
+
+    mock_get.side_effect = [mock_401, mock_success]
+
+    # Mock re-authentication
+    mock_auth_response = MagicMock()
+    mock_auth_response.status_code = 200
+    mock_auth_response.json.return_value = {"token": "new_token"}
+    mock_post.return_value = mock_auth_response
+
+    job_data = automation.monitor_job(12345, poll_interval=0)
+    assert job_data["state"] == State.SUCCESSFUL.value
+    # One re-auth POST should have been made
+    mock_post.assert_called_once()
+    # Two GETs: the 401 and the retry
+    expected_get_count = 2
+    assert mock_get.call_count == expected_get_count
+
+
+@patch("examples.job_scripts.pearl_fast_jobs.PearlFastStart.authenticate")
 @patch("examples.job_scripts.pearl_fast_jobs.PearlFastStart.submit_job")
 @patch("examples.job_scripts.pearl_fast_jobs.PearlFastStart.monitor_job")
 @patch("examples.job_scripts.pearl_fast_jobs.PearlFastStart.download_results")
