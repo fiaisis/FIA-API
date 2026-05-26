@@ -75,7 +75,7 @@ def test_submit_job_success(mock_post, get_fast_start):
     mock_response.json.return_value = 12345
     mock_post.return_value = mock_response
 
-    job_id = automation.submit_job("print('hello')", "6.9.0")
+    job_id = automation.submit_job("print('hello')")
     expected_job_id = 12345
     assert job_id == expected_job_id
     mock_post.assert_called_once()
@@ -146,16 +146,14 @@ def test_download_results_no_outputs(get_fast_start):
 @patch("examples.job_scripts.pearl_fast_jobs.PearlFastStart.submit_job")
 @patch("examples.job_scripts.pearl_fast_jobs.PearlFastStart.monitor_job")
 @patch("examples.job_scripts.pearl_fast_jobs.PearlFastStart.download_results")
-def test_run_success(mock_dl, mock_mon, mock_sub, mock_get_img, mock_auth, get_fast_start):
+def test_run_success(mock_dl, mock_mon, mock_sub, mock_auth, get_fast_start):
     automation = get_fast_start
-    mock_get_img.return_value = "img"
     mock_sub.return_value = 1
     mock_mon.return_value = {"outputs": "out"}
 
     automation.run()
 
     mock_auth.assert_called_once()
-    mock_get_img.assert_called_once()
     mock_sub.assert_called_once()
     mock_mon.assert_called_once_with(1)
     mock_dl.assert_called_once_with(1, "out")
