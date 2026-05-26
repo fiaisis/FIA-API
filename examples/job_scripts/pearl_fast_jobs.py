@@ -282,7 +282,6 @@ def main() -> None:
         args.username,
         args.password,
         args.output_dir,
-        args.runner,
         args.token_refresh_interval,
     )
     automation.run()
