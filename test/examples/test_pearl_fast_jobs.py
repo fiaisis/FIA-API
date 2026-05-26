@@ -66,42 +66,6 @@ def test_authenticate_no_token_raises_error(mock_post, get_fast_start):
         automation.authenticate()
 
 
-@patch("examples.job_scripts.pearl_fast_jobs.requests.get")
-def test_get_runner_image_success(mock_get, get_fast_start):
-    automation = get_fast_start
-    automation.token = "valid_token"  # noqa S105
-    automation.runner_image = None
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {"6.15.0": "sha1", "6.9.0": "sha2"}
-    mock_get.return_value = mock_response
-
-    runner = automation.get_runner_image()
-    assert runner == "ghcr.io/fiaisis/mantid@6.15.0"
-    mock_get.assert_called_once()
-
-
-def test_get_runner_image_already_set(get_fast_start):
-    automation = get_fast_start
-    automation.runner_image = "custom-runner"
-    runner = automation.get_runner_image()
-    assert runner == "custom-runner"
-
-
-@patch("examples.job_scripts.pearl_fast_jobs.requests.get")
-def test_get_runner_image_empty_raises_error(mock_get, get_fast_start):
-    automation = get_fast_start
-    automation.token = "valid_token"  # noqa S105
-    automation.runner_image = None
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {}
-    mock_get.return_value = mock_response
-
-    with pytest.raises(ValueError, match="No Mantid runners found"):
-        automation.get_runner_image()
-
-
 @patch("examples.job_scripts.pearl_fast_jobs.requests.post")
 def test_submit_job_success(mock_post, get_fast_start):
     automation = get_fast_start
@@ -179,7 +143,6 @@ def test_download_results_no_outputs(get_fast_start):
 
 
 @patch("examples.job_scripts.pearl_fast_jobs.PearlFastStart.authenticate")
-@patch("examples.job_scripts.pearl_fast_jobs.PearlFastStart.get_runner_image")
 @patch("examples.job_scripts.pearl_fast_jobs.PearlFastStart.submit_job")
 @patch("examples.job_scripts.pearl_fast_jobs.PearlFastStart.monitor_job")
 @patch("examples.job_scripts.pearl_fast_jobs.PearlFastStart.download_results")
