@@ -6,6 +6,7 @@ scripts.
 import logging
 from pathlib import Path
 
+from fia_api.core.auth.tokens import DEV_MODE
 from fia_api.core.models import Job
 from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.transform import Transform
@@ -19,7 +20,7 @@ class IMATTransform(Transform):
     entity.
     """
 
-    def apply(self, script: PreScript, job: Job) -> None:
+    def apply(self, script: PreScript, job: Job) -> None:  # noqa: C901, PLR0912
         logger.info("Beginning IMAT transform for job %s...", job.id)
         lines = script.value.splitlines()
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
@@ -49,7 +50,6 @@ class IMATTransform(Transform):
                     lines[index] = "recon = False"
                 continue
             if line.startswith("output_path ="):
-                from fia_api.fia_api import DEV_MODE
                 if "ngem_path" in job.inputs and not DEV_MODE:
                     output_path = f"\"{Path(job.inputs['ngem_path']).parent}\""
                 else:

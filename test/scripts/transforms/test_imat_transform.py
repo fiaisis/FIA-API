@@ -1,6 +1,6 @@
 """Test Case for IMAT transforms"""
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.imat_transforms import IMATTransform
@@ -24,7 +24,6 @@ output = "/output"
 
 def apply_transform_and_verify(job_inputs, expected_replacements, dev_mode=False):
     """Helper to apply transform and verify results against expected replacements in SCRIPT"""
-    from unittest.mock import patch
     job = Mock()
     job.id = "job_test"
     job.inputs = job_inputs
@@ -32,7 +31,6 @@ def apply_transform_and_verify(job_inputs, expected_replacements, dev_mode=False
     with patch("fia_api.fia_api.DEV_MODE", dev_mode):
         IMATTransform().apply(script, job)
 
-    actual_lines = script.value.splitlines()
     expected_lines = SCRIPT.strip().splitlines()
 
     for old, new in expected_replacements.items():
