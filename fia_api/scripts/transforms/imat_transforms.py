@@ -29,7 +29,7 @@ class IMATTransform(Transform):
             if line.startswith("runno =") and "runno" in job.inputs:
                 lines[index] = f"runno = {job.inputs['runno']}"  # type: ignore
                 continue
-            if line.startswith("dataset_path = ") and "images_dir" in job.inputs:
+            if line.startswith("dataset_path =") and "images_dir" in job.inputs:
                 lines[index] = f'dataset_path = "{job.inputs["images_dir"]}"'  # type: ignore
                 continue
             if line.startswith("ngem_path =") and "ngem_path" in job.inputs:
@@ -49,12 +49,12 @@ class IMATTransform(Transform):
                 else:
                     lines[index] = "recon = False"
                 continue
-            if line.startswith("output_path ="):
+            if line.startswith("output ="):
                 if "ngem_path" in job.inputs and not DEV_MODE:
                     output_path = f"\"{Path(job.inputs['ngem_path']).parent}\""
                 else:
                     output_path = '"/output"'
-                lines[index] = f"output_path = {output_path}"
+                lines[index] = f"output = {output_path}"
                 continue
 
 

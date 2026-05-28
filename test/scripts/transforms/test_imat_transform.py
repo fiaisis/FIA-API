@@ -28,7 +28,7 @@ def apply_transform_and_verify(job_inputs, expected_replacements, dev_mode=False
     job.id = "job_test"
     job.inputs = job_inputs
     script = PreScript(value=SCRIPT.strip())
-    with patch("fia_api.fia_api.DEV_MODE", dev_mode):
+    with patch("fia_api.scripts.transforms.imat_transforms.DEV_MODE", dev_mode):
         IMATTransform().apply(script, job)
 
     expected_lines = SCRIPT.strip().splitlines()
