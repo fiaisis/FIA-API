@@ -26,32 +26,32 @@ class IMATTransform(Transform):
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
         # If you get here in the future, try removing the following line and see if it passes with newer mypy.
         for index, line in enumerate(lines):
-            if line.startswith("runno =") and "runno" in job.inputs:
+            if line.startswith("runno =") and "runno" in job.inputs:  # type: ignore
                 lines[index] = f"runno = {job.inputs['runno']}"  # type: ignore
                 continue
-            if line.startswith("dataset_path =") and "images_dir" in job.inputs:
+            if line.startswith("dataset_path =") and "images_dir" in job.inputs:  # type: ignore
                 lines[index] = f'dataset_path = "{job.inputs["images_dir"]}"'  # type: ignore
                 continue
-            if line.startswith("ngem_path =") and "ngem_path" in job.inputs:
-                lines[index] = f'ngem_path = "{job.inputs["ngem_path"]}"'
+            if line.startswith("ngem_path =") and "ngem_path" in job.inputs:  # type: ignore
+                lines[index] = f'ngem_path = "{job.inputs["ngem_path"]}"'  # type: ignore
                 continue
             if line.startswith("ngem ="):
                 # Regardless we want to set the boolean state
-                if "ngem" in job.inputs and job.inputs["ngem"] == "true":
+                if "ngem" in job.inputs and job.inputs["ngem"] == "true":  # type: ignore
                     lines[index] = "ngem = True"
                 else:
                     lines[index] = "ngem = False"
                 continue
             if line.startswith("recon ="):
                 # Regardless we want to set the boolean state
-                if "recon" in job.inputs and job.inputs["recon"] == "true":
+                if "recon" in job.inputs and job.inputs["recon"] == "true":  # type: ignore
                     lines[index] = "recon = True"
                 else:
                     lines[index] = "recon = False"
                 continue
             if line.startswith("output ="):
-                if "ngem_path" in job.inputs and not DEV_MODE:
-                    output_path = f'"{Path(job.inputs["ngem_path"]).parent}"'
+                if "ngem_path" in job.inputs and not DEV_MODE:  # type: ignore
+                    output_path = f'"{Path(job.inputs["ngem_path"]).parent}"'  # type: ignore
                 else:
                     output_path = '"/output"'
                 lines[index] = f"output = {output_path}"
