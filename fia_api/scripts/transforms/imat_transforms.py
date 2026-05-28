@@ -51,12 +51,11 @@ class IMATTransform(Transform):
                 continue
             if line.startswith("output ="):
                 if "ngem_path" in job.inputs and not DEV_MODE:
-                    output_path = f"\"{Path(job.inputs['ngem_path']).parent}\""
+                    output_path = f'"{Path(job.inputs["ngem_path"]).parent}"'
                 else:
                     output_path = '"/output"'
                 lines[index] = f"output = {output_path}"
                 continue
-
 
         script.value = "\n".join(lines)
         logger.info("Transform complete for job %s", job.id)

@@ -40,8 +40,8 @@ def apply_transform_and_verify(job_inputs, expected_replacements, dev_mode=False
                 expected_lines[i] = new
                 found = True
         if not found:
-             # If not in SCRIPT but expected, it won't be in script.value either unless we add it
-             pass
+            # If not in SCRIPT but expected, it won't be in script.value either unless we add it
+            pass
 
     assert script.value == "\n".join(expected_lines)
 
