@@ -57,7 +57,7 @@ class IMATTransform(Transform):
                 continue
             if line.startswith("output ="):
                 if "ngem_path" in job.inputs and not DEV_MODE:  # type: ignore
-                    cycle_num, cycle_year = _extract_cycle_details(job.inputs["ngem_path"])
+                    cycle_num, cycle_year = _extract_cycle_details(job.inputs["ngem_path"])  # type: ignore
                     imat_nxs_folder = f"IMAT_{cycle_year}_{cycle_num}_nxs"
                     output_path = f'"{Path(job.inputs["ngem_path"]).parent.parent / imat_nxs_folder}"'  # type: ignore
                 else:
