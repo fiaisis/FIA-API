@@ -19,6 +19,7 @@ def _extract_cycle_details(ngem_run_path: str):
     _, cycle_year, cycle_num = ngem_run_parent_directory.split("_")
     return cycle_num, cycle_year[-2:]
 
+
 class IMATTransform(Transform):
     """
     IMATTransform applies modifications to IMAT instrument scripts based on reduction input parameters in a Reduction
