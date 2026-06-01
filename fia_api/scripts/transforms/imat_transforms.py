@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def _extract_cycle_details(ngem_run_path: str) -> tuple[str, str]:
-    """ An example path looks like: /ngem/nGEM-INES/DATA/IMAT_2026_01/IMAT00038896 """
+    """An example path looks like: /ngem/nGEM-INES/DATA/IMAT_2026_01/IMAT00038896"""
     ngem_run_parent_directory = Path(ngem_run_path).parent.name
     _, cycle_year, cycle_num = ngem_run_parent_directory.split("_")
     return cycle_num, cycle_year[-2:]
