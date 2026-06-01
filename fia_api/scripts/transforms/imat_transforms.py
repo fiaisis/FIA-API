@@ -14,7 +14,7 @@ from fia_api.scripts.transforms.transform import Transform
 logger = logging.getLogger(__name__)
 
 
-def _extract_cycle_details(ngem_run_path: str):
+def _extract_cycle_details(ngem_run_path: str) -> tuple[str, str]:
     ngem_run_parent_directory = Path(ngem_run_path).parent.name
     _, cycle_year, cycle_num = ngem_run_parent_directory.split("_")
     return cycle_num, cycle_year[-2:]
