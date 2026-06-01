@@ -14,6 +14,11 @@ from fia_api.scripts.transforms.transform import Transform
 logger = logging.getLogger(__name__)
 
 
+def _extract_cycle_details(ngem_run_path: str):
+    ngem_run_parent_directory = Path(ngem_run_path).parent.name
+    _, cycle_year, cycle_num = ngem_run_parent_directory.split("_")
+    return cycle_num, cycle_year[-2:]
+
 class IMATTransform(Transform):
     """
     IMATTransform applies modifications to IMAT instrument scripts based on reduction input parameters in a Reduction
@@ -51,7 +56,9 @@ class IMATTransform(Transform):
                 continue
             if line.startswith("output ="):
                 if "ngem_path" in job.inputs and not DEV_MODE:  # type: ignore
-                    output_path = f'"{Path(job.inputs["ngem_path"]).parent}"'  # type: ignore
+                    cycle_num, cycle_year = _extract_cycle_details(job.inputs["ngem_path"])
+                    imat_nxs_folder = f"IMAT_{cycle_year}_{cycle_num}_nxs"
+                    output_path = f'"{Path(job.inputs["ngem_path"]).parent.parent / imat_nxs_folder}"'  # type: ignore
                 else:
                     output_path = '"/output"'
                 lines[index] = f"output = {output_path}"
