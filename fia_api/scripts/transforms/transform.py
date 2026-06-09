@@ -26,8 +26,10 @@ class Transform(ABC):
         :return: None
         """
 
+
 class DefaultTransform(Transform):
     """A transform that makes no changes to the script."""
+
     def apply(self, script: PreScript, job: Job) -> None:
         pass
 
