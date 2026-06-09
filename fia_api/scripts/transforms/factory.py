@@ -10,13 +10,13 @@ from fia_api.scripts.transforms.osiris_transform import OsirisTransform
 from fia_api.scripts.transforms.sans_transform import SansTransform
 from fia_api.scripts.transforms.test_transforms import TestTransform
 from fia_api.scripts.transforms.tosca_transform import ToscaTransform
-from fia_api.scripts.transforms.transform import MissingTransformError, Transform
+from fia_api.scripts.transforms.transform import DefaultTransform, MissingTransformError, Transform
 from fia_api.scripts.transforms.vesuvio_transform import VesuvioTransform
 
 logger = logging.getLogger(__name__)
 
 
-def get_transform_for_instrument(instrument: str) -> Transform:  # noqa: PLR0911
+def get_transform_for_instrument(instrument: str) -> Transform:  # noqa: PLR0911, C901
     """
     Get the appropriate transform for the given instrument and run file
     :param instrument: str - the instrument
@@ -42,5 +42,7 @@ def get_transform_for_instrument(instrument: str) -> Transform:  # noqa: PLR0911
             return IMATTransform()
         case "test":
             return TestTransform()
+        case "larmor":
+            return DefaultTransform()
         case _:
             raise MissingTransformError(f"No transform for instrument {instrument}")
