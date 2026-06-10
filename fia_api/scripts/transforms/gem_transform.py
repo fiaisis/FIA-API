@@ -2,11 +2,12 @@ import logging
 
 from fia_api.core.models import Job
 from fia_api.scripts.pre_script import PreScript
+from fia_api.scripts.transforms.transform import Transform
 
 logger = logging.getLogger(__name__)
 
 
-class GEMTransform:
+class GEMTransform(Transform):
     """
     GEMTransform applies modifications to GEM instrument scripts based on reduction input parameters in a Reduction
     entity.
@@ -39,10 +40,10 @@ class GEMTransform:
                 lines[index] = f'input_mode = "{job.inputs["input_mode"]}"'  # type: ignore
                 continue
             if line.startswith("vanadium_runno ="):
-                lines[index] = f"vanadium_runno = {runno_str}"  # type: ignore
+                lines[index] = f"vanadium_runno = {runno_str}"
                 continue
             if line.startswith("runno ="):
-                lines[index] = f"runno = {runno_str}"  # type: ignore
+                lines[index] = f"runno = {runno_str}"
                 continue
             if line.startswith("calibration_dir ="):
                 lines[index] = f"calibration_dir = {job.inputs['calibration_dir']}"  # type: ignore
