@@ -5,18 +5,19 @@ from fia_api.scripts.pre_script import PreScript
 
 logger = logging.getLogger(__name__)
 
+
 class GEMTransform:
     """
     GEMTransform applies modifications to GEM instrument scripts based on reduction input parameters in a Reduction
     entity.
     """
-    
-    def apply(self, script: PreScript, job: Job) -> None: # noqa: PLR0912,C901
+
+    def apply(self, script: PreScript, job: Job) -> None:  # noqa: PLR0912,C901
         logger.info("Beginning GEM transform for job %s...", job.id)
         lines = script.value.splitlines()
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
         # If you get here in the future, try removing the following line and see if it passes with newer mypy.
-        
+
         runno = job.inputs["runno"]  # type: ignore
         if isinstance(runno, list):
             if len(runno) > 1:
@@ -29,9 +30,8 @@ class GEMTransform:
                 runno_str = str(runno[0])
         else:
             runno_str = str(runno)
-        
+
         for index, line in enumerate(lines):
-            
             if line.startswith("mode ="):
                 lines[index] = f'mode = "{job.inputs["mode"]}"'  # type: ignore
                 continue
