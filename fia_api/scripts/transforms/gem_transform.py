@@ -11,7 +11,7 @@ class GEMTransform:
     entity.
     """
     
-    def apply(self, script: PreScript, job: Job) -> None:
+    def apply(self, script: PreScript, job: Job) -> None: # noqa: C901
         logger.info("Beginning GEM transform for job %s...", job.id)
         lines = script.value.splitlines()
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
@@ -39,7 +39,10 @@ class GEMTransform:
                 lines[index] = f'input_mode = "{job.inputs["input_mode"]}"'  # type: ignore
                 continue
             if line.startswith("vanadium_runno ="):
-                lines[index] = f"vanadium_runno = {vanadium_runno_str}"  # type: ignore
+                lines[index] = f"vanadium_runno = {runno_str}"  # type: ignore
+                continue
+            if line.startswith("runno ="):
+                lines[index] = f"runno = {runno_str}"  # type: ignore
                 continue
             if line.startswith("calibration_dir ="):
                 lines[index] = f"calibration_dir = {job.inputs['calibration_dir']}"  # type: ignore
