@@ -39,6 +39,7 @@ def base_job():
 @pytest.fixture
 def create_expected_script():
     """Fixture returning a helper function to construct the expected script with runno."""
+
     def _create(runno_str: str) -> str:
         return f"""
 mode = "transmission"
@@ -49,6 +50,7 @@ calibration_dir = /path/to/cal
 splined_vanadium_dir = "/path/to/splined"
 config_file = "/path/to/config"
 output_dir = "/path/to/output\""""
+
     return _create
 
 
