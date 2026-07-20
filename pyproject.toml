@@ -51,6 +51,10 @@ all = [
     "fia-api[test]",
 ]
 
+client-generation = [
+    "openapi-python-client==0.25.0",
+]
+
 [tool.setuptools]
 packages = ["fia_api"]
 
