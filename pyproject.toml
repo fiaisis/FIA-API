@@ -4,7 +4,7 @@ readme = "README.md"
 version = "0.0.1"
 requires-python = ">= 3.11"
 dependencies = [
-    "fastapi[all]==0.139.0",
+    "fastapi[all]==0.140.0",
     "PyGithub==2.9.1",
     "PyJWT==2.13.0",
     "psycopg2==2.9.12",
@@ -13,13 +13,13 @@ dependencies = [
     "uvicorn==0.51.0",
     "requests==2.34.2",
     "redis==8.0.1",
-    "pika==1.4.1",
-    "opentelemetry-api==1.43.0",
-    "opentelemetry-sdk==1.43.0",
-    "opentelemetry-instrumentation==0.64b0",
-    "opentelemetry-instrumentation-fastapi==0.64b0",
-    "opentelemetry-instrumentation-psycopg2==0.64b0",
-    "opentelemetry-exporter-otlp==1.43.0"
+    "pika==1.4.2",
+    "opentelemetry-api==1.44.0",
+    "opentelemetry-sdk==1.44.0",
+    "opentelemetry-instrumentation==0.65b0",
+    "opentelemetry-instrumentation-fastapi==0.65b0",
+    "opentelemetry-instrumentation-psycopg2==0.65b0",
+    "opentelemetry-exporter-otlp==1.44.0"
 ]
 
 [project.urls]
@@ -27,8 +27,8 @@ dependencies = [
 
 [project.optional-dependencies]
 formatting = [
-    "ruff==0.15.21",
-    "mypy==2.2.0",
+    "ruff==0.16.0",
+    "mypy==2.3.0",
     "fia-api[test]",
     "types-requests==2.33.0.20260712",
     "types-urllib3==1.26.25.14",
@@ -42,8 +42,8 @@ test = [
     "httpx==0.28.1",
     "pytest-cov==7.1.0",
     "pytest-random-order==1.2.0",
-    "Faker==40.28.1",
-    "pytest-env==1.6.0",
+    "Faker==40.36.0",
+    "pytest-env==1.7.0",
 ]
 
 all = [
