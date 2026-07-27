@@ -208,7 +208,7 @@ async def log_stream_generator(instrument_name: str, since: str = "0") -> AsyncG
 
             if response:
                 # response format: [[b'stream_key', [(b'id', {b'msg': b'...', b'level': b'...'}), ...]]]
-                for _, messages in response:  # type: ignore[str-unpack]
+                for _, messages in response:
                     for message_id, message_data in messages:
                         last_id = message_id.decode("utf-8") if isinstance(message_id, bytes) else message_id
 
