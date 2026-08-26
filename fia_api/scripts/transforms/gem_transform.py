@@ -33,23 +33,29 @@ class GEMTransform(Transform):
             runno_str = str(runno)
 
         for index, line in enumerate(lines):
+            if line.startswith("van_norm ="):
+                lines[index] = f'van_norm = "{job.inputs["van_norm"]}"'  # type: ignore
+                continue
+            if line.startswith("save_all ="):
+                lines[index] = f'save_all = "{job.inputs["save_all"]}"'  # type: ignore
+                continue
+            if line.startswith("do_asbord_corrections ="):
+                lines[index] = f'do_asbord_corrections = "{job.inputs["do_asbord_corrections"]}"'  # type: ignore
+                continue
+            if line.startswith("cal_mapping_file ="):
+                lines[index] = f'cal_mapping_file = "{job.inputs["cal_mapping_file"]}"'  # type: ignore
+                continue
             if line.startswith("mode ="):
                 lines[index] = f'mode = "{job.inputs["mode"]}"'  # type: ignore
                 continue
             if line.startswith("input_mode ="):
                 lines[index] = f'input_mode = "{job.inputs["input_mode"]}"'  # type: ignore
                 continue
-            if line.startswith("vanadium_runno ="):
-                lines[index] = f"vanadium_runno = {runno_str}"
-                continue
             if line.startswith("runno ="):
                 lines[index] = f"runno = {runno_str}"
                 continue
             if line.startswith("calibration_dir ="):
                 lines[index] = f"calibration_dir = {job.inputs['calibration_dir']}"  # type: ignore
-                continue
-            if line.startswith("splined_vanadium_dir ="):
-                lines[index] = f'splined_vanadium_dir = "{job.inputs["splined_vanadium_dir"]}"'  # type: ignore
                 continue
             if line.startswith("config_file ="):
                 lines[index] = f'config_file = "{job.inputs["config_file"]}"'  # type: ignore
