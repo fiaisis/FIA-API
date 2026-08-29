@@ -1,0 +1,3 @@
+[submodule "fia_api_client"]
+	path = fia_api_client
+	url = https://github.com/fiaisis/fia_api_client.git
