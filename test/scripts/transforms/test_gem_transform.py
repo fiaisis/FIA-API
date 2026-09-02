@@ -149,7 +149,7 @@ def reduction():
     return mock
 
 
-def test_gem_transform_apply(script, reduction):
+def test_gem_transform_apply(script, reduction): #noqa: C901
     """Test GEMTransform only modifies expected lines and leaves others unchanged."""
     transform = GEMTransform()
     original_lines = script.value.splitlines()
