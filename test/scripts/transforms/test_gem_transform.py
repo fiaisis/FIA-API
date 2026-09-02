@@ -42,14 +42,14 @@ def create_expected_script():
 
     def _create(runno_str: str) -> str:
         return f"""
-mode = "transmission"
-input_mode = "raw"
-vanadium_runno = {runno_str}
-runno = {runno_str}
-calibration_dir = /path/to/cal
-splined_vanadium_dir = "/path/to/splined"
-config_file = "/path/to/config"
-output_dir = "/path/to/output\""""
+        mode = "transmission"
+        input_mode = "raw"
+        vanadium_runno = {runno_str}
+        runno = {runno_str}
+        calibration_dir = /path/to/cal
+        splined_vanadium_dir = "/path/to/splined"
+        config_file = "/path/to/config"
+        output_dir = "/path/to/output\""""
 
     return _create
 
