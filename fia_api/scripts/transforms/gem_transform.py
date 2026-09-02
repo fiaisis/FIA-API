@@ -60,9 +60,6 @@ class GEMTransform(Transform):
             if line.startswith("config_file ="):
                 lines[index] = f'config_file = "{job.inputs["config_file"]}"'  # type: ignore
                 continue
-            if line.startswith("output_dir = "):
-                lines[index] = f'output_dir = "{job.inputs["output_dir"]}"'  # type: ignore
-                continue
 
         script.value = "\n".join(lines)
         logger.info("Transform complete for job %s", job.id)

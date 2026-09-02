@@ -135,7 +135,6 @@ def reduction():
         "input_mode": "raw",
         "calibration_dir": "/path/to/cal",
         "config_file": "/path/to/config",
-        "output_dir": "/path/to/output",
         "runno": 12345,
         "van_norm": True,
         "save_all": True,
@@ -201,7 +200,5 @@ def test_gem_transform_apply(script, reduction):
             assert line == 'splined_vanadium_dir = "/path/to/splined"'
         elif line.startswith("config_file ="):
             assert line == 'config_file = "/path/to/config"'
-        elif line.startswith("output_dir = "):
-            assert line == 'output_dir = "/path/to/output"'
         else:
             assert line == original_lines[index]
