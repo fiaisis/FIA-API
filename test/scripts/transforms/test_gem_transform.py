@@ -43,7 +43,7 @@ def pull_vars_from_config(config_file):
 runno = "97486"
 mode, van_norm, do_absorb_corrections, multiple_scattering = pull_vars_from_config(config_file)
 # Summed, Individual
-input_mode = "Individual"  
+input_mode = "Individual"
 # Set to False to skip vanadium normalisation step
 van_norm = True
 # Set to True to save all intermediate workspaces, False to only save final focused workspace
@@ -153,7 +153,7 @@ def test_gem_transform_single_run(script, reduction):
     """Test GEMTransform with a single run number."""
     GEMTransform().apply(script, reduction)
 
-    assert script.value == "12345"
+    assert script.value[reduction.inputs["runno"]] == "12345"
 
 
 def test_gem_transform_contiguous_runs(script, reduction):
@@ -161,7 +161,7 @@ def test_gem_transform_contiguous_runs(script, reduction):
     reduction.inputs["runno"] = [12345, 12346, 12347]
     GEMTransform().apply(script, reduction)
 
-    assert script.value == "12345-12347"
+    assert script.value[reduction.inputs["runno"][0]] == "12345-12347"
 
 
 def test_gem_transform_non_contiguous_runs(script, reduction):
@@ -169,7 +169,7 @@ def test_gem_transform_non_contiguous_runs(script, reduction):
     reduction.inputs["runno"] = [12345, 12347, 12349]
     GEMTransform().apply(script, reduction)
 
-    assert script.value == "12345,12347,12349"
+    assert script.value[reduction.inputs["runno"][0]] == "12345,12347,12349"
 
 
 def test_gem_transform_list_length_one(script, reduction):
@@ -177,7 +177,7 @@ def test_gem_transform_list_length_one(script, reduction):
     reduction.inputs["runno"] = [12345]
     GEMTransform().apply(script, reduction)
 
-    assert script.value == "12345"
+    assert script.value[reduction.inputs["runno"][0]] == "12345"
 
 
 def test_gem_transform_apply(script, reduction):
