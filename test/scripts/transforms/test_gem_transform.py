@@ -41,7 +41,11 @@ def pull_vars_from_config(config_file):
     return mode, van_norm, do_absorb_corrections, multiple_scattering
 
 runno = "97486"
-mode, van_norm, do_absorb_corrections, multiple_scattering = pull_vars_from_config(config_file)
+f_mode, f_van_norm, f_do_absorb_corrections, f_multiple_scattering = pull_vars_from_config(config_file)
+mode = f_mode
+van_norm = f_van_norm
+do_absorb_corrections = f_do_absorb_corrections
+multiple_scattering = f_multiple_scattering
 # Summed, Individual
 input_mode = "Individual"
 # Set to False to skip vanadium normalisation step
