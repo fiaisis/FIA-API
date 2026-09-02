@@ -13,7 +13,8 @@ def script():
     """GEM Transform PreScript fixture.
     :return:"""
 
-    return PreScript(value="""
+    return PreScript(
+        value="""
         from mantid.simpleapi import SaveNexus
 import numpy as np
 from pathlib import Path
@@ -121,7 +122,7 @@ gem.focus(
 )
 
 print(f"Reduction completed for run {runno}. Output files: {output}")"""
-                     )
+    )
 
 
 @pytest.fixture
