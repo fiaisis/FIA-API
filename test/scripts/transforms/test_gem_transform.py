@@ -7,24 +7,129 @@ import pytest
 from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.gem_transform import GEMTransform
 
-SCRIPT = """
-mode = "default_mode"
-input_mode = "default_input_mode"
-vanadium_runno = 0
-runno = 0
-calibration_dir = None
-splined_vanadium_dir = "default_splined_vanadium_dir"
-config_file = "default_config_file"
-output_dir = "default_output_dir"
-"""
+
+@pytest.fixture
+def script():
+    """GEM Transform PreScript fixture.
+    :return:"""
+
+    return PreScript(value="""
+        from mantid.simpleapi import SaveNexus
+import numpy as np
+from pathlib import Path
+from isis_powder.gem import Gem
+
+
+######
+# autoreduction
+######
+
+config_file = "/extras/gem/Gem_config_example_25_3.yaml"
+
+def pull_vars_from_config(config_file):
+    with open(config_file, 'r') as f:
+        for line in f:
+            if line.startswith("mode"):
+                mode = line.split(":")[1].strip()
+            elif line.startswith("vanadium_normalisation"):
+                van_norm = line.split(":")[1].strip().lower()
+            elif line.startswith("do_absorb_corrections"):
+                do_absorb_corrections = line.split(":")[1].strip().lower()
+            elif line.startswith("multiple_scattering"):
+                multiple_scattering = line.split(":")[1].strip().lower()
+    return mode, van_norm, do_absorb_corrections, multiple_scattering
+
+runno = "97486"
+mode, van_norm, do_absorb_corrections, multiple_scattering = pull_vars_from_config(config_file)
+input_mode = "Individual"  # Summed, Individual
+van_norm = True  # Set to False to skip vanadium normalisation step
+save_all = True  # Set to True to save all intermediate workspaces, False to only save final focused workspace
+do_absorb_corrections = True  # Set to False to skip absorption corrections
+multiple_scattering = True  # Indicates whether to account for the effects of multiple scattering when calculating 
+                            # absorption corrections. If do_absorb_corrections is set to True this parameter must be set.
+
+cal_mapping_file = "calibration_mapping.yaml" #We need to create this file
+cwd = Path.cwd()
+cal_mapping_file_path = Path(cwd) / cal_mapping_file
+
+output = "/output"
+
+gem = Gem(
+    calibration_to_adjust=cal_mapping_file,
+    calibration_directory=cwd, #find the calibration directory in the current working directory
+    output_directory=cwd, #output files into the current working directory
+    user_name="Autoreduction",
+    config_file=config_file
+)
+
+gem.create_cal(run_number=runno,
+               calibration_mapping_file=cal_mapping_file
+)
+
+# Vanadium only
+# isis_powder checks for existing splined vanadium files.
+# If they exist, create_vanadium is a no-op effectively.
+# If you pre-compute vanadium and store in /extras/gem/,
+# you can remove this block entirely.
+
+gem.create_vanadium(
+    calibration_mapping_file=cal_mapping_file,
+    mode=mode,
+    do_absorb_corrections=do_absorb_corrections,
+    multiple_scattering=multiple_scattering,
+    spline_coefficient=120,
+    #texture_mode=True
+)
+
+
+# Focus
+print(f"Starting focus for run {runno} with mode {mode} and input mode {input_mode}")
+
+# Choice of cropping values for PDF or Rietveld mode
+if mode == "Rietveld":
+    focused_cropping_values = [
+        (700, 19500),  # Bank 1
+        (1000, 19500),  # Bank 2
+        (1000, 19500),  # Bank 3
+        (1000, 19500),  # Bank 4
+        (1000, 18500),  # Bank 5
+        (1000, 16750),  # Bank 6
+    ]
+elif mode == "PDF":
+    focused_cropping_values = [
+        (550, 19900),  # Bank 1
+        (550, 19900),  # Bank 2
+        (550, 19900),  # Bank 3
+        (550, 19900),  # Bank 4
+        (550, 18500),  # Bank 5
+        (550, 16750),  # Bank 6
+    ]
+else:
+    raise ValueError(f"Invalid mode: {mode}. Expected 'PDF' or 'Rietveld'.")
+
+gem.focus(
+    calibration_mapping_file=cal_mapping_file,
+    do_absorb_corrections=do_absorb_corrections,
+    input_mode=input_mode,
+    mode=mode,
+    run_number=runno,
+    vanadium_normalisation=van_norm,
+    unit_to_keep="dSpacing",
+    keep_raw_workspace=False,
+    save_all=save_all,
+    focused_cropping_values=focused_cropping_values,
+)
+
+print(f"Reduction completed for run {runno}. Output files: {output}")"""
+                     )
 
 
 @pytest.fixture
-def base_job():
-    """Fixture for base job inputs."""
-    job = Mock()
-    job.id = "test-job-gem"
-    job.inputs = {
+def reduction():
+    """Reduction fixture"""
+
+    mock = Mock()
+    mock.inputs = {
         "mode": "transmission",
         "input_mode": "raw",
         "calibration_dir": "/path/to/cal",
@@ -33,69 +138,51 @@ def base_job():
         "output_dir": "/path/to/output",
         "runno": 12345,
     }
-    return job
+    return mock
 
 
-@pytest.fixture
-def create_expected_script():
-    """Fixture returning a helper function to construct the expected script with runno."""
-
-    def _create(runno_str: str) -> str:
-        return f"""
-        mode = "transmission"
-        input_mode = "raw"
-        vanadium_runno = {runno_str}
-        runno = {runno_str}
-        calibration_dir = /path/to/cal
-        splined_vanadium_dir = "/path/to/splined"
-        config_file = "/path/to/config"
-        output_dir = "/path/to/output\""""
-
-    return _create
-
-
-def test_gem_transform_single_run(base_job, create_expected_script):
+def test_gem_transform_single_run(script, reduction):
     """Test GEMTransform with a single run number."""
-    script = PreScript(value=SCRIPT)
-    GEMTransform().apply(script, base_job)
+    script = script
+    GEMTransform().apply(script, reduction)
 
-    assert script.value == create_expected_script("12345")
+    assert script.value == "12345"
 
 
-def test_gem_transform_contiguous_runs(base_job, create_expected_script):
+def test_gem_transform_contiguous_runs(script, reduction):
     """Test GEMTransform with contiguous runs."""
-    base_job.inputs["runno"] = [12345, 12346, 12347]
-    script = PreScript(value=SCRIPT)
-    GEMTransform().apply(script, base_job)
+    reduction.inputs["runno"] = [12345, 12346, 12347]
+    script = script
+    GEMTransform().apply(script, reduction)
 
-    assert script.value == create_expected_script("12345-12347")
+    assert script.value == "12345-12347"
 
 
-def test_gem_transform_non_contiguous_runs(base_job, create_expected_script):
+def test_gem_transform_non_contiguous_runs(script, reduction):
     """Test GEMTransform with non-contiguous runs."""
-    base_job.inputs["runno"] = [12345, 12347, 12349]
-    script = PreScript(value=SCRIPT)
-    GEMTransform().apply(script, base_job)
+    reduction.inputs["runno"] = [12345, 12347, 12349]
+    script = script
+    GEMTransform().apply(script, reduction)
 
-    assert script.value == create_expected_script("12345,12347,12349")
+    assert script.value == "12345,12347,12349"
 
 
-def test_gem_transform_list_length_one(base_job, create_expected_script):
+def test_gem_transform_list_length_one(script, reduction):
     """Test GEMTransform with list containing a single run."""
-    base_job.inputs["runno"] = [12345]
-    script = PreScript(value=SCRIPT)
-    GEMTransform().apply(script, base_job)
+    reduction.inputs["runno"] = [12345]
+    script = script
+    GEMTransform().apply(script, reduction)
 
-    assert script.value == create_expected_script("12345")
+    assert script.value == "12345"
 
 
-def test_gem_transform_apply(base_job):
+def test_gem_transform_apply(script, reduction):
     """Test GEMTransform only modifies expected lines and leaves others unchanged."""
     transform = GEMTransform()
-    script = PreScript(value=SCRIPT)
+    script = script
     original_lines = script.value.splitlines()
 
-    transform.apply(script, base_job)
+    transform.apply(script, reduction)
 
     updated_lines = script.value.splitlines()
     assert len(original_lines) == len(updated_lines)
@@ -105,8 +192,6 @@ def test_gem_transform_apply(base_job):
             assert line == 'mode = "transmission"'
         elif line.startswith("input_mode ="):
             assert line == 'input_mode = "raw"'
-        elif line.startswith("vanadium_runno ="):
-            assert line == "vanadium_runno = 12345"
         elif line.startswith("runno ="):
             assert line == "runno = 12345"
         elif line.startswith("calibration_dir ="):
