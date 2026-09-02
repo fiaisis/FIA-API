@@ -164,17 +164,19 @@ def test_gem_transform_apply(script, reduction):
             assert line == 'mode = "transmission"'
         elif line.startswith("input_mode ="):
             assert line == 'input_mode = "raw"'
+        elif line.startswith("calibration_dir ="):
+            assert line == "calibration_dir = /path/to/cal"
+        elif line.startswith("config_file ="):
+            assert line == 'config_file = "/path/to/config"'
         elif line.startswith("runno ="):
             assert line == "runno = 12345"
         elif line.startswith("van_norm ="):
             assert line == 'van_norm = "True"'
-        elif line.startswith("calibration_dir ="):
-            assert line == "calibration_dir = /path/to/cal"
-        elif line.startswith("splined_vanadium_dir ="):
-            assert line == 'splined_vanadium_dir = "/path/to/splined"'
-        elif line.startswith("config_file ="):
-            assert line == 'config_file = "/path/to/config"'
         elif line.startswith("save_all ="):
             assert line == 'save_all = "True"'
+        elif line.startswith("do_asbord_corrections ="):
+            assert line == 'do_asbord_corrections = "True"'
+        elif line.startswith("cal_mapping_file ="):
+            assert line == 'cal_mapping_file = "/path/to/cal_mapping.yaml"'
         else:
             assert line == original_lines[index]
