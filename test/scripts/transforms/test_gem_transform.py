@@ -147,7 +147,7 @@ def reduction():
         "runno": 12345,
         "van_norm": True,
         "save_all": True,
-        "do_asbord_corrections": True,
+        "do_absorb_corrections": True,
         "cal_mapping_file": "/path/to/cal_mapping.yaml",
         "multiple_scattering": True,
     }
@@ -179,8 +179,8 @@ def test_gem_transform_apply(script, reduction):  # noqa: C901
             assert line == 'van_norm = "True"'
         elif line.startswith("save_all ="):
             assert line == 'save_all = "True"'
-        elif line.startswith("do_asborb_corrections ="):
-            assert line == 'do_asborb_corrections = "True"'
+        elif line.startswith("do_absorb_corrections ="):
+            assert line == 'do_absorb_corrections = "True"'
         elif line.startswith("cal_mapping_file ="):
             assert line == 'cal_mapping_file = "/path/to/cal_mapping.yaml"'
         elif line.startswith("multiple_scattering ="):

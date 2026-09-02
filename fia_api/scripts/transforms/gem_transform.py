@@ -39,8 +39,8 @@ class GEMTransform(Transform):
             if line.startswith("save_all ="):
                 lines[index] = f'save_all = "{job.inputs["save_all"]}"'  # type: ignore
                 continue
-            if line.startswith("do_asborb_corrections ="):
-                lines[index] = f'do_asborb_corrections = "{job.inputs["do_asborb_corrections"]}"'  # type: ignore
+            if line.startswith("do_absorb_corrections ="):
+                lines[index] = f'do_absorb_corrections = "{job.inputs["do_absorb_corrections"]}"'  # type: ignore
                 continue
             if line.startswith("cal_mapping_file ="):
                 lines[index] = f'cal_mapping_file = "{job.inputs["cal_mapping_file"]}"'  # type: ignore
