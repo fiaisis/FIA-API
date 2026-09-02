@@ -133,10 +133,13 @@ def reduction():
         "mode": "transmission",
         "input_mode": "raw",
         "calibration_dir": "/path/to/cal",
-        "splined_vanadium_dir": "/path/to/splined",
         "config_file": "/path/to/config",
         "output_dir": "/path/to/output",
         "runno": 12345,
+        "van_norm": True,
+        "save_all": True,
+        "do_asbord_corrections": True,
+        "cal_mapping_file": "/path/to/cal_mapping.yaml",
     }
     return mock
 
@@ -189,6 +192,8 @@ def test_gem_transform_apply(script, reduction):
             assert line == 'input_mode = "raw"'
         elif line.startswith("runno ="):
             assert line == "runno = 12345"
+        elif line.startswith("van_norm ="):
+            assert line == 'van_norm = "True"'
         elif line.startswith("calibration_dir ="):
             assert line == "calibration_dir = /path/to/cal"
         elif line.startswith("splined_vanadium_dir ="):
