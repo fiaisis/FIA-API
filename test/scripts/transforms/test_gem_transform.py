@@ -174,8 +174,8 @@ def test_gem_transform_apply(script, reduction):  # noqa: C901
             assert line == 'van_norm = "True"'
         elif line.startswith("save_all ="):
             assert line == 'save_all = "True"'
-        elif line.startswith("do_asbord_corrections ="):
-            assert line == 'do_asbord_corrections = "True"'
+        elif line.startswith("do_asborb_corrections ="):
+            assert line == 'do_asborb_corrections = "True"'
         elif line.startswith("cal_mapping_file ="):
             assert line == 'cal_mapping_file = "/path/to/cal_mapping.yaml"'
         else:
