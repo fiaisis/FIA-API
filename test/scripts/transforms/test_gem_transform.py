@@ -149,6 +149,7 @@ def reduction():
         "save_all": True,
         "do_asbord_corrections": True,
         "cal_mapping_file": "/path/to/cal_mapping.yaml",
+        "multiple_scattering": True,
     }
     return mock
 
@@ -182,5 +183,7 @@ def test_gem_transform_apply(script, reduction):  # noqa: C901
             assert line == 'do_asborb_corrections = "True"'
         elif line.startswith("cal_mapping_file ="):
             assert line == 'cal_mapping_file = "/path/to/cal_mapping.yaml"'
+        elif line.startswith("multiple_scattering ="):
+            assert line == 'multiple_scattering = "True"'
         else:
             assert line == original_lines[index]
