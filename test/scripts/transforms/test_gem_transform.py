@@ -45,8 +45,8 @@ input_mode = "Individual"  # Summed, Individual
 van_norm = True  # Set to False to skip vanadium normalisation step
 save_all = True  # Set to True to save all intermediate workspaces, False to only save final focused workspace
 do_absorb_corrections = True  # Set to False to skip absorption corrections
-multiple_scattering = True  # Indicates whether to account for the effects of multiple scattering when calculating 
-                            # absorption corrections. If do_absorb_corrections is set to True this parameter must be set.
+multiple_scattering = True  #Indicates whether to account for the effects of multiple scattering when calculating
+                            #absorption corrections. If do_absorb_corrections is set to True this parameter must be set
 
 cal_mapping_file = "calibration_mapping.yaml" #We need to create this file
 cwd = Path.cwd()
@@ -143,7 +143,6 @@ def reduction():
 
 def test_gem_transform_single_run(script, reduction):
     """Test GEMTransform with a single run number."""
-    script = script
     GEMTransform().apply(script, reduction)
 
     assert script.value == "12345"
@@ -152,7 +151,6 @@ def test_gem_transform_single_run(script, reduction):
 def test_gem_transform_contiguous_runs(script, reduction):
     """Test GEMTransform with contiguous runs."""
     reduction.inputs["runno"] = [12345, 12346, 12347]
-    script = script
     GEMTransform().apply(script, reduction)
 
     assert script.value == "12345-12347"
@@ -161,7 +159,6 @@ def test_gem_transform_contiguous_runs(script, reduction):
 def test_gem_transform_non_contiguous_runs(script, reduction):
     """Test GEMTransform with non-contiguous runs."""
     reduction.inputs["runno"] = [12345, 12347, 12349]
-    script = script
     GEMTransform().apply(script, reduction)
 
     assert script.value == "12345,12347,12349"
@@ -170,7 +167,6 @@ def test_gem_transform_non_contiguous_runs(script, reduction):
 def test_gem_transform_list_length_one(script, reduction):
     """Test GEMTransform with list containing a single run."""
     reduction.inputs["runno"] = [12345]
-    script = script
     GEMTransform().apply(script, reduction)
 
     assert script.value == "12345"
@@ -179,7 +175,6 @@ def test_gem_transform_list_length_one(script, reduction):
 def test_gem_transform_apply(script, reduction):
     """Test GEMTransform only modifies expected lines and leaves others unchanged."""
     transform = GEMTransform()
-    script = script
     original_lines = script.value.splitlines()
 
     transform.apply(script, reduction)
