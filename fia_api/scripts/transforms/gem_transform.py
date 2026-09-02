@@ -54,9 +54,6 @@ class GEMTransform(Transform):
             if line.startswith("runno ="):
                 lines[index] = f"runno = {runno_str}"
                 continue
-            if line.startswith("cal_mapping_file ="):
-                lines[index] = f'cal_mapping_file = "{job.inputs["cal_mapping_file"]}"'  # type: ignore
-                continue
             if line.startswith("config_file ="):
                 lines[index] = f'config_file = "{job.inputs["config_file"]}"'  # type: ignore
                 continue
