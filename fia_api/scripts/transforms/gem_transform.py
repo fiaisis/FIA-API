@@ -27,8 +27,6 @@ class GEMTransform(Transform):
                     runno_str = f"{runno[0]}-{runno[-1]}"
                 else:
                     runno_str = ",".join(map(str, runno))
-            else:
-                runno_str = str(runno[0])
         else:
             runno_str = str(runno)
 
