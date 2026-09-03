@@ -154,6 +154,18 @@ def reduction():
     return mock
 
 
+
+def test_gem_transform_runno_list(script, reduction):
+    """Test GEMTransform handles runno as a list correctly."""
+    reduction.inputs["runno"] = [12345, 12346, 12347]
+    transform = GEMTransform()
+    transform.apply(script, reduction)
+    updated_lines = script.value.splitlines()
+    for line in updated_lines:
+        if line.startswith("runno ="):
+            assert line == "runno = 12345-12347"
+
+
 def test_gem_transform_apply(script, reduction):  # noqa: C901
     """Test GEMTransform only modifies expected lines and leaves others unchanged."""
     transform = GEMTransform()
