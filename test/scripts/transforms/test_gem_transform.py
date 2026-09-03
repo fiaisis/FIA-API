@@ -154,7 +154,6 @@ def reduction():
     return mock
 
 
-
 def test_gem_transform_runno_list(script, reduction):
     """Test GEMTransform handles runno as a list correctly."""
     reduction.inputs["runno"] = [12345, 12346, 12347]
