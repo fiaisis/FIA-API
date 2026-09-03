@@ -52,9 +52,6 @@ class GEMTransform(Transform):
             if line.startswith("runno ="):
                 lines[index] = f"runno = {runno_str}"
                 continue
-            if line.startswith("config_file ="):
-                lines[index] = f'config_file = "{job.inputs["config_file"]}"'  # type: ignore
-                continue
             if line.startswith("multiple_scattering ="):
                 lines[index] = f'multiple_scattering = "{job.inputs["multiple_scattering"]}"'  # type: ignore
                 continue

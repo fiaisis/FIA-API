@@ -143,7 +143,6 @@ def reduction():
         "mode": "transmission",
         "input_mode": "raw",
         "calibration_dir": "/path/to/cal",
-        "config_file": "/path/to/config",
         "runno": 12345,
         "van_norm": True,
         "save_all": True,
@@ -182,8 +181,6 @@ def test_gem_transform_apply(script, reduction):  # noqa: C901
             assert line == 'input_mode = "raw"'
         elif line.startswith("calibration_dir ="):
             assert line == "calibration_dir = /path/to/cal"
-        elif line.startswith("config_file ="):
-            assert line == 'config_file = "/path/to/config"'
         elif line.startswith("runno ="):
             assert line == "runno = 12345"
         elif line.startswith("van_norm ="):
