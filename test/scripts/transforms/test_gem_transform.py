@@ -30,7 +30,7 @@ mode = "Rietveld"
 van_norm = True
 # Set to False to skip absorption corrections
 do_absorb_corrections = True
-# Indicates whether to account for the effects of multiple scattering when calculating 
+# Indicates whether to account for the effects of multiple scattering when calculating
 # absorption corrections. If do_absorb_corrections is set to True this parameter must be set.
 multiple_scattering = True
 # Summed, Individual
