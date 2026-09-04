@@ -15,9 +15,7 @@ def script():
 
     return PreScript(
         value="""
-        from mantid.simpleapi import SaveNexus
-import numpy as np
-from pathlib import Path
+        from pathlib import Path
 from isis_powder.gem import Gem
 
 
@@ -25,38 +23,20 @@ from isis_powder.gem import Gem
 # autoreduction
 ######
 
-config_file = "/extras/gem/Gem_config_example_25_3.yaml"
-
-def pull_vars_from_config(config_file):
-    with open(config_file, 'r') as f:
-        for line in f:
-            if line.startswith("mode"):
-                mode = line.split(":")[1].strip()
-            elif line.startswith("vanadium_normalisation"):
-                van_norm = line.split(":")[1].strip().lower()
-            elif line.startswith("do_absorb_corrections"):
-                do_absorb_corrections = line.split(":")[1].strip().lower()
-            elif line.startswith("multiple_scattering"):
-                multiple_scattering = line.split(":")[1].strip().lower()
-    return mode, van_norm, do_absorb_corrections, multiple_scattering
-
 runno = "97486"
-f_mode, f_van_norm, f_do_absorb_corrections, f_multiple_scattering = pull_vars_from_config(config_file)
-mode = f_mode
-van_norm = f_van_norm
-do_absorb_corrections = f_do_absorb_corrections
-multiple_scattering = f_multiple_scattering
-# Summed, Individual
-input_mode = "Individual"
+# Set the mode for reduction
+mode = "Rietveld"
 # Set to False to skip vanadium normalisation step
 van_norm = True
-# Set to True to save all intermediate workspaces, False to only save final focused workspace
-save_all = True
 # Set to False to skip absorption corrections
 do_absorb_corrections = True
-#Indicates whether to account for the effects of multiple scattering when calculating
-#absorption corrections. If do_absorb_corrections is set to True this parameter must be set
+# Indicates whether to account for the effects of multiple scattering when calculating 
+# absorption corrections. If do_absorb_corrections is set to True this parameter must be set.
 multiple_scattering = True
+# Summed, Individual
+input_mode = "Individual"
+# Set to True to save all intermediate workspaces, False to only save final focused workspace
+save_all = True
 
 cal_mapping_file = "calibration_mapping.yaml"
 cwd = Path.cwd()
@@ -69,7 +49,6 @@ gem = Gem(
     calibration_directory=cwd, #find the calibration directory in the current working directory
     output_directory=cwd, #output files into the current working directory
     user_name="Autoreduction",
-    config_file=config_file
 )
 
 gem.create_cal(run_number=runno,
@@ -88,7 +67,7 @@ gem.create_vanadium(
     do_absorb_corrections=do_absorb_corrections,
     multiple_scattering=multiple_scattering,
     spline_coefficient=120,
-    #texture_mode=True
+    texture_mode=False
 )
 
 
