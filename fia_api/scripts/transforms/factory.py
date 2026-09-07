@@ -3,6 +3,7 @@
 import logging
 
 from fia_api.scripts.transforms.enginx_transform import EnginxTransform
+from fia_api.scripts.transforms.gem_transform import GEMTransform
 from fia_api.scripts.transforms.imat_transforms import IMATTransform
 from fia_api.scripts.transforms.iris_transform import IrisTransform
 from fia_api.scripts.transforms.mari_transforms import MariTransform
@@ -16,7 +17,7 @@ from fia_api.scripts.transforms.vesuvio_transform import VesuvioTransform
 logger = logging.getLogger(__name__)
 
 
-def get_transform_for_instrument(instrument: str) -> Transform:  # noqa: PLR0911
+def get_transform_for_instrument(instrument: str) -> Transform:  # noqa: PLR0911, C901
     """
     Get the appropriate transform for the given instrument and run file
     :param instrument: str - the instrument
@@ -40,6 +41,8 @@ def get_transform_for_instrument(instrument: str) -> Transform:  # noqa: PLR0911
             return EnginxTransform()
         case "imat":
             return IMATTransform()
+        case "gem":
+            return GEMTransform()
         case "test":
             return TestTransform()
         case _:
