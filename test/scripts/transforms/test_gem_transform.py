@@ -136,7 +136,7 @@ def reduction():
         "rietveldemptyrunnumbers": "96664",
         "pdfvanrunnumbers": "97483",
         "pdfemptyrunnumbers": "97484",
-        "offset_file": "offsets_2023_cycle231.cal"
+        "offset_file": "offsets_2023_cycle231.cal",
     }
     return mock
 
