@@ -10,12 +10,14 @@ import os
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from functools import cache
-from typing import Any
+from typing import Any, cast
 
 from redis import Redis
 from redis.exceptions import RedisError
 
 logger = logging.getLogger(__name__)
+
+_StreamResponse = list[tuple[str | bytes, list[tuple[str | bytes, dict[str, Any]]]]]
 
 DEFAULT_VALKEY_URL = "redis://valkey.valkey.svc.cluster.local:6379/0"
 
@@ -199,11 +201,14 @@ async def log_stream_generator(instrument_name: str, since: str = "0") -> AsyncG
         try:
             # Offload the synchronous blocking read to a thread to prevent freezing the event loop.
             # block=1000 means to wait for 1 second before returning an empty list if no messages are available.
-            response = await asyncio.to_thread(valkey_client.xread, {stream_key: last_id}, count=50, block=1000)
+            response = cast(
+                "_StreamResponse",
+                await asyncio.to_thread(valkey_client.xread, {stream_key: last_id}, count=50, block=1000),
+            )
 
             if response:
                 # response format: [[b'stream_key', [(b'id', {b'msg': b'...', b'level': b'...'}), ...]]]
-                for _, messages in response:  # type: ignore[union-attr]
+                for _, messages in response:
                     for message_id, message_data in messages:
                         last_id = message_id.decode("utf-8") if isinstance(message_id, bytes) else message_id
 

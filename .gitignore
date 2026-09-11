@@ -1,4 +1,5 @@
 .idea/
+.junie/
 fia_api.egg-info/
 
 fia_api/local_scripts/*

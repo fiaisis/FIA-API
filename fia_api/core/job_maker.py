@@ -12,7 +12,7 @@ from pika.connection import ConnectionParameters  # type: ignore[import-untyped]
 from pika.credentials import PlainCredentials  # type: ignore[import-untyped]
 from sqlalchemy.orm import Session
 
-from fia_api.core.exceptions import JobRequestError
+from fia_api.core.exceptions import JobRequestError, MissingRecordError
 from fia_api.core.models import Job, JobOwner, JobType, Script, State
 from fia_api.core.repositories import Repo
 from fia_api.core.specifications.job import JobSpecification
@@ -60,24 +60,31 @@ class JobMaker:
         self.channel = None
         self._connect_to_broker()
 
-    def _connect_to_broker(self) -> None:
+    def _connect_to_broker(self, queue_name: str | None = None) -> None:
         """
         Use this to connect to the broker
         :return: None
         """
+        queue_name = queue_name or self.queue_name
         self.connection = BlockingConnection(self.connection_parameters)
         self.channel = self.connection.channel()  # type: ignore[attr-defined]
         self.channel.exchange_declare(  # type: ignore[attr-defined]
-            self.queue_name,
+            queue_name,
             exchange_type="direct",
             durable=True,
         )
         self.channel.queue_declare(  # type: ignore[attr-defined]
-            self.queue_name,
+            queue_name,
             durable=True,
             arguments={"x-queue-type": "quorum"},
         )
-        self.channel.queue_bind(self.queue_name, self.queue_name, routing_key="")  # type: ignore[attr-defined]
+        self.channel.queue_bind(queue_name, queue_name, routing_key="")  # type: ignore[attr-defined]
+
+    def _publish(self, message: str, queue_name: str) -> None:
+        # This method allows us to publish to a different queue
+        self._connect_to_broker(queue_name)
+        # Assuming channel is set in _connect_to_broker()
+        self.channel.basic_publish(exchange=queue_name, routing_key="", body=message)  # type: ignore
 
     def _send_message(self, message: str) -> None:
         self._connect_to_broker()
@@ -155,6 +162,29 @@ class JobMaker:
         if job_owner is None:
             job_owner = JobOwner(experiment_number=experiment_number, user_number=user_number)
         return job_owner
+
+    def resubmit_job_to_watched_files(
+        self,
+        job_id: int,
+    ) -> int:
+        """
+        Resubmit a job to the watched-files queue. It will extract the job_id from and its run from the db,
+        extract the run.filename, and then submit this to the watched-files queue with the same job_id.
+        :param job_id: The id of the job to be resubmitted
+        :return: The id of the resubmitted job
+        """
+
+        job = self._job_repo.find_one(JobSpecification().by_id(job_id))
+        if job is None:
+            raise MissingRecordError(f"No Job for id {job_id}.")
+        if job.run is None:
+            raise JobRequestError("Cannot resubmit job that does not have an associated run.")
+        filename = job.run.filename
+        if not filename:
+            raise JobRequestError("Cannot resubmit job that does not have a filename associated with its run.")
+
+        self._publish(filename, queue_name="watched-files")
+        return job.id
 
     @require_owner
     def create_simple_job(
