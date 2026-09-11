@@ -22,7 +22,10 @@ from isis_powder.gem import Gem
 ######
 # autoreduction
 ######
-
+rietveldvanrunnumbers = "96663"
+rietveldemptyrunnumbers = "96664"
+pdfvanrunnumbers = "97483"
+pdfemptyrunnumbers = "97484"
 runno = "97486"
 # Set the mode for reduction
 mode = "Rietveld"
@@ -128,6 +131,10 @@ def reduction():
         "do_absorb_corrections": True,
         "cal_mapping_file": "/path/to/cal_mapping.yaml",
         "multiple_scattering": True,
+        "rietveldvanrunnumbers": "96663",
+        "rietveldemptyrunnumbers": "96664",
+        "pdfvanrunnumbers": "97483",
+        "pdfemptyrunnumbers": "97484",
     }
     return mock
 
@@ -172,5 +179,13 @@ def test_gem_transform_apply(script, reduction):  # noqa: C901
             assert line == 'cal_mapping_file = "/path/to/cal_mapping.yaml"'
         elif line.startswith("multiple_scattering ="):
             assert line == 'multiple_scattering = "True"'
+        elif line.startswith("rietveldvanrunnumbers ="):
+            assert line == "rietveldvanrunnumbers = 96663"
+        elif line.startswith("rietveldemptyrunnumbers ="):
+            assert line == "rietveldemptyrunnumbers = 96664"
+        elif line.startswith("pdfvanrunnumbers ="):
+            assert line == "pdfvanrunnumbers = 97483"
+        elif line.startswith("pdfemptyrunnumbers ="):
+            assert line == "pdfemptyrunnumbers = 97484"
         else:
             assert line == original_lines[index]

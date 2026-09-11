@@ -55,6 +55,24 @@ class GEMTransform(Transform):
             if line.startswith("multiple_scattering ="):
                 lines[index] = f'multiple_scattering = "{job.inputs["multiple_scattering"]}"'  # type: ignore
                 continue
+            if line.startswith("cycle ="):
+                lines[index] = f'cycle = "{job.inputs["cycle"]}"'  # type: ignore
+                continue
+            if line.startswith("offset_file ="):
+                lines[index] = f'offset_file = "{job.inputs["offset_file"]}"'  # type: ignore
+                continue
+            if line.startswith("rietveldvanrunnumbers ="):
+                lines[index] = f"rietveldvanrunnumbers = {job.inputs['rietveldvanrunnumbers']}"  # type: ignore
+                continue
+            if line.startswith("rietveldemptyrunnumbers ="):
+                lines[index] = f"rietveldemptyrunnumbers = {job.inputs['rietveldemptyrunnumbers']}"  # type: ignore
+                continue
+            if line.startswith("pdfvanrunnumbers ="):
+                lines[index] = f"pdfvanrunnumbers = {job.inputs['pdfvanrunnumbers']}"  # type: ignore
+                continue
+            if line.startswith("pdfemptyrunnumbers ="):
+                lines[index] = f"pdfemptyrunnumbers = {job.inputs['pdfemptyrunnumbers']}"  # type: ignore
+                continue
 
         script.value = "\n".join(lines)
         logger.info("Transform complete for job %s", job.id)
