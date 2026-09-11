@@ -192,8 +192,8 @@ def test_gem_transform_apply(script, reduction):  # noqa: C901, PLR0912
         elif line.startswith("pdfemptyrunnumbers ="):
             assert line == "pdfemptyrunnumbers = 97484"
         elif line.startswith("cycle ="):
-            assert line == "cycle = cycle_25_3"
+            assert line == 'cycle = "cycle_25_3"'
         elif line.startswith("offset_file = "):
-            assert line == "offset_file = offsets_2023_cycle231.cal"
+            assert line == 'offset_file = "offsets_2023_cycle231.cal"'
         else:
             assert line == original_lines[index]
