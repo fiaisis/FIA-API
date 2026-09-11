@@ -22,7 +22,12 @@ from isis_powder.gem import Gem
 ######
 # autoreduction
 ######
-
+cycle = "cycle_25_3"
+offset_file = "offsets_2023_cycle231.cal"
+rietveldvanrunnumbers = "96663"
+rietveldemptyrunnumbers = "96664"
+pdfvanrunnumbers = "97483"
+pdfemptyrunnumbers = "97484"
 runno = "97486"
 # Set the mode for reduction
 mode = "Rietveld"
@@ -119,6 +124,7 @@ def reduction():
 
     mock = Mock()
     mock.inputs = {
+        "cycle": "cycle_25_3",
         "mode": "transmission",
         "input_mode": "raw",
         "calibration_dir": "/path/to/cal",
@@ -128,6 +134,11 @@ def reduction():
         "do_absorb_corrections": True,
         "cal_mapping_file": "/path/to/cal_mapping.yaml",
         "multiple_scattering": True,
+        "rietveldvanrunnumbers": "96663",
+        "rietveldemptyrunnumbers": "96664",
+        "pdfvanrunnumbers": "97483",
+        "pdfemptyrunnumbers": "97484",
+        "offset_file": "offsets_2023_cycle231.cal",
     }
     return mock
 
@@ -143,7 +154,7 @@ def test_gem_transform_runno_list(script, reduction):
             assert line == "runno = 12345-12347"
 
 
-def test_gem_transform_apply(script, reduction):  # noqa: C901
+def test_gem_transform_apply(script, reduction):  # noqa: C901, PLR0912
     """Test GEMTransform only modifies expected lines and leaves others unchanged."""
     transform = GEMTransform()
     original_lines = script.value.splitlines()
@@ -172,5 +183,17 @@ def test_gem_transform_apply(script, reduction):  # noqa: C901
             assert line == 'cal_mapping_file = "/path/to/cal_mapping.yaml"'
         elif line.startswith("multiple_scattering ="):
             assert line == 'multiple_scattering = "True"'
+        elif line.startswith("rietveldvanrunnumbers ="):
+            assert line == "rietveldvanrunnumbers = 96663"
+        elif line.startswith("rietveldemptyrunnumbers ="):
+            assert line == "rietveldemptyrunnumbers = 96664"
+        elif line.startswith("pdfvanrunnumbers ="):
+            assert line == "pdfvanrunnumbers = 97483"
+        elif line.startswith("pdfemptyrunnumbers ="):
+            assert line == "pdfemptyrunnumbers = 97484"
+        elif line.startswith("cycle ="):
+            assert line == 'cycle = "cycle_25_3"'
+        elif line.startswith("offset_file = "):
+            assert line == 'offset_file = "offsets_2023_cycle231.cal"'
         else:
             assert line == original_lines[index]
