@@ -22,6 +22,8 @@ from isis_powder.gem import Gem
 ######
 # autoreduction
 ######
+cycle = "cycle_25_3"
+offset_file = "offsets_2023_cycle231.cal"
 rietveldvanrunnumbers = "96663"
 rietveldemptyrunnumbers = "96664"
 pdfvanrunnumbers = "97483"
