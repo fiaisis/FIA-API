@@ -13,7 +13,7 @@ class GEMTransform(Transform):
     entity.
     """
 
-    def apply(self, script: PreScript, job: Job) -> None:  # noqa: PLR0912,C901
+    def apply(self, script: PreScript, job: Job) -> None:  # noqa: PLR0912,C901,PLR0915
         logger.info("Beginning GEM transform for job %s...", job.id)
         lines = script.value.splitlines()
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin

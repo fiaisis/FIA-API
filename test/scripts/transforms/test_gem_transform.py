@@ -150,7 +150,7 @@ def test_gem_transform_runno_list(script, reduction):
             assert line == "runno = 12345-12347"
 
 
-def test_gem_transform_apply(script, reduction):  # noqa: C901
+def test_gem_transform_apply(script, reduction):  # noqa: C901, PLR0912
     """Test GEMTransform only modifies expected lines and leaves others unchanged."""
     transform = GEMTransform()
     original_lines = script.value.splitlines()
