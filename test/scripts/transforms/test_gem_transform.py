@@ -122,6 +122,7 @@ def reduction():
 
     mock = Mock()
     mock.inputs = {
+        "cycle": "cycle_25_3",
         "mode": "transmission",
         "input_mode": "raw",
         "calibration_dir": "/path/to/cal",
@@ -135,6 +136,7 @@ def reduction():
         "rietveldemptyrunnumbers": "96664",
         "pdfvanrunnumbers": "97483",
         "pdfemptyrunnumbers": "97484",
+        "offset_file": "offsets_2023_cycle231.cal"
     }
     return mock
 
@@ -187,5 +189,9 @@ def test_gem_transform_apply(script, reduction):  # noqa: C901, PLR0912
             assert line == "pdfvanrunnumbers = 97483"
         elif line.startswith("pdfemptyrunnumbers ="):
             assert line == "pdfemptyrunnumbers = 97484"
+        elif line.startswith("cycle ="):
+            assert line == "cycle = cycle_25_3"
+        elif line.startswith("offset_file = "):
+            assert line == "offset_file = offsets_2023_cycle231.cal"
         else:
             assert line == original_lines[index]
