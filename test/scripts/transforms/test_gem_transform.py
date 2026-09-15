@@ -132,7 +132,6 @@ def reduction():
         "van_norm": True,
         "save_all": True,
         "do_absorb_corrections": True,
-        "cal_mapping_file": "/path/to/cal_mapping.yaml",
         "multiple_scattering": True,
         "rietveldvanrunnumbers": "96663",
         "rietveldemptyrunnumbers": "96664",
@@ -179,8 +178,6 @@ def test_gem_transform_apply(script, reduction):  # noqa: C901, PLR0912
             assert line == 'save_all = "True"'
         elif line.startswith("do_absorb_corrections ="):
             assert line == 'do_absorb_corrections = "True"'
-        elif line.startswith("cal_mapping_file ="):
-            assert line == 'cal_mapping_file = "/path/to/cal_mapping.yaml"'
         elif line.startswith("multiple_scattering ="):
             assert line == 'multiple_scattering = "True"'
         elif line.startswith("rietveldvanrunnumbers ="):
