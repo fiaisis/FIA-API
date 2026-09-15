@@ -13,7 +13,7 @@ class GEMTransform(Transform):
     entity.
     """
 
-    def apply(self, script: PreScript, job: Job) -> None:  # noqa: PLR0912,C901
+    def apply(self, script: PreScript, job: Job) -> None:  # noqa: PLR0912,C901,PLR0915
         logger.info("Beginning GEM transform for job %s...", job.id)
         lines = script.value.splitlines()
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
@@ -54,6 +54,24 @@ class GEMTransform(Transform):
                 continue
             if line.startswith("multiple_scattering ="):
                 lines[index] = f'multiple_scattering = "{job.inputs["multiple_scattering"]}"'  # type: ignore
+                continue
+            if line.startswith("cycle ="):
+                lines[index] = f'cycle = "{job.inputs["cycle"]}"'  # type: ignore
+                continue
+            if line.startswith("offset_file ="):
+                lines[index] = f'offset_file = "{job.inputs["offset_file"]}"'  # type: ignore
+                continue
+            if line.startswith("rietveldvanrunnumbers ="):
+                lines[index] = f"rietveldvanrunnumbers = {job.inputs['rietveldvanrunnumbers']}"  # type: ignore
+                continue
+            if line.startswith("rietveldemptyrunnumbers ="):
+                lines[index] = f"rietveldemptyrunnumbers = {job.inputs['rietveldemptyrunnumbers']}"  # type: ignore
+                continue
+            if line.startswith("pdfvanrunnumbers ="):
+                lines[index] = f"pdfvanrunnumbers = {job.inputs['pdfvanrunnumbers']}"  # type: ignore
+                continue
+            if line.startswith("pdfemptyrunnumbers ="):
+                lines[index] = f"pdfemptyrunnumbers = {job.inputs['pdfemptyrunnumbers']}"  # type: ignore
                 continue
 
         script.value = "\n".join(lines)
