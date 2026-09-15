@@ -34,7 +34,7 @@ mode = "Rietveld"
 van_norm = True
 # Set to False to skip absorption corrections
 do_absorb_corrections = False
-# Indicates whether to account for the effects of multiple scattering when calculating 
+# Indicates whether to account for the effects of multiple scattering when calculating
 # absorption corrections. If do_absorb_corrections is set to True this parameter must be set.
 multiple_scattering = False
 # Summed, Individual
@@ -61,7 +61,7 @@ mapping_file_data = {
                                     "empty_run_numbers": f"{pdfemptyrunnumbers}"}}
 }
 
-        
+
 cal_mapping_file = f"GEM_{cycle}_calibration_mapping.yaml"
 calibration_directory = Path("/Calibrations")
 cal_cycle_path = Path(calibration_directory, cycle)
