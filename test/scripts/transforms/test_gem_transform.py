@@ -46,7 +46,7 @@ cycle = "cycle_25_1"
 
 
 offset_file = "offsets_2023_cycle231.cal"
-offset_file_base_path = Path(f"C:\\Users\\yyf77781\\Documents\\mantid_scripts\\{offset_file}")
+offset_file_base_path = Path(f"C:\\Path\\to\\{offset_file}")
 rietveldvanrunnumbers = "96663"
 rietveldemptyrunnumbers = "96664"
 pdfvanrunnumbers = "97483"
@@ -99,16 +99,6 @@ gem = Gem(
     mayers_mult_scat_events=100 #reduce points for monte carlo sim for testing, remove for prod
 )
 
-# Vanadium only
-# isis_powder checks for existing splined vanadium files.
-# If they exist, create_vanadium is a no-op effectively.
-# If you pre-compute vanadium and store in /extras/gem/,
-# you can remove this block entirely.
-
-#sample_details = SampleDetails(height=4.0, radius=0.2985, center=[0, 0, 0], shape='cylinder')
-#sample_details.set_material(chemical_formula='Si', packing_fraction=0.6)
-#sample_details.set_container(radius=0.3175, chemical_formula='V')
-#gem.set_sample_details(sample=sample_details)
 
 gem.create_vanadium(
     first_cycle_run_no=first_cycle_run_no,
@@ -122,29 +112,6 @@ gem.create_vanadium(
 
 
 # Focus
-print(f"Starting focus for run {runno} with mode {mode} and input mode {input_mode}")
-
-# Choice of cropping values for PDF or Rietveld mode
-# if mode == "Rietveld":
-#     focused_cropping_values = [
-#         (700, 19500),  # Bank 1
-#         (1000, 19500),  # Bank 2
-#         (1000, 19500),  # Bank 3
-#         (1000, 19500),  # Bank 4
-#         (1000, 18500),  # Bank 5
-#         (1000, 16750),  # Bank 6
-#     ]
-# elif mode == "PDF":
-#     focused_cropping_values = [
-#         (550, 19900),  # Bank 1
-#         (550, 19900),  # Bank 2
-#         (550, 19900),  # Bank 3
-#         (550, 19900),  # Bank 4
-#         (550, 18500),  # Bank 5
-#         (550, 16750),  # Bank 6
-#     ]
-# else:
-#     raise ValueError(f"Invalid mode: {mode}. Expected 'PDF' or 'Rietveld'.")
 
 gem.focus(
     calibration_mapping_file=cal_mapping_file_path,
