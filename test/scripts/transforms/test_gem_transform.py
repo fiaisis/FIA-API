@@ -123,7 +123,6 @@ gem.focus(
     unit_to_keep="dSpacing",
     keep_raw_workspace=False,
     save_all=save_all,
-    #focused_cropping_values=focused_cropping_values,
 )
 
 print(f"Reduction completed for run {runno}. Output files: {output_directory}")
