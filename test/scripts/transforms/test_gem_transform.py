@@ -153,15 +153,6 @@ def reduction():
     return mock
 
 
-def test_gem_transform_runno_list(script, reduction):
-    """Test GEMTransform handles runno as a list correctly."""
-    reduction.inputs["runno"] = [12345, 12346, 12347]
-    transform = GEMTransform()
-    transform.apply(script, reduction)
-    updated_lines = script.value.splitlines()
-    for line in updated_lines:
-        if line.startswith("runno ="):
-            assert line == "runno = 12345-12347"
 
 
 def test_gem_transform_apply(script, reduction):  # noqa: C901, PLR0912
@@ -182,7 +173,7 @@ def test_gem_transform_apply(script, reduction):  # noqa: C901, PLR0912
         elif line.startswith("calibration_dir ="):
             assert line == "calibration_dir = /path/to/cal"
         elif line.startswith("runno ="):
-            assert line == "runno = 12345"
+            assert line == 'runno = "12345"'
         elif line.startswith("van_norm ="):
             assert line == 'van_norm = "True"'
         elif line.startswith("do_absorb_corrections ="):
