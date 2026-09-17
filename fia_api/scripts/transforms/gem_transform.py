@@ -13,12 +13,11 @@ class GEMTransform(Transform):
     entity.
     """
 
-    def apply(self, script: PreScript, job: Job) -> None:  # noqa: PLR0912,C901,PLR0915
+    def apply(self, script: PreScript, job: Job) -> None:  # noqa: PLR0912, C901
         logger.info("Beginning GEM transform for job %s...", job.id)
         lines = script.value.splitlines()
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
         # If you get here in the future, try removing the following line and see if it passes with newer mypy.
-
 
         for index, line in enumerate(lines):
             if line.startswith("van_norm ="):
@@ -34,7 +33,7 @@ class GEMTransform(Transform):
                 lines[index] = f'input_mode = "{job.inputs["input_mode"]}"'  # type: ignore
                 continue
             if line.startswith("runno ="):
-                lines[index] = f'runno = "{job.inputs["runno"]}"' # type: ignore
+                lines[index] = f'runno = "{job.inputs["runno"]}"'  # type: ignore
                 continue
             if line.startswith("multiple_scattering ="):
                 lines[index] = f'multiple_scattering = "{job.inputs["multiple_scattering"]}"'  # type: ignore
