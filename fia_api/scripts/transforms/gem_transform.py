@@ -13,29 +13,15 @@ class GEMTransform(Transform):
     entity.
     """
 
-    def apply(self, script: PreScript, job: Job) -> None:  # noqa: PLR0912,C901,PLR0915
+    def apply(self, script: PreScript, job: Job) -> None:  # noqa: PLR0912, C901
         logger.info("Beginning GEM transform for job %s...", job.id)
         lines = script.value.splitlines()
         # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
         # If you get here in the future, try removing the following line and see if it passes with newer mypy.
 
-        runno = job.inputs["runno"]  # type: ignore
-        if isinstance(runno, list):
-            if len(runno) > 1:
-                # Convert list to range string if contiguous, otherwise comma-separated
-                if all(runno[i] == runno[i - 1] + 1 for i in range(1, len(runno))):
-                    runno_str = f"{runno[0]}-{runno[-1]}"
-                else:
-                    runno_str = ",".join(map(str, runno))
-        else:
-            runno_str = str(runno)
-
         for index, line in enumerate(lines):
             if line.startswith("van_norm ="):
                 lines[index] = f'van_norm = "{job.inputs["van_norm"]}"'  # type: ignore
-                continue
-            if line.startswith("save_all ="):
-                lines[index] = f'save_all = "{job.inputs["save_all"]}"'  # type: ignore
                 continue
             if line.startswith("do_absorb_corrections ="):
                 lines[index] = f'do_absorb_corrections = "{job.inputs["do_absorb_corrections"]}"'  # type: ignore
@@ -47,7 +33,7 @@ class GEMTransform(Transform):
                 lines[index] = f'input_mode = "{job.inputs["input_mode"]}"'  # type: ignore
                 continue
             if line.startswith("runno ="):
-                lines[index] = f"runno = {runno_str}"
+                lines[index] = f'runno = "{job.inputs["runno"]}"'  # type: ignore
                 continue
             if line.startswith("multiple_scattering ="):
                 lines[index] = f'multiple_scattering = "{job.inputs["multiple_scattering"]}"'  # type: ignore
