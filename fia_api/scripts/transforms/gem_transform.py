@@ -24,9 +24,6 @@ class GEMTransform(Transform):
             if line.startswith("van_norm ="):
                 lines[index] = f'van_norm = "{job.inputs["van_norm"]}"'  # type: ignore
                 continue
-            if line.startswith("save_all ="):
-                lines[index] = f'save_all = "{job.inputs["save_all"]}"'  # type: ignore
-                continue
             if line.startswith("do_absorb_corrections ="):
                 lines[index] = f'do_absorb_corrections = "{job.inputs["do_absorb_corrections"]}"'  # type: ignore
                 continue

@@ -142,7 +142,6 @@ def reduction():
         "calibration_dir": "/path/to/cal",
         "runno": 12345,
         "van_norm": True,
-        "save_all": True,
         "do_absorb_corrections": True,
         "multiple_scattering": True,
         "rietveldvanrunnumbers": "96663",
@@ -186,8 +185,6 @@ def test_gem_transform_apply(script, reduction):  # noqa: C901, PLR0912
             assert line == "runno = 12345"
         elif line.startswith("van_norm ="):
             assert line == 'van_norm = "True"'
-        elif line.startswith("save_all ="):
-            assert line == 'save_all = "True"'
         elif line.startswith("do_absorb_corrections ="):
             assert line == 'do_absorb_corrections = "True"'
         elif line.startswith("multiple_scattering ="):
