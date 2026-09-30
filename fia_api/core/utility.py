@@ -156,7 +156,7 @@ def find_file_user_number(ceph_dir: str, user_number: int, filename: str) -> Pat
 def _cycle_candidate_names(year: int) -> list[str]:
     """Build a short list of plausible cycle directory names for the given year.
 
-    ISIS cycles are typically named like ``cycle_19_2`` (2-digit year, sub-cycle 1-5), but a leading
+    ISIS cycles are typically named like ``cycle_19_2`` (2-digit year, sub-cycle 1-8), but a leading
     zero on the sub-cycle number (``cycle_19_02``) has also been seen in the wild, so both forms are
     generated.
 
@@ -165,7 +165,7 @@ def _cycle_candidate_names(year: int) -> list[str]:
     """
     yy = f"{year % 100:02d}"
     names = []
-    for sub_cycle in range(1, 6):
+    for sub_cycle in range(1, 9):
         names.append(f"cycle_{yy}_{sub_cycle}")
         names.append(f"cycle_{yy}_0{sub_cycle}")
     return names
