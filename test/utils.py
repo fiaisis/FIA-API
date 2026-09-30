@@ -100,11 +100,9 @@ class FIAProvider(BaseProvider):
         raw_frames = faker.pyint(min_value=1000)
         good_frames = faker.pyint(max_value=raw_frames)
         title = faker.unique.sentence(nb_words=10)
-        run.filename = (
-            f"/archive/NDX{instrument.instrument_name}/Instrument/data/"
-            f"cycle_{faker.pyint(min_value=15, max_value=23)}_0{faker.pyint(min_value=1, max_value=3)}/"
-            f"{instrument.instrument_name}{experiment_number}.nxs"
-        )
+        # In production Run.filename is just the bare filename (no path components) - the path is
+        # resolved separately by looking it up in the instrument archive.
+        run.filename = f"{instrument.instrument_name}{experiment_number}.nxs"
         run.title = title
         run.instrument = instrument
         run.raw_frames = raw_frames
