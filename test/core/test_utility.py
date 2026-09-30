@@ -467,14 +467,26 @@ def test_find_file_in_archive_falls_back_to_recursive_search():
         assert found_file == path
 
 
-def test_find_file_in_archive_not_found():
+def test_find_file_in_archive_not_found_when_instrument_dir_exists():
     with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
-        # The instrument data directory must exist (but be empty) for the safe-path check used by the
-        # recursive fallback search to succeed rather than raising AuthError, matching the behaviour of
-        # the existing find_file_* helpers.
         instrument_dir = Path(archive_dir) / "NDXMAR" / "Instrument" / "data"
         instrument_dir.mkdir(parents=True, exist_ok=True)
 
+        found_file = find_file_in_archive(
+            instrument="mar",
+            filename="missing.nxs",
+            run_start=datetime(2024, 6, 1, tzinfo=UTC),
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+
+        assert found_file is None
+
+
+def test_find_file_in_archive_not_found_when_instrument_dir_missing():
+    """When the instrument's archive data directory doesn't exist at all, this should be treated the same
+    as a not-found file (returning None) rather than raising AuthError."""
+    with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
         found_file = find_file_in_archive(
             instrument="mar",
             filename="missing.nxs",

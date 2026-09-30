@@ -206,6 +206,11 @@ def find_file_in_archive(
                 return candidate
 
     # Fast path missed - fall back to an exhaustive recursive search of the instrument's data directory.
+    # If the instrument's data directory doesn't exist at all (e.g. an unknown/mistyped instrument, or a
+    # genuinely missing file with no archive presence yet), there's nothing to search - return None rather
+    # than letting _safe_find_file_in_dir raise AuthError for what is really just a "not found" case.
+    if not instrument_dir.exists():
+        return None
     return _safe_find_file_in_dir(dir_path=instrument_dir, base_path=archive_dir, filename=filename)
 
 
