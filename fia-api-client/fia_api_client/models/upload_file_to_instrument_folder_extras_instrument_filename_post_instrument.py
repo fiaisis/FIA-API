@@ -1,0 +1,43 @@
+from enum import Enum
+
+
+class UploadFileToInstrumentFolderExtrasInstrumentFilenamePostInstrument(str, Enum):
+    ALF = "alf"
+    ARGUS = "argus"
+    CHIPIR = "chipir"
+    CHRONUS = "chronus"
+    CRISP = "crisp"
+    EMU = "emu"
+    ENGINX = "enginx"
+    GEM = "gem"
+    HIFI = "hifi"
+    HRPD = "hrpd"
+    IMAT = "imat"
+    INES = "ines"
+    INTER = "inter"
+    IRIS = "iris"
+    LARMOR = "larmor"
+    LET = "let"
+    LOQ = "loq"
+    MAPS = "maps"
+    MARI = "mari"
+    MERLIN = "merlin"
+    MUSR = "musr"
+    NIMROD = "nimrod"
+    OFFSPEC = "offspec"
+    OSIRIS = "osiris"
+    PEARL = "pearl"
+    POLARIS = "polaris"
+    POLREF = "polref"
+    SANDALS = "sandals"
+    SANS2D = "sans2d"
+    SURF = "surf"
+    SXD = "sxd"
+    TEST = "test"
+    TOSCA = "tosca"
+    VESUVIO = "vesuvio"
+    WISH = "wish"
+    ZOOM = "zoom"
+
+    def __str__(self) -> str:
+        return str(self.value)
