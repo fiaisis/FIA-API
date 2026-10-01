@@ -409,8 +409,7 @@ def test_find_file_in_archive_imat_not_found():
 
 
 def test_find_file_in_archive_year_guess_fast_path():
-    """A file sat in a cycle folder that matches the run_start year should be found without needing
-    the recursive fallback search."""
+    """A file in a cycle folder matching run_start's year should be found."""
     with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
         filename = "MAR12345.nxs"
         path = Path(archive_dir) / "NDXMAR" / "Instrument" / "data" / "cycle_24_2" / filename
@@ -429,7 +428,7 @@ def test_find_file_in_archive_year_guess_fast_path():
 
 
 def test_find_file_in_archive_year_guess_fast_path_zero_padded_sub_cycle():
-    """The zero-padded sub-cycle naming form should also be tried by the fast path."""
+    """The zero-padded sub-cycle naming form should also be tried."""
     with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
         filename = "MAR12345.nxs"
         path = Path(archive_dir) / "NDXMAR" / "Instrument" / "data" / "cycle_24_02" / filename
@@ -447,9 +446,8 @@ def test_find_file_in_archive_year_guess_fast_path_zero_padded_sub_cycle():
         assert found_file == path
 
 
-def test_find_file_in_archive_falls_back_to_recursive_search():
-    """When the year-guessed candidates all miss (e.g. an unusual cycle naming), fall back to a full
-    recursive search of the instrument's data directory."""
+def test_find_file_in_archive_does_not_fall_back_to_recursive_search():
+    """No recursive fallback - an unmatched cycle name should return None."""
     with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
         filename = "MAR12345.nxs"
         path = Path(archive_dir) / "NDXMAR" / "Instrument" / "data" / "some_unexpected_folder_name" / filename
@@ -460,6 +458,41 @@ def test_find_file_in_archive_falls_back_to_recursive_search():
             instrument="mar",
             filename=filename,
             run_start=datetime(2024, 6, 1, tzinfo=UTC),
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+
+        assert found_file is None
+
+
+def test_find_file_in_archive_adds_missing_nxs_extension():
+    """A filename missing the .nxs suffix should have it appended."""
+    with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
+        path = Path(archive_dir) / "NDXMAR" / "Instrument" / "data" / "cycle_24_2" / "MAR12345.nxs"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("Hello World!")
+
+        found_file = find_file_in_archive(
+            instrument="mar",
+            filename="MAR12345",
+            run_start=datetime(2024, 6, 1, tzinfo=UTC),
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+
+        assert found_file == path
+
+
+def test_find_file_in_archive_adds_missing_nxs_extension_imat():
+    """.nxs normalisation should also apply to IMAT."""
+    with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
+        path = Path(imat_dir) / "IMAT00038896.nxs"
+        path.write_text("Hello World!")
+
+        found_file = find_file_in_archive(
+            instrument="IMAT",
+            filename="IMAT00038896",
+            run_start=datetime(2024, 3, 1, tzinfo=UTC),
             archive_dir=archive_dir,
             imat_dir=imat_dir,
         )

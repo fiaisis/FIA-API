@@ -174,21 +174,22 @@ def _cycle_candidate_names(year: int) -> list[str]:
 def find_file_in_archive(
     instrument: str, filename: str, run_start: datetime, archive_dir: str, imat_dir: str
 ) -> Path | None:
-    """Find the raw input file for a run in the instrument archive.
+    """Find a run's raw file in the archive, appending .nxs to filename if missing.
 
-    For IMAT, files live directly under ``imat_dir`` (flat, no instrument/cycle subfolders). For every
-    other instrument, files live under ``archive_dir/NDX{INSTRUMENT}/Instrument/data/<cycle_dir>``. The
-    cycle directory isn't recorded anywhere, so a small number of cheap, year-guessed candidate paths
-    (based on ``run_start``) are checked first via direct existence checks, and only if none of those
-    match do we fall back to a full recursive search of the instrument's data directory.
+    IMAT files live flat under imat_dir. Other instruments live under
+    archive_dir/NDX{INSTRUMENT}/Instrument/data/<cycle_dir>, where the cycle dir is guessed from
+    run_start. No recursive fallback - a miss on every guess is treated as not found.
 
-    :param instrument: name of the instrument the file belongs to
-    :param filename: bare filename to find (no path components)
-    :param run_start: start time of the run, used to guess the cycle year
-    :param archive_dir: base path of the archive mount (used for all instruments except IMAT)
+    :param instrument: instrument the file belongs to
+    :param filename: bare filename, with or without a .nxs suffix
+    :param run_start: run start time, used to guess the cycle year
+    :param archive_dir: base path of the archive mount (non-IMAT)
     :param imat_dir: base path of the IMAT mount
-    :return: path to the file, or None if it could not be found
+    :return: path to the file, or None if not found
     """
+    if not filename.endswith(".nxs"):
+        filename = f"{filename}.nxs"
+
     if instrument.upper() == "IMAT":
         candidate = Path(imat_dir) / filename
         with suppress(OSError):
@@ -205,13 +206,7 @@ def find_file_in_archive(
             if candidate.exists():
                 return candidate
 
-    # Fast path missed - fall back to an exhaustive recursive search of the instrument's data directory.
-    # If the instrument's data directory doesn't exist at all (e.g. an unknown/mistyped instrument, or a
-    # genuinely missing file with no archive presence yet), there's nothing to search - return None rather
-    # than letting _safe_find_file_in_dir raise AuthError for what is really just a "not found" case.
-    if not instrument_dir.exists():
-        return None
-    return _safe_find_file_in_dir(dir_path=instrument_dir, base_path=archive_dir, filename=filename)
+    return None
 
 
 def _safe_find_file_in_dir(dir_path: Path, base_path: str, filename: str) -> Path | None:
