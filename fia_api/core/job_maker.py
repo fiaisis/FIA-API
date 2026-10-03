@@ -3,6 +3,7 @@ from __future__ import annotations
 import functools
 import json
 import logging
+import os
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -18,7 +19,7 @@ from fia_api.core.repositories import Repo
 from fia_api.core.specifications.job import JobSpecification
 from fia_api.core.specifications.job_owner import JobOwnerSpecification
 from fia_api.core.specifications.script import ScriptSpecification
-from fia_api.core.utility import hash_script
+from fia_api.core.utility import find_file_in_archive, hash_script
 
 logger = logging.getLogger(__name__)
 
@@ -169,7 +170,8 @@ class JobMaker:
     ) -> int:
         """
         Resubmit a job to the watched-files queue. It will extract the job_id from and its run from the db,
-        extract the run.filename, and then submit this to the watched-files queue with the same job_id.
+        extract the run.filename, resolve that filename to its full path in the instrument archive (or the
+        IMAT mount for IMAT), and then submit this path to the watched-files queue with the same job_id.
         :param job_id: The id of the job to be resubmitted
         :return: The id of the resubmitted job
         """
@@ -183,7 +185,20 @@ class JobMaker:
         if not filename:
             raise JobRequestError("Cannot resubmit job that does not have a filename associated with its run.")
 
-        self._publish(filename, queue_name="watched-files")
+        instrument = job.run.instrument.instrument_name
+        archive_dir = os.environ.get("ARCHIVE_DIR", "/archive")
+        imat_dir = os.environ.get("IMAT_DIR", "/imat")
+        filepath = find_file_in_archive(
+            instrument=instrument,
+            filename=filename,
+            run_start=job.run.run_start,
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+        if filepath is None:
+            raise JobRequestError(f"Could not find input file '{filename}' for job {job_id} in the archive.")
+
+        self._publish(str(filepath), queue_name="watched-files")
         return job.id
 
     @require_owner
