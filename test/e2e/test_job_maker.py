@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pika.adapters.blocking_connection import BlockingChannel, BlockingConnection
 from sqlalchemy import func, select
-from sqlalchemy.orm import joinedload
 from starlette.testclient import TestClient
 
 from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, State
@@ -87,21 +86,114 @@ def test_post_rerun_job(producer_channel):
     ]
 
 
+def _make_job_with_run(instrument_name: str, filename: str, run_start: datetime) -> tuple[int, int]:
+    """Create an owner/instrument/run/job in the DB with the given instrument, filename and run_start.
+
+    :return: tuple of (job_id, experiment_number)
+    """
+    with SESSION() as session:
+        experiment_number = session.query(func.max(JobOwner.experiment_number)).scalar() + 1
+        owner = JobOwner(experiment_number=experiment_number)
+        session.add(owner)
+        session.flush()
+
+        instrument = session.query(Instrument).filter(Instrument.instrument_name == instrument_name).first()
+        if instrument is None:
+            instrument = Instrument(instrument_name=instrument_name, specification={})
+            session.add(instrument)
+            session.flush()
+
+        run = Run(
+            filename=filename,
+            instrument_id=instrument.id,
+            owner_id=owner.id,
+            title="Resubmit test run",
+            users="User",
+            run_start=run_start,
+            run_end=run_start,
+            good_frames=0,
+            raw_frames=0,
+        )
+        session.add(run)
+        session.flush()
+
+        job = Job(owner_id=owner.id, job_type=JobType.SIMPLE, state=State.NOT_STARTED, run_id=run.id, inputs={})
+        session.add(job)
+        session.commit()
+        return job.id, experiment_number
+
+
 @patch("fia_api.core.job_maker.BlockingConnection")
-def test_post_resubmit_job_success(mock_blocking_connection):
+def test_post_resubmit_job_success(mock_blocking_connection, monkeypatch, tmp_path):
+    """A non-IMAT resubmit resolves the bare filename to its full archive path and publishes that."""
     mock_connection = MagicMock()
     mock_channel = MagicMock()
     mock_blocking_connection.return_value = mock_connection
     mock_connection.channel.return_value = mock_channel
 
-    response = client.post(f"/job/{1}/resubmit", json={"job_id": 1}, headers=API_KEY_HEADER)
+    monkeypatch.setenv("ARCHIVE_DIR", str(tmp_path))
+    monkeypatch.setenv("IMAT_DIR", str(tmp_path / "imat"))
+
+    run_start = datetime(2024, 6, 1, tzinfo=UTC)
+    filename = "MARI123456.nxs"
+    expected_path = tmp_path / "NDXMARI" / "Instrument" / "data" / "cycle_24_1" / filename
+    expected_path.parent.mkdir(parents=True, exist_ok=True)
+    expected_path.write_text("test file contents")
+
+    job_id, _ = _make_job_with_run("MARI", filename, run_start)
+
+    response = client.post(f"/job/{job_id}/resubmit", json={"job_id": job_id}, headers=API_KEY_HEADER)
 
     assert response.status_code == HTTPStatus.OK
     mock_channel.basic_publish.assert_called_once()
     _, kwargs = mock_channel.basic_publish.call_args
     assert kwargs["exchange"] == "watched-files"
-    assert kwargs["body"].startswith("/archive/")
-    assert kwargs["body"].endswith(".nxs")
+    assert kwargs["body"] == str(expected_path)
+
+
+@patch("fia_api.core.job_maker.BlockingConnection")
+def test_post_resubmit_job_success_imat(mock_blocking_connection, monkeypatch, tmp_path):
+    """An IMAT resubmit resolves the bare filename to a flat path directly under IMAT_DIR."""
+    mock_connection = MagicMock()
+    mock_channel = MagicMock()
+    mock_blocking_connection.return_value = mock_connection
+    mock_connection.channel.return_value = mock_channel
+
+    imat_dir = tmp_path / "imat"
+    monkeypatch.setenv("ARCHIVE_DIR", str(tmp_path / "archive"))
+    monkeypatch.setenv("IMAT_DIR", str(imat_dir))
+
+    run_start = datetime(2024, 6, 1, tzinfo=UTC)
+    filename = "IMAT00038896.nxs"
+    imat_dir.mkdir(parents=True, exist_ok=True)
+    (imat_dir / filename).write_text("test file contents")
+
+    job_id, _ = _make_job_with_run("IMAT", filename, run_start)
+
+    response = client.post(f"/job/{job_id}/resubmit", json={"job_id": job_id}, headers=API_KEY_HEADER)
+
+    assert response.status_code == HTTPStatus.OK
+    mock_channel.basic_publish.assert_called_once()
+    _, kwargs = mock_channel.basic_publish.call_args
+    assert kwargs["exchange"] == "watched-files"
+    assert kwargs["body"] == str(imat_dir / filename)
+
+
+@patch("fia_api.core.auth.tokens.requests.post")
+def test_resubmit_job_file_not_found(mock_auth_post, monkeypatch, tmp_path):
+    """When the input file cannot be located in the archive, resubmit fails with 400 JobRequestError."""
+    mock_auth_post.return_value.status_code = HTTPStatus.OK
+    monkeypatch.setenv("ARCHIVE_DIR", str(tmp_path))
+    monkeypatch.setenv("IMAT_DIR", str(tmp_path / "imat"))
+
+    run_start = datetime(2024, 6, 1, tzinfo=UTC)
+    filename = "MARI999999.nxs"
+    job_id, _ = _make_job_with_run("MARI", filename, run_start)
+
+    response = client.post(f"/job/{job_id}/resubmit", json={"job_id": job_id}, headers=STAFF_HEADER)
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert "The job request was malformed and could not be processed" in response.json()["message"]
 
 
 def test_post_resubmit_job_not_found():
@@ -201,7 +293,9 @@ def test_resubmit_job_missing_filename(mock_auth_post):
 @patch("fia_api.core.job_maker.BlockingConnection")
 @patch("fia_api.routers.job_creation.get_experiments_for_user_number")
 @patch("fia_api.core.auth.tokens.requests.post")
-def test_resubmit_authorized_user(mock_auth_post, mock_get_experiments, mock_blocking_connection):
+def test_resubmit_authorized_user(
+    mock_auth_post, mock_get_experiments, mock_blocking_connection, monkeypatch, tmp_path
+):
     """Non-staff user whose experiments include the target job's experiment can successfully resubmit."""
     mock_auth_post.return_value.status_code = HTTPStatus.OK
     mock_connection = MagicMock()
@@ -209,20 +303,27 @@ def test_resubmit_authorized_user(mock_auth_post, mock_get_experiments, mock_blo
     mock_blocking_connection.return_value = mock_connection
     mock_connection.channel.return_value = mock_channel
 
-    # Get the experiment number for job 1 (seeded data with a valid run and filename)
-    with SESSION() as session:
-        job = session.query(Job).options(joinedload(Job.owner)).filter(Job.id == 1).first()
-        experiment_number = job.owner.experiment_number
+    monkeypatch.setenv("ARCHIVE_DIR", str(tmp_path))
+    monkeypatch.setenv("IMAT_DIR", str(tmp_path / "imat"))
+
+    run_start = datetime(2024, 6, 1, tzinfo=UTC)
+    filename = "MARI555555.nxs"
+    expected_path = tmp_path / "NDXMARI" / "Instrument" / "data" / "cycle_24_1" / filename
+    expected_path.parent.mkdir(parents=True, exist_ok=True)
+    expected_path.write_text("test file contents")
+
+    job_id, experiment_number = _make_job_with_run("MARI", filename, run_start)
 
     # Mock experiments to include the target job's experiment number
     mock_get_experiments.return_value = [experiment_number]
 
-    response = client.post("/job/1/resubmit", headers=USER_HEADER)
+    response = client.post(f"/job/{job_id}/resubmit", headers=USER_HEADER)
 
     assert response.status_code == HTTPStatus.OK
     mock_channel.basic_publish.assert_called_once()
     _, kwargs = mock_channel.basic_publish.call_args
     assert kwargs["exchange"] == "watched-files"
+    assert kwargs["body"] == str(expected_path)
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
