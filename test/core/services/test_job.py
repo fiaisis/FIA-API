@@ -18,6 +18,7 @@ from fia_api.core.services.job import (
     get_job_by_id,
     get_job_by_instrument,
     list_mantid_runners,
+    list_mantidimaging_runners,
     update_job_by_id,
 )
 
@@ -99,17 +100,35 @@ def test_count_jobs_by_instrument(mock_spec_class, mock_repo):
     mock_repo_instance.count.assert_called_once_with(spec.by_instruments(["TEST"]))
 
 
+@pytest.mark.parametrize(
+    ("list_runners", "org", "image_name"),
+    [
+        (list_mantid_runners, "fiaisis", "mantid"),
+        (list_mantidimaging_runners, "mantidproject", "mantidimaging"),
+    ],
+)
 @patch("fia_api.core.services.job.get_packages")
-def test_list_mantid_runners_filters_empty_tags(mock_get_packages):
+def test_list_runners_filters_empty_tags(mock_get_packages, list_runners, org, image_name):
     mock_get_packages.return_value = [
-        {"name": "sha256:aaa", "metadata": {"container": {"tags": ["6.8.0"]}}},
+        {"name": "sha256:aaa", "metadata": {"container": {"tags": ["1.0.0", "latest"]}}},
         {"name": "sha256:bbb", "metadata": {"container": {"tags": []}}},
         {"name": "sha256:ccc", "metadata": {"container": {}}},
         {"name": "sha256:ddd"},
+        {"name": "sha256:eee", "metadata": {}},
+        {"name": "sha256:fff", "metadata": {"container": {"tags": ["2.0.0"]}}},
     ]
 
-    assert list_mantid_runners() == {"sha256:aaa": "6.8.0"}
-    mock_get_packages.assert_called_once_with(org="fiaisis", image_name="mantid")
+    assert list_runners() == {"sha256:aaa": "1.0.0", "sha256:fff": "2.0.0"}
+    mock_get_packages.assert_called_once_with(org=org, image_name=image_name)
+
+
+@pytest.mark.parametrize("list_runners", [list_mantid_runners, list_mantidimaging_runners])
+@pytest.mark.parametrize("packages", [[], [{"name": "sha256:aaa", "metadata": {"container": {"tags": []}}}]])
+@patch("fia_api.core.services.job.get_packages")
+def test_list_runners_no_tagged_images(mock_get_packages, list_runners, packages):
+    mock_get_packages.return_value = packages
+
+    assert list_runners() == {}
 
 
 @patch("fia_api.core.services.job.Repo")

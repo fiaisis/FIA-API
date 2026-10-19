@@ -435,17 +435,24 @@ def resolve_job_file_path(job_id: int, filename: str, user: User, ceph_dir: str,
 
 
 def list_mantid_runners() -> dict[str, str]:
-    """
-    Get mantid runners from github packages.
-    Returns a dict of mantid versions and their corresponding git sha from GitHub.
-    """
-    data = get_packages(org="fiaisis", image_name="mantid")
-    mantid_versions: dict[str, str] = {}
+    """Return Mantid container image digests mapped to their first tag."""
+    return _list_runners(org="fiaisis", image_name="mantid")
+
+
+def list_mantidimaging_runners() -> dict[str, str]:
+    """Return Mantid Imaging container image digests mapped to their first tag."""
+    return _list_runners(org="mantidproject", image_name="mantidimaging")
+
+
+def _list_runners(org: str, image_name: str) -> dict[str, str]:
+    """List tagged container images from a GitHub package."""
+    data = get_packages(org=org, image_name=image_name)
+    versions: dict[str, str] = {}
     for item in data:
         name = str(item.get("name", ""))
         tags = item.get("metadata", {}).get("container", {}).get("tags", [])
-        if not tags:  # if tags is an empty list
+        if not tags:
             continue
-        mantid_versions[name] = str(tags[0])
+        versions[name] = str(tags[0])
 
-    return mantid_versions
+    return versions
