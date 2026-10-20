@@ -234,7 +234,7 @@ def test_get_experiment_number_from_job_id_expect_raise(mock_repo):
     job_id = faker.generator.random.randint(1, 1000)
     mock_repo_instance.find_one.return_value = None
 
-    with patch("fia_api.core.services.job.JobSpecification"), pytest.raises(ValueError):  # noqa: PT011
+    with patch("fia_api.core.services.job.JobSpecification"), pytest.raises(MissingRecordError):
         get_experiment_number_for_job_id(job_id, mock_session)
 
 

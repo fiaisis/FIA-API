@@ -22,7 +22,8 @@ from fia_api.core.specifications.job import JobSpecification
 DB_USERNAME = os.environ.get("DB_USERNAME", "postgres")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "password")
 DB_IP = os.environ.get("DB_IP", "localhost")
-DB_URL = f"postgresql+psycopg2://{DB_USERNAME}:{DB_PASSWORD}@{DB_IP}:5432/fia"
+DB_PORT = os.environ.get("DB_PORT", "5432")
+DB_URL = f"postgresql+psycopg2://{DB_USERNAME}:{DB_PASSWORD}@{DB_IP}:{DB_PORT}/fia"
 TEST_JOB_OWNER = JobOwner(experiment_number=1)
 TEST_JOB_OWNER_2 = JobOwner(experiment_number=2)
 TEST_INSTRUMENT_1 = Instrument(instrument_name="instrument 1", latest_run=1, specification={"foo": "bar"})

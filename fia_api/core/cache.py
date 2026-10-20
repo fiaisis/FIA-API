@@ -2,18 +2,24 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import logging
 import os
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from functools import cache
-from typing import Any
+from typing import Any, cast
 
 from redis import Redis
 from redis.exceptions import RedisError
 
 logger = logging.getLogger(__name__)
+
+_StreamResponse = list[tuple[str | bytes, list[tuple[str | bytes, dict[str, Any]]]]]
+
+DEFAULT_VALKEY_URL = "redis://valkey.valkey.svc.cluster.local:6379/0"
 
 
 @dataclass(slots=True)
@@ -27,47 +33,32 @@ def _valkey_state() -> _ValkeyState:
     return _ValkeyState()
 
 
-def _valkey_configured() -> bool:
-    return bool(os.environ.get("VALKEY_URL") or os.environ.get("VALKEY_HOST"))
-
-
 def _create_client() -> Redis | None:
-    url = os.environ.get("VALKEY_URL")
-    if url:
-        return Redis.from_url(
-            url,
-            decode_responses=True,
-            socket_connect_timeout=0.5,
-            socket_timeout=1,
-            retry_on_timeout=False,
-        )
-
-    host = os.environ.get("VALKEY_HOST")
-    if not host:
-        return None
-
-    port = int(os.environ.get("VALKEY_PORT", "6379"))
-    db = int(os.environ.get("VALKEY_DB", "0"))
-    password = os.environ.get("VALKEY_PASSWORD")
-    ssl_enabled = os.environ.get("VALKEY_SSL", "").lower() in ("1", "true", "yes")
-    return Redis(
-        host=host,
-        port=port,
-        db=db,
-        password=password,
-        ssl=ssl_enabled,
+    url = os.environ.get("VALKEY_URL", DEFAULT_VALKEY_URL)
+    return Redis.from_url(
+        url,
         decode_responses=True,
         socket_connect_timeout=0.5,
-        socket_timeout=1,
+        socket_timeout=1.5,  # timeout needs to be > 1 second for streaming
         retry_on_timeout=False,
     )
 
 
 def get_valkey_client() -> Redis | None:
+    """
+    Get or create a Valkey (Redis) client instance.
+
+    Returns a shared Redis client if Valkey is available.
+    The client is lazily initialized on first access and cached for reuse.
+    If the connection fails, it returns None and disables further connection
+    attempts.
+
+    :return: Redis client instance if available, None otherwise
+    """
+
     state = _valkey_state()
     if state.disabled:
-        return None
-    if not _valkey_configured():
+        logger.warning("Valkey cache disabled: previous connection error")
         return None
     if state.client is None:
         try:
@@ -86,16 +77,52 @@ def _disable_cache(exc: Exception) -> None:
         logger.warning("Valkey cache disabled: %s", exc)
 
 
-def cache_get_json(key: str) -> Any | None:
+def cache_get(key: str) -> Any | None:
+    """Retrieve a value from the Valkey cache.
+
+    Attempts to fetch a cached value by key. If the cache is unavailable,
+    the key doesn't exist, or the value cannot be parsed as JSON, returns None.
+    Automatically disables the cache on connection errors.
+
+    :param key: The cache key to retrieve
+    :return: Cached value if found, None otherwise
+    """
     client = get_valkey_client()
     if client is None:
+        logger.warning("Failed to retrieve value from Valkey cache (cache disabled)")
+        return None
+    try:
+        return client.get(key)
+    except RedisError as exc:
+        _disable_cache(exc)
+        logger.exception("Failed to retrieve value from Valkey cache", exc_info=exc)
+        return None
+
+
+def cache_get_json(key: str) -> Any | None:
+    """
+    Retrieve and deserialize a JSON value from the Valkey cache.
+
+    Attempts to fetch a cached value by key and parse it as JSON. If the cache
+    is unavailable, the key doesn't exist, or the value cannot be parsed as JSON,
+    returns None. Automatically disables the cache on connection errors.
+
+    :param key: The cache key to retrieve
+    :return: Deserialized JSON value if found and valid, None otherwise
+    """
+
+    client = get_valkey_client()
+    if client is None:
+        logger.warning("Failed to retrieve JSON from Valkey cache (cache disabled)")
         return None
     try:
         raw = client.get(key)
     except RedisError as exc:
         _disable_cache(exc)
+        logger.exception("Failed to retrieve JSON from Valkey cache", exc_info=exc)
         return None
     if raw is None:
+        logger.warning("No value found in Valkey cache for key: %s", key)
         return None
     if isinstance(raw, (bytes, bytearray)):
         raw_text = raw.decode("utf-8")
@@ -106,14 +133,30 @@ def cache_get_json(key: str) -> Any | None:
     try:
         return json.loads(raw_text)
     except json.JSONDecodeError:
+        logger.warning("Failed to parse JSON from Valkey cache")
         return None
 
 
 def cache_set_json(key: str, value: Any, ttl_seconds: int) -> None:
+    """
+    Store a JSON-serializable value in the Valkey cache with a time-to-live.
+
+    Serializes the provided value to JSON and stores it in the cache with an
+    expiration time. If the cache is unavailable, the value cannot be serialized
+    to JSON, or the TTL is non-positive, the operation is silently skipped.
+    Automatically disables the cache on connection errors.
+
+    :param key: The cache key under which to store the value
+    :param value: Any JSON-serializable value to cache
+    :param ttl_seconds: Time-to-live in seconds; must be positive
+    :return: None
+    """
+
     if ttl_seconds <= 0:
         return
     client = get_valkey_client()
     if client is None:
+        logger.warning("Failed to set JSON in Valkey cache (cache disabled)")
         return
     try:
         payload = json.dumps(value)
@@ -126,4 +169,61 @@ def cache_set_json(key: str, value: Any, ttl_seconds: int) -> None:
 
 
 def hash_key(value: str) -> str:
+    """
+    Generate a SHA-256 hash of the input string.
+
+    Computes a hexadecimal SHA-256 digest of the UTF-8 encoded input string.
+    Useful for creating deterministic cache keys from arbitrary string data.
+
+    :param value: The string to hash
+    :return: Hexadecimal SHA-256 digest as a string
+    """
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+async def log_stream_generator(instrument_name: str, since: str = "0") -> AsyncGenerator[str, None]:
+    """
+    Asynchronously generate log messages from a Valkey stream.
+
+    :param instrument_name: The instrument name to stream logs for
+    :param since: The Valkey stream ID to start reading from. Defaults to "0" (beginning).
+    """
+    valkey_client = get_valkey_client()
+    if valkey_client is None:
+        raise RuntimeError("Valkey client is not available")
+
+    stream_key = f"{instrument_name}_live_data_processor_logs"
+
+    # Start tailing from the ID provided by the frontend
+    last_id = since
+
+    while True:
+        try:
+            # Offload the synchronous blocking read to a thread to prevent freezing the event loop.
+            # block=1000 means to wait for 1 second before returning an empty list if no messages are available.
+            response = cast(
+                "_StreamResponse",
+                await asyncio.to_thread(valkey_client.xread, {stream_key: last_id}, count=50, block=1000),
+            )
+
+            if response:
+                # response format: [[b'stream_key', [(b'id', {b'msg': b'...', b'level': b'...'}), ...]]]
+                for _, messages in response:
+                    for message_id, message_data in messages:
+                        last_id = message_id.decode("utf-8") if isinstance(message_id, bytes) else message_id
+
+                        if isinstance(message_data, dict):
+                            message_data["valkey_id"] = last_id
+
+                        payload = json.dumps(message_data)
+
+                        # Yield the standard SSE "id:" field alongside the data
+                        yield f"id: {last_id}\ndata: {payload}\n\n"
+            else:
+                # Send an empty SSE comment as a keep-alive ping to prevent proxy timeouts
+                yield ": keep-alive\n\n"
+
+        except Exception as e:
+            logger.error(f"Error reading from Valkey stream {stream_key}: {e}")
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            await asyncio.sleep(2)

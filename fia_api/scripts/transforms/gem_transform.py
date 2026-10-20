@@ -1,0 +1,61 @@
+import logging
+
+from fia_api.core.models import Job
+from fia_api.scripts.pre_script import PreScript
+from fia_api.scripts.transforms.transform import Transform
+
+logger = logging.getLogger(__name__)
+
+
+class GEMTransform(Transform):
+    """
+    GEMTransform applies modifications to GEM instrument scripts based on reduction input parameters in a Reduction
+    entity.
+    """
+
+    def apply(self, script: PreScript, job: Job) -> None:  # noqa: PLR0912, C901
+        logger.info("Beginning GEM transform for job %s...", job.id)
+        lines = script.value.splitlines()
+        # MyPY does not believe ColumnElement[JSONB] is indexable, despite JSONB implementing the Indexable mixin
+        # If you get here in the future, try removing the following line and see if it passes with newer mypy.
+
+        for index, line in enumerate(lines):
+            if line.startswith("van_norm ="):
+                lines[index] = f'van_norm = "{job.inputs["van_norm"]}"'  # type: ignore
+                continue
+            if line.startswith("do_absorb_corrections ="):
+                lines[index] = f'do_absorb_corrections = "{job.inputs["do_absorb_corrections"]}"'  # type: ignore
+                continue
+            if line.startswith("mode ="):
+                lines[index] = f'mode = "{job.inputs["mode"]}"'  # type: ignore
+                continue
+            if line.startswith("input_mode ="):
+                lines[index] = f'input_mode = "{job.inputs["input_mode"]}"'  # type: ignore
+                continue
+            if line.startswith("runno ="):
+                lines[index] = f'runno = "{job.inputs["runno"]}"'  # type: ignore
+                continue
+            if line.startswith("multiple_scattering ="):
+                lines[index] = f'multiple_scattering = "{job.inputs["multiple_scattering"]}"'  # type: ignore
+                continue
+            if line.startswith("cycle ="):
+                lines[index] = f'cycle = "{job.inputs["cycle"]}"'  # type: ignore
+                continue
+            if line.startswith("offset_file ="):
+                lines[index] = f'offset_file = "{job.inputs["offset_file"]}"'  # type: ignore
+                continue
+            if line.startswith("rietveldvanrunnumbers ="):
+                lines[index] = f"rietveldvanrunnumbers = {job.inputs['rietveldvanrunnumbers']}"  # type: ignore
+                continue
+            if line.startswith("rietveldemptyrunnumbers ="):
+                lines[index] = f"rietveldemptyrunnumbers = {job.inputs['rietveldemptyrunnumbers']}"  # type: ignore
+                continue
+            if line.startswith("pdfvanrunnumbers ="):
+                lines[index] = f"pdfvanrunnumbers = {job.inputs['pdfvanrunnumbers']}"  # type: ignore
+                continue
+            if line.startswith("pdfemptyrunnumbers ="):
+                lines[index] = f"pdfemptyrunnumbers = {job.inputs['pdfemptyrunnumbers']}"  # type: ignore
+                continue
+
+        script.value = "\n".join(lines)
+        logger.info("Transform complete for job %s", job.id)

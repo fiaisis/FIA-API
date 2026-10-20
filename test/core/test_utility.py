@@ -2,6 +2,7 @@
 
 import shutil
 from collections.abc import Callable
+from datetime import UTC, datetime
 from http import HTTPStatus
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -16,6 +17,7 @@ from fia_api.core.utility import (
     GITHUB_PACKAGE_TOKEN,
     filter_script_for_tokens,
     find_file_experiment_number,
+    find_file_in_archive,
     find_file_instrument,
     find_file_user_number,
     forbid_path_characters,
@@ -355,3 +357,175 @@ def test_find_file_method_when_failed(find_file_method: Callable, method_inputs:
 def test_find_file_methods_does_not_allow_path_injection(find_file_method: Callable, method_inputs: dict[str, Any]):
     with pytest.raises(AuthError):
         find_file_method(**method_inputs)
+
+
+def test_find_file_in_archive_imat_flat_lookup():
+    """IMAT files live directly under imat_dir with no instrument/cycle subfolders."""
+    with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
+        filename = "IMAT00038896.nxs"
+        path = Path(imat_dir) / filename
+        path.write_text("Hello World!")
+
+        found_file = find_file_in_archive(
+            instrument="IMAT",
+            filename=filename,
+            run_start=datetime(2024, 3, 1, tzinfo=UTC),
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+
+        assert found_file == path
+
+
+def test_find_file_in_archive_imat_case_insensitive_instrument_name():
+    """The IMAT branch should be picked regardless of the case of the instrument name."""
+    with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
+        filename = "IMAT00038896.nxs"
+        path = Path(imat_dir) / filename
+        path.write_text("Hello World!")
+
+        found_file = find_file_in_archive(
+            instrument="imat",
+            filename=filename,
+            run_start=datetime(2024, 3, 1, tzinfo=UTC),
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+
+        assert found_file == path
+
+
+def test_find_file_in_archive_imat_not_found():
+    with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
+        found_file = find_file_in_archive(
+            instrument="IMAT",
+            filename="missing.nxs",
+            run_start=datetime(2024, 3, 1, tzinfo=UTC),
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+
+        assert found_file is None
+
+
+def test_find_file_in_archive_year_guess_fast_path():
+    """A file in a cycle folder matching run_start's year should be found."""
+    with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
+        filename = "MAR12345.nxs"
+        path = Path(archive_dir) / "NDXMAR" / "Instrument" / "data" / "cycle_24_2" / filename
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("Hello World!")
+
+        found_file = find_file_in_archive(
+            instrument="mar",
+            filename=filename,
+            run_start=datetime(2024, 6, 1, tzinfo=UTC),
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+
+        assert found_file == path
+
+
+def test_find_file_in_archive_year_guess_fast_path_zero_padded_sub_cycle():
+    """The zero-padded sub-cycle naming form should also be tried."""
+    with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
+        filename = "MAR12345.nxs"
+        path = Path(archive_dir) / "NDXMAR" / "Instrument" / "data" / "cycle_24_02" / filename
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("Hello World!")
+
+        found_file = find_file_in_archive(
+            instrument="mar",
+            filename=filename,
+            run_start=datetime(2024, 6, 1, tzinfo=UTC),
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+
+        assert found_file == path
+
+
+def test_find_file_in_archive_does_not_fall_back_to_recursive_search():
+    """No recursive fallback - an unmatched cycle name should return None."""
+    with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
+        filename = "MAR12345.nxs"
+        path = Path(archive_dir) / "NDXMAR" / "Instrument" / "data" / "some_unexpected_folder_name" / filename
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("Hello World!")
+
+        found_file = find_file_in_archive(
+            instrument="mar",
+            filename=filename,
+            run_start=datetime(2024, 6, 1, tzinfo=UTC),
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+
+        assert found_file is None
+
+
+def test_find_file_in_archive_adds_missing_nxs_extension():
+    """A filename missing the .nxs suffix should have it appended."""
+    with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
+        path = Path(archive_dir) / "NDXMAR" / "Instrument" / "data" / "cycle_24_2" / "MAR12345.nxs"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("Hello World!")
+
+        found_file = find_file_in_archive(
+            instrument="mar",
+            filename="MAR12345",
+            run_start=datetime(2024, 6, 1, tzinfo=UTC),
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+
+        assert found_file == path
+
+
+def test_find_file_in_archive_adds_missing_nxs_extension_imat():
+    """.nxs normalisation should also apply to IMAT."""
+    with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
+        path = Path(imat_dir) / "IMAT00038896.nxs"
+        path.write_text("Hello World!")
+
+        found_file = find_file_in_archive(
+            instrument="IMAT",
+            filename="IMAT00038896",
+            run_start=datetime(2024, 3, 1, tzinfo=UTC),
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+
+        assert found_file == path
+
+
+def test_find_file_in_archive_not_found_when_instrument_dir_exists():
+    with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
+        instrument_dir = Path(archive_dir) / "NDXMAR" / "Instrument" / "data"
+        instrument_dir.mkdir(parents=True, exist_ok=True)
+
+        found_file = find_file_in_archive(
+            instrument="mar",
+            filename="missing.nxs",
+            run_start=datetime(2024, 6, 1, tzinfo=UTC),
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+
+        assert found_file is None
+
+
+def test_find_file_in_archive_not_found_when_instrument_dir_missing():
+    """When the instrument's archive data directory doesn't exist at all, this should be treated the same
+    as a not-found file (returning None) rather than raising AuthError."""
+    with TemporaryDirectory() as archive_dir, TemporaryDirectory() as imat_dir:
+        found_file = find_file_in_archive(
+            instrument="mar",
+            filename="missing.nxs",
+            run_start=datetime(2024, 6, 1, tzinfo=UTC),
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+
+        assert found_file is None

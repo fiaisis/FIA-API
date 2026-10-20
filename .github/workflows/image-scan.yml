@@ -13,10 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7.0.1
 
       - name: Build Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           file: ./container/fia_api.D
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/fia_api:${{ github.sha }}

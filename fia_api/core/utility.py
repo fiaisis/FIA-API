@@ -7,6 +7,7 @@ import hashlib
 import os
 from collections.abc import Callable
 from contextlib import suppress
+from datetime import datetime
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any, TypeVar, cast
@@ -150,6 +151,62 @@ def find_file_user_number(ceph_dir: str, user_number: int, filename: str) -> Pat
     """
     dir_path = Path(ceph_dir) / f"GENERIC/autoreduce/UserNumbers/{user_number}/"
     return _safe_find_file_in_dir(dir_path=dir_path, base_path=ceph_dir, filename=filename)
+
+
+def _cycle_candidate_names(year: int) -> list[str]:
+    """Build a short list of plausible cycle directory names for the given year.
+
+    ISIS cycles are typically named like ``cycle_19_2`` (2-digit year, sub-cycle 1-8), but a leading
+    zero on the sub-cycle number (``cycle_19_02``) has also been seen in the wild, so both forms are
+    generated.
+
+    :param year: the 4-digit year to build candidate cycle names for
+    :return: list of candidate cycle directory names, e.g. ["cycle_19_1", "cycle_19_01", ...]
+    """
+    yy = f"{year % 100:02d}"
+    names = []
+    for sub_cycle in range(1, 9):
+        names.append(f"cycle_{yy}_{sub_cycle}")
+        names.append(f"cycle_{yy}_0{sub_cycle}")
+    return names
+
+
+def find_file_in_archive(
+    instrument: str, filename: str, run_start: datetime, archive_dir: str, imat_dir: str
+) -> Path | None:
+    """Find a run's raw file in the archive, appending .nxs to filename if missing.
+
+    IMAT files live flat under imat_dir. Other instruments live under
+    archive_dir/NDX{INSTRUMENT}/Instrument/data/<cycle_dir>, where the cycle dir is guessed from
+    run_start. No recursive fallback - a miss on every guess is treated as not found.
+
+    :param instrument: instrument the file belongs to
+    :param filename: bare filename, with or without a .nxs suffix
+    :param run_start: run start time, used to guess the cycle year
+    :param archive_dir: base path of the archive mount (non-IMAT)
+    :param imat_dir: base path of the IMAT mount
+    :return: path to the file, or None if not found
+    """
+    if not filename.endswith(".nxs"):
+        filename = f"{filename}.nxs"
+
+    if instrument.upper() == "IMAT":
+        candidate = Path(imat_dir) / filename
+        with suppress(OSError):
+            safe_check_filepath_plotting(filepath=candidate, base_path=imat_dir)
+        return candidate if candidate.exists() else None
+
+    instrument_dir = Path(archive_dir) / f"NDX{instrument.upper()}" / "Instrument" / "data"
+
+    for year in (run_start.year, run_start.year - 1):
+        for cycle_name in _cycle_candidate_names(year):
+            candidate = instrument_dir / cycle_name / filename
+            with suppress(OSError):
+                safe_check_filepath_plotting(filepath=candidate, base_path=archive_dir)
+            if candidate.exists():
+                return candidate
+
+    return None
 
 
 def _safe_find_file_in_dir(dir_path: Path, base_path: str, filename: str) -> Path | None:

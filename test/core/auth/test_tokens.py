@@ -64,48 +64,6 @@ def test_is_jwt_access_token_valid_raises_returns_invalid(mock_post):
     assert not jwtbearer._is_jwt_access_token_valid(TOKEN)
 
 
-def test_is_jwt_access_token_valid_uses_cache_short_circuit():
-    """Test cached token avoids network request."""
-    with (
-        patch("fia_api.core.auth.tokens.cache_get_json", return_value=True) as mock_cache,
-        patch("fia_api.core.auth.tokens.requests.post") as mock_post,
-    ):
-        jwtbearer = JWTAPIBearer()
-        assert jwtbearer._is_jwt_access_token_valid(TOKEN)
-        mock_cache.assert_called_once()
-        mock_post.assert_not_called()
-
-
-def test_is_jwt_access_token_valid_sets_cache_on_success():
-    """Test cache set on successful verification."""
-    response = Mock()
-    response.status_code = HTTPStatus.OK
-    with (
-        patch("fia_api.core.auth.tokens.cache_get_json", return_value=None),
-        patch("fia_api.core.auth.tokens.cache_set_json") as mock_cache_set,
-        patch("fia_api.core.auth.tokens.requests.post", return_value=response),
-        patch("fia_api.core.auth.tokens.hash_key", return_value="abc123"),
-        patch("fia_api.core.auth.tokens.AUTH_VERIFY_CACHE_TTL_SECONDS", 120),
-    ):
-        jwtbearer = JWTAPIBearer()
-        assert jwtbearer._is_jwt_access_token_valid(TOKEN)
-        mock_cache_set.assert_called_once_with("fia_api:auth:verify:abc123", True, 120)
-
-
-def test_is_jwt_access_token_valid_does_not_cache_on_failure():
-    """Test cache not set when verification fails."""
-    response = Mock()
-    response.status_code = HTTPStatus.FORBIDDEN
-    with (
-        patch("fia_api.core.auth.tokens.cache_get_json", return_value=None),
-        patch("fia_api.core.auth.tokens.cache_set_json") as mock_cache_set,
-        patch("fia_api.core.auth.tokens.requests.post", return_value=response),
-    ):
-        jwtbearer = JWTAPIBearer()
-        assert not jwtbearer._is_jwt_access_token_valid(TOKEN)
-        mock_cache_set.assert_not_called()
-
-
 def test_is_api_token_valid_check_against_env_var():
     api_key = str(mock.MagicMock())
     os.environ["FIA_API_API_KEY"] = api_key

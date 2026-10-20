@@ -19,6 +19,10 @@ The required env vars to run are:
  - DB_PASSWORD - The database password - default: password
  - DB_IP - The database host - default: localhost:5432
  - DEV_MODE - When true will disable auth - default: False
+ - ARCHIVE_DIR - The base path of the instrument archive mount, used to resolve a run's filename to its
+   full path (e.g. when resubmitting to the watched-files queue) - default: /archive
+ - IMAT_DIR - The base path of the IMAT mount, used the same way as ARCHIVE_DIR but for IMAT, which is
+   mounted separately from the rest of the instruments - default: /imat
 
 ```shell
 uvicorn fia_api.fia_api:app --reload  

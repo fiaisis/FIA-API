@@ -14,13 +14,13 @@ from pika.connection import ConnectionParameters  # type: ignore[import-untyped]
 from pika.credentials import PlainCredentials  # type: ignore[import-untyped]
 from sqlalchemy.orm import Session
 
-from fia_api.core.exceptions import JobRequestError, LLSPSubmissionFailureError
+from fia_api.core.exceptions import JobRequestError, LLSPSubmissionFailureError, MissingRecordError
 from fia_api.core.models import Job, JobOwner, JobType, Script, State
 from fia_api.core.repositories import Repo
 from fia_api.core.specifications.job import JobSpecification
 from fia_api.core.specifications.job_owner import JobOwnerSpecification
 from fia_api.core.specifications.script import ScriptSpecification
-from fia_api.core.utility import hash_script
+from fia_api.core.utility import find_file_in_archive, hash_script
 
 logger = logging.getLogger(__name__)
 
@@ -65,24 +65,31 @@ class JobMaker:
         self.connection = None
         self.channel = None
 
-    def _connect_to_broker(self) -> None:
+    def _connect_to_broker(self, queue_name: str | None = None) -> None:
         """
         Use this to connect to the broker
         :return: None
         """
+        queue_name = queue_name or self.queue_name
         self.connection = BlockingConnection(self.connection_parameters)
         self.channel = self.connection.channel()  # type: ignore[attr-defined]
         self.channel.exchange_declare(  # type: ignore[attr-defined]
-            self.queue_name,
+            queue_name,
             exchange_type="direct",
             durable=True,
         )
         self.channel.queue_declare(  # type: ignore[attr-defined]
-            self.queue_name,
+            queue_name,
             durable=True,
             arguments={"x-queue-type": "quorum"},
         )
-        self.channel.queue_bind(self.queue_name, self.queue_name, routing_key="")  # type: ignore[attr-defined]
+        self.channel.queue_bind(queue_name, queue_name, routing_key="")  # type: ignore[attr-defined]
+
+    def _publish(self, message: str, queue_name: str) -> None:
+        # This method allows us to publish to a different queue
+        self._connect_to_broker(queue_name)
+        # Assuming channel is set in _connect_to_broker()
+        self.channel.basic_publish(exchange=queue_name, routing_key="", body=message)  # type: ignore
 
     def _send_message(self, message: str) -> None:
         self._connect_to_broker()
@@ -160,6 +167,43 @@ class JobMaker:
         if job_owner is None:
             job_owner = JobOwner(experiment_number=experiment_number, user_number=user_number)
         return job_owner
+
+    def resubmit_job_to_watched_files(
+        self,
+        job_id: int,
+    ) -> int:
+        """
+        Resubmit a job to the watched-files queue. It will extract the job_id from and its run from the db,
+        extract the run.filename, resolve that filename to its full path in the instrument archive (or the
+        IMAT mount for IMAT), and then submit this path to the watched-files queue with the same job_id.
+        :param job_id: The id of the job to be resubmitted
+        :return: The id of the resubmitted job
+        """
+
+        job = self._job_repo.find_one(JobSpecification().by_id(job_id))
+        if job is None:
+            raise MissingRecordError(f"No Job for id {job_id}.")
+        if job.run is None:
+            raise JobRequestError("Cannot resubmit job that does not have an associated run.")
+        filename = job.run.filename
+        if not filename:
+            raise JobRequestError("Cannot resubmit job that does not have a filename associated with its run.")
+
+        instrument = job.run.instrument.instrument_name
+        archive_dir = os.environ.get("ARCHIVE_DIR", "/archive")
+        imat_dir = os.environ.get("IMAT_DIR", "/imat")
+        filepath = find_file_in_archive(
+            instrument=instrument,
+            filename=filename,
+            run_start=job.run.run_start,
+            archive_dir=archive_dir,
+            imat_dir=imat_dir,
+        )
+        if filepath is None:
+            raise JobRequestError(f"Could not find input file '{filename}' for job {job_id} in the archive.")
+
+        self._publish(str(filepath), queue_name="watched-files")
+        return job.id
 
     @require_owner
     def create_simple_job(

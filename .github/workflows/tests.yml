@@ -10,15 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout project
-        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # v3.5.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v3.5.0
 
       - name: Set up python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v4.5.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v4.5.0
         with:
           python-version: "3.12"
 
       - name: Set up cache for Python dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
@@ -33,7 +33,7 @@ jobs:
         run: pytest . --random-order --random-order-bucket=global --ignore=test/e2e --ignore=test/core/test_repositories_integration.py --cov --cov-report=xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -53,15 +53,15 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
       - name: Set up cache for Python dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
@@ -80,7 +80,7 @@ jobs:
           pytest test/core/test_repositories_integration.py --random-order --random-order-bucket=global --cov --cov-report=xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -107,15 +107,15 @@ jobs:
           RABBITMQ_PASSWORD: guest
     steps:
       - name: Check out repository
-        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
       - name: Set up cache for Python dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
@@ -133,13 +133,22 @@ jobs:
           pytest test/e2e/test_job_maker.py --random-order --random-order-bucket=global --cov --cov-report=xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
   e2e-core:
     runs-on: ubuntu-latest
 
     services:
+      valkey:
+        image: valkey/valkey:latest
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       postgres:
         image: postgres:14.7
         env:
@@ -152,15 +161,15 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
       - name: Set up cache for Python dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
@@ -177,10 +186,17 @@ jobs:
           DATABASE_URL: postgresql://postgres:password@localhost:5432/test_db
           GITHUB_PACKAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SCRIPT_WRITE_TOKEN: ${{ secrets.SCRIPT_WRITE_TOKEN }}
+          VALKEY_URL: "redis://localhost:6379"
         run: |
-          pytest test/e2e --random-order --random-order-bucket=global --cov --cov-report=xml --ignore=test/e2e/test_job_maker.py
+          pytest test/e2e \
+          --random-order \
+          --random-order-bucket=global \
+          --cov \
+          --cov-report=xml \
+          --ignore=test/e2e/test_job_maker.py \
+          --log-cli-level=INFO
 
       - name: Upload coverage
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
