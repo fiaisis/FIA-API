@@ -381,7 +381,11 @@ def resolve_job_files(
             continue
 
         for filename in filenames:
-            if job.job_type != JobType.SIMPLE and job.owner.experiment_number and job.instrument:
+            if (
+                job.job_type not in (JobType.SIMPLE, JobType.FAST_START)
+                and job.owner.experiment_number
+                and job.instrument
+            ):
                 filepath = find_file_instrument(
                     ceph_dir,
                     job.instrument.instrument_name,
@@ -429,7 +433,7 @@ def resolve_job_file_path(job_id: int, filename: str, user: User, ceph_dir: str,
     if job.owner is None:
         raise JobOwnerError("Job has no owner.")
 
-    if job.job_type != JobType.SIMPLE:
+    if job.job_type not in (JobType.SIMPLE, JobType.FAST_START):
         if job.owner.experiment_number is None:
             raise DataIntegrityError("Experiment number not found in scenario where it should be expected.")
         if job.instrument is None:

@@ -110,6 +110,7 @@ async def get_jobs(
                 "order_by": order_by,
                 "order_direction": order_direction,
                 "filters": filters,
+                "include_fast_start_jobs": include_fast_start_jobs,
             },
         )
         cached = cache_get_json(cache_key)
@@ -195,6 +196,7 @@ async def get_jobs_by_instrument(  # noqa: PLR0913
                 "order_by": order_by,
                 "order_direction": order_direction,
                 "filters": filters,
+                "include_fast_start_jobs": include_fast_start_jobs,
             },
         )
         cached = cache_get_json(cache_key)
@@ -244,7 +246,14 @@ async def count_jobs_for_instrument(
 
     cache_key = None
     if JOB_COUNT_CACHE_TTL_SECONDS > 0:
-        cache_key = _jobs_cache_key("count:instrument", {"instrument": instrument, "filters": parsed_filters})
+        cache_key = _jobs_cache_key(
+            "count:instrument",
+            {
+                "instrument": instrument,
+                "filters": parsed_filters,
+                "include_fast_start_jobs": include_fast_start_jobs,
+            },
+        )
         cached = cache_get_json(cache_key)
         if isinstance(cached, dict) and "count" in cached:
             return CountResponse.model_validate(cached)
@@ -331,7 +340,10 @@ async def count_all_jobs(
 
     cache_key = None
     if JOB_COUNT_CACHE_TTL_SECONDS > 0:
-        cache_key = _jobs_cache_key("count:all", {"filters": parsed_filters})
+        cache_key = _jobs_cache_key(
+            "count:all",
+            {"filters": parsed_filters, "include_fast_start_jobs": include_fast_start_jobs},
+        )
         cached = cache_get_json(cache_key)
         if isinstance(cached, dict) and "count" in cached:
             return CountResponse.model_validate(cached)

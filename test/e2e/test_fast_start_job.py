@@ -2,6 +2,7 @@ from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
 import pytest
+from requests.exceptions import RequestException
 from starlette.testclient import TestClient
 
 from fia_api.core.auth.tokens import User
@@ -41,9 +42,9 @@ def test_fast_start_job_lifecycle(mock_post):
     # searches for the creation call
     found_llsp_call = False
     for calls in mock_post.call_args_list:
-        if calls.kwargs.get("json") == {"script": "print('hello')"} and calls.kwargs.get("headers") == {
-            "Authorization": "Bearer shh"
-        }:
+        if calls.kwargs.get("json") == {"script": "print('hello')", "job_id": job_id} and calls.kwargs.get(
+            "headers"
+        ) == {"Authorization": "Bearer shh"}:
             found_llsp_call = True
             break
     assert found_llsp_call
@@ -104,3 +105,17 @@ def test_get_only_fast_start_jobs(mock_post):
     )
     assert response_count.status_code == HTTPStatus.OK
     assert response_count.json()["count"] == len(jobs)
+
+
+@patch("fia_api.core.job_maker.requests.post")
+@patch("fia_api.core.auth.tokens.requests.post")
+@pytest.mark.usefixtures("mock_blocking_connection")
+def test_fast_start_job_submission_failure(mock_auth_post, mock_llsp_post):
+    """Test that a failed submission to LLSP-API returns 424 FAILED_DEPENDENCY."""
+    client = TestClient(app)
+    mock_auth_post.return_value.status_code = HTTPStatus.OK
+    mock_llsp_post.side_effect = RequestException("LLSP down")
+
+    response = client.post("/job/fast-start", json={"script": "print('fail')"}, headers=USER_HEADER)
+    assert response.status_code == HTTPStatus.FAILED_DEPENDENCY
+    assert response.json() == {"message": "Job Failed to submit to LLSP-API"}

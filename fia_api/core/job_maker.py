@@ -269,6 +269,7 @@ class JobMaker:
             state=State.NOT_STARTED,
             inputs={},
         )
+        job = self._job_repo.add_one(job)
 
         # Call External API
         llsp_url = os.environ.get("LLSP_API_HOST", "http://localhost:8001")
@@ -277,18 +278,17 @@ class JobMaker:
         try:
             response = requests.post(
                 f"{llsp_url}/execute",
-                json={"script": script},
+                json={"script": script, "job_id": job.id},
                 headers={"Authorization": f"Bearer {llsp_key}"},
                 timeout=10,
             )
             response.raise_for_status()
         except requests.RequestException as e:
-            logger.error(f"Failed to submit fast start job to LLSP: {e}")
+            logger.exception("Failed to submit fast start job to LLSP")
             job.state = State.UNSUCCESSFUL
             job.outputs = "Job failed to submit to LLSP."
+            self._job_repo.update_one(job)
             raise LLSPSubmissionFailureError(f"Failed to submit fast start job: {e}") from e
-        finally:
-            job = self._job_repo.add_one(job)
         return job.id
 
     def _get_or_create_script(self, script: str) -> Script:

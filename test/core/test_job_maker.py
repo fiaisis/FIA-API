@@ -211,7 +211,7 @@ def test_create_fast_start_job_success(mock_post, mock_connect, faker):
     assert job_id == job.id
     mock_post.assert_called_once()
     _, kwargs = mock_post.call_args
-    assert kwargs["json"] == {"script": script}
+    assert kwargs["json"] == {"script": script, "job_id": job.id}
     # Check default header key 'shh'
     assert kwargs["headers"]["Authorization"] == "Bearer shh"
 
