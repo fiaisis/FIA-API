@@ -66,9 +66,17 @@ def test_fast_start_job_lifecycle(mock_post):
 
     assert response.status_code in (401, 403)
 
-    # Try to patch with API Key (user -1)
+    # Try to patch with API Key (user -1) on a non-FAST_START job (should be forbidden)
     with patch("fia_api.routers.jobs.get_user_from_token") as mock_get_user:
-        mock_user = User(user_number=-1, role="staff")
+        mock_user = User(user_number=-1, role="user")
+        mock_get_user.return_value = mock_user
+
+        response = client.patch("/job/1", json={"state": "SUCCESSFUL"}, headers={"Authorization": "Bearer fake-token"})
+        assert response.status_code in (401, 403)
+
+    # Try to patch with API Key (user -1) on the FAST_START job
+    with patch("fia_api.routers.jobs.get_user_from_token") as mock_get_user:
+        mock_user = User(user_number=-1, role="user")
         mock_get_user.return_value = mock_user
 
         response = client.patch(
@@ -107,14 +115,20 @@ def test_get_only_fast_start_jobs(mock_post):
     assert response_count.json()["count"] == len(jobs)
 
 
-@patch("fia_api.core.job_maker.requests.post")
-@patch("fia_api.core.auth.tokens.requests.post")
+@patch("requests.post")
 @pytest.mark.usefixtures("mock_blocking_connection")
-def test_fast_start_job_submission_failure(mock_auth_post, mock_llsp_post):
+def test_fast_start_job_submission_failure(mock_post):
     """Test that a failed submission to LLSP-API returns 424 FAILED_DEPENDENCY."""
     client = TestClient(app)
-    mock_auth_post.return_value.status_code = HTTPStatus.OK
-    mock_llsp_post.side_effect = RequestException("LLSP down")
+
+    def post_side_effect(url, *args, **kwargs):
+        if url.endswith("/execute"):
+            raise RequestException("LLSP down")
+        mock_resp = MagicMock()
+        mock_resp.status_code = HTTPStatus.OK
+        return mock_resp
+
+    mock_post.side_effect = post_side_effect
 
     response = client.post("/job/fast-start", json={"script": "print('fail')"}, headers=USER_HEADER)
     assert response.status_code == HTTPStatus.FAILED_DEPENDENCY
