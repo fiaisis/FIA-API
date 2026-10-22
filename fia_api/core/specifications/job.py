@@ -151,6 +151,7 @@ class JobSpecification(Specification[Job]):
         offset: int | None = None,
         order_by: JointRunJobOrderField = "id",
         order_direction: Literal["asc", "desc"] = "desc",
+        include_without_run: bool = False,
     ) -> JobSpecification:
         """
         Fetch all jobs and applies ordering, limit, and offset to the query.
@@ -159,13 +160,21 @@ class JobSpecification(Specification[Job]):
         :param offset: The number of jobs to skip before starting to return the results. None for no offset.
         :param order_by: The attribute to order the jobs by. Can be attributes of Job or Run entities.
         :param order_direction: The direction to order the jobs, either 'asc' for ascending or 'desc' for descending.
+        :param include_without_run: Whether to outer-join Run/JobOwner/Instrument so jobs without a Run are included.
         :return: An instance of JobSpecification with the applied filters and ordering.
         """
-        self.value = (
-            self.value.outerjoin(Run, onclause=Job.run)
-            .outerjoin(JobOwner, onclause=Run.owner)
-            .outerjoin(Instrument, onclause=Run.instrument)
-        )
+        if include_without_run:
+            self.value = (
+                self.value.outerjoin(Run, onclause=Job.run)
+                .outerjoin(JobOwner, onclause=Run.owner)
+                .outerjoin(Instrument, onclause=Run.instrument)
+            )
+        else:
+            self.value = (
+                self.value.join(Run, onclause=Job.run)
+                .join(JobOwner, onclause=Run.owner)
+                .join(Instrument, onclause=Run.instrument)
+            )
         self._apply_ordering(order_by, order_direction)
 
         return self

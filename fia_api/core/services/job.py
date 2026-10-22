@@ -145,9 +145,18 @@ def get_all_jobs(
     """
     specification = JobSpecification()
     if user_number is None:
-        specification = specification.all(
-            limit=limit, offset=offset, order_by=order_by, order_direction=order_direction
-        )
+        if include_fast_start_jobs:
+            specification = specification.all(
+                limit=limit,
+                offset=offset,
+                order_by=order_by,
+                order_direction=order_direction,
+                include_without_run=True,
+            )
+        else:
+            specification = specification.all(
+                limit=limit, offset=offset, order_by=order_by, order_direction=order_direction
+            )
     else:
         experiment_numbers = get_experiments_for_user_number(user_number)
         specification = specification.by_experiment_numbers(
@@ -223,7 +232,9 @@ def count_jobs(
     :param include_fast_start_jobs: (bool) Whether to include fast start jobs
     :return: (int) number of jobs
     """
-    spec: Specification[Job] = JobSpecification().all()
+    spec: Specification[Job] = (
+        JobSpecification().all(include_without_run=True) if include_fast_start_jobs else JobSpecification().all()
+    )
     if filters:
         spec = apply_filters_to_spec(filters, spec)
     if not include_fast_start_jobs:

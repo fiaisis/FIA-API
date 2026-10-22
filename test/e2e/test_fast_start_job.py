@@ -70,6 +70,7 @@ def test_fast_start_job_lifecycle(mock_post):
     )
     assert latest_fast_start_response.status_code == HTTPStatus.OK
     assert latest_fast_start_response.json()[0]["id"] == job_id
+    assert latest_fast_start_response.json()[0]["script"] == {"value": "print('hello')"}
 
     response = client.patch(f"/job/{job_id}", json={"state": "SUCCESSFUL"}, headers=headers)
 

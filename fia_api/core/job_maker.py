@@ -227,7 +227,7 @@ class JobMaker:
             owner=job_owner,
             job_type=JobType.SIMPLE,
             runner_image=runner_image,
-            script_id=script_object.id,
+            script=script_object,
             state=State.NOT_STARTED,
             inputs={},
         )
@@ -265,7 +265,7 @@ class JobMaker:
             owner=job_owner,
             job_type=JobType.FAST_START,
             runner_image=runner_image,
-            script_id=script_object.id,
+            script=script_object,
             state=State.NOT_STARTED,
             inputs={},
         )

@@ -209,6 +209,9 @@ def test_create_fast_start_job_success(mock_post, mock_connect, faker):
     job_id = job_maker.create_fast_start_job(runner_image=runner_image, script=script, user_number=user_number)
 
     assert job_id == job.id
+    added_job = job_maker._job_repo.add_one.call_args[0][0]
+    assert added_job.script is not None
+    assert added_job.script.script == script
     mock_post.assert_called_once()
     _, kwargs = mock_post.call_args
     assert kwargs["json"] == {"script": script, "job_id": job.id}
