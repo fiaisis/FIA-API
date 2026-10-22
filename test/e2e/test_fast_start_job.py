@@ -62,6 +62,15 @@ def test_fast_start_job_lifecycle(mock_post):
     # So included_count should be > default_count (since we just created one)
     assert included_count > default_count
 
+    # Verify the newly created fast start job (which has no associated Run) is returned by GET /jobs
+    latest_fast_start_response = client.get(
+        "/jobs?include_fast_start_jobs=true&order_by=id&order_direction=desc&limit=1"
+        '&filters={"job_type_in": ["FAST_START"]}',
+        headers=STAFF_HEADER,
+    )
+    assert latest_fast_start_response.status_code == HTTPStatus.OK
+    assert latest_fast_start_response.json()[0]["id"] == job_id
+
     response = client.patch(f"/job/{job_id}", json={"state": "SUCCESSFUL"}, headers=headers)
 
     assert response.status_code in (401, 403)

@@ -162,9 +162,9 @@ class JobSpecification(Specification[Job]):
         :return: An instance of JobSpecification with the applied filters and ordering.
         """
         self.value = (
-            self.value.join(Run, onclause=Job.run)
-            .join(JobOwner, onclause=Run.owner)
-            .join(Instrument, onclause=Run.instrument)
+            self.value.outerjoin(Run, onclause=Job.run)
+            .outerjoin(JobOwner, onclause=Run.owner)
+            .outerjoin(Instrument, onclause=Run.instrument)
         )
         self._apply_ordering(order_by, order_direction)
 
