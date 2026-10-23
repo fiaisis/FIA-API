@@ -22,6 +22,11 @@ def _jwt_headers(payload):
     return {"Authorization": f"Bearer {token}"}
 
 
+@pytest.fixture(autouse=True)
+def _setup():
+    """Override the e2e database setup because runner discovery does not use the database."""
+
+
 @pytest.fixture(params=list(RUNNER_ENDPOINTS))
 def runner_endpoint(request):
     return request.param
