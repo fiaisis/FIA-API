@@ -119,7 +119,12 @@ async def get_mantid_runners(
 async def get_mantidimaging_runners(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
 ) -> dict[str, str]:
-    """Return Mantid Imaging container image digests mapped to their first tag."""
+    """
+    Return tagged Mantid Imaging container images if the user is authenticated.
+    \f
+    :param credentials: Bearer credentials verified by the authentication dependency.
+    :return: Mapping of image digests to their first tag.
+    """
     user = get_user_from_token(credentials.credentials)
 
     if user.role is None or user.user_number is None:

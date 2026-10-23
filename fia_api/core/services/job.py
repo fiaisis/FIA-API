@@ -435,17 +435,31 @@ def resolve_job_file_path(job_id: int, filename: str, user: User, ceph_dir: str,
 
 
 def list_mantid_runners() -> dict[str, str]:
-    """Return Mantid container image digests mapped to their first tag."""
+    """
+    Get tagged Mantid container images from GitHub Packages.
+
+    :return: Mapping of image digests to their first tag.
+    """
     return _list_runners(org="fiaisis", image_name="mantid")
 
 
 def list_mantidimaging_runners() -> dict[str, str]:
-    """Return Mantid Imaging container image digests mapped to their first tag."""
+    """
+    Get tagged Mantid Imaging container images from GitHub Packages.
+
+    :return: Mapping of image digests to their first tag.
+    """
     return _list_runners(org="mantidproject", image_name="mantidimaging")
 
 
 def _list_runners(org: str, image_name: str) -> dict[str, str]:
-    """List tagged container images from a GitHub package."""
+    """
+    List tagged container images from a GitHub package, omitting untagged images.
+
+    :param org: GitHub organization that owns the container package.
+    :param image_name: Name of the container package within the organization.
+    :return: Mapping of image digests to their first tag.
+    """
     data = get_packages(org=org, image_name=image_name)
     versions: dict[str, str] = {}
     for item in data:
