@@ -40,6 +40,51 @@ def test_get_jobs_by_instrument(mock_spec_class, mock_repo):
     mock_repo_instance.find.assert_called_once_with(spec.by_instruments(["test"], limit=5, offset=6))
 
 
+@patch("fia_api.core.services.job.apply_filters_to_spec")
+@patch("fia_api.core.services.job.Repo")
+@patch("fia_api.core.services.job.JobSpecification")
+def test_get_jobs_by_instrument_with_filters(mock_spec_class, mock_repo, mock_apply_filters):
+    """Test get_job_by_instrument applies user filters when provided."""
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
+    get_job_by_instrument("test", mock_session, filters={"title": "foo"}, include_fast_start_jobs=True)
+    mock_apply_filters.assert_called_once()
+
+
+@patch("fia_api.core.services.job.apply_filters_to_spec")
+@patch("fia_api.core.services.job.Repo")
+@patch("fia_api.core.services.job.JobSpecification")
+def test_get_all_jobs_with_filters(mock_spec_class, mock_repo, mock_apply_filters):
+    """Test get_all_jobs applies user filters when provided."""
+    mock_session = Mock()
+    mock_repo_instance = Mock()
+    mock_repo.return_value = mock_repo_instance
+    get_all_jobs(mock_session, filters={"title": "foo"}, include_fast_start_jobs=True)
+    mock_apply_filters.assert_called_once()
+
+
+@patch("fia_api.core.services.job.apply_filters_to_spec")
+@patch("fia_api.core.services.job.Repo")
+def test_count_jobs_with_filters(mock_repo, mock_apply_filters):
+    """Test count_jobs applies user filters when provided."""
+    mock_session = Mock()
+    mock_repo.return_value = Mock()
+    count_jobs(mock_session, filters={"title": "foo"}, include_fast_start_jobs=True)
+    mock_apply_filters.assert_called_once()
+
+
+@patch("fia_api.core.services.job.apply_filters_to_spec")
+@patch("fia_api.core.services.job.Repo")
+@patch("fia_api.core.services.job.JobSpecification")
+def test_count_jobs_by_instrument_with_filters(mock_spec_class, mock_repo, mock_apply_filters):
+    """Test count_jobs_by_instrument applies user filters when provided."""
+    mock_session = Mock()
+    mock_repo.return_value = Mock()
+    count_jobs_by_instrument("TEST", mock_session, filters={"title": "foo"}, include_fast_start_jobs=True)
+    mock_apply_filters.assert_called_once()
+
+
 @patch("fia_api.core.services.job.Repo")
 def test_get_job_by_id_job_exists(mock_repo):
     """

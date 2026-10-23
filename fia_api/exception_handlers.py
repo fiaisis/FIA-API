@@ -37,6 +37,19 @@ async def bad_job_request_handler(_: Request, __: Exception) -> JSONResponse:
     )
 
 
+async def llsp_api_request_handler(_: Request, __: Exception) -> JSONResponse:
+    """
+    Automatically return a 424 when a job submission to LLSP-API fails
+    :param _:
+    :param __:
+    :return: JSONResponse with 424
+    """
+    return JSONResponse(
+        status_code=HTTPStatus.FAILED_DEPENDENCY,
+        content={"message": "Job Failed to submit to LLSP-API"},
+    )
+
+
 async def missing_script_handler(_: Request, __: Exception) -> JSONResponse:
     """
     Automatically return a 404 when the script could not be found locally or remote

@@ -7,7 +7,7 @@ import pytest
 from sqlalchemy import func, select
 from starlette.testclient import TestClient
 
-from fia_api.core.models import Instrument, Job, JobOwner, Run
+from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run
 from fia_api.fia_api import app
 from utils.db_generator import SESSION
 
@@ -60,7 +60,13 @@ def test_count_jobs_with_filters(mock_post):
     """Test count with filter"""
     expected_count = 0
     with SESSION() as session:
-        expected_count = session.scalar(select(func.count()).select_from(Job).join(Run).where(Run.title.icontains("n")))
+        expected_count = session.scalar(
+            select(func.count())
+            .select_from(Job)
+            .join(Run)
+            .where(Run.title.icontains("n"))
+            .where(Job.job_type != JobType.FAST_START)
+        )
     mock_post.return_value.status_code = HTTPStatus.OK
     response = client.get('/jobs/count?filters={"title":"n"}')
     assert response.json()["count"] == expected_count
@@ -78,6 +84,7 @@ def test_count_jobs_by_instrument_with_filter(mock_post):
             .join(Instrument)
             .where(Run.title.icontains("n"))
             .where(Instrument.instrument_name == "MARI")
+            .where(Job.job_type != JobType.FAST_START)
         )
 
     mock_post.return_value.status_code = HTTPStatus.OK
@@ -444,9 +451,11 @@ def test_jobs_count():
     Test count endpoint for all jobs
     :return:
     """
+    with SESSION() as session:
+        expected_count = session.query(Job).where(Job.job_type != JobType.FAST_START).count()
     response = client.get("/jobs/count")
     assert response.status_code == HTTPStatus.OK
-    assert response.json()["count"] == 5001  # noqa: PLR2004
+    assert response.json()["count"] == expected_count
 
 
 @patch("fia_api.core.auth.tokens.requests.post")
