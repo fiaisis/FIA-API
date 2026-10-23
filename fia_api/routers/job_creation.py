@@ -14,6 +14,7 @@ from fia_api.core.services.job import (
     get_experiment_number_for_job_id,
     job_maker,
     list_mantid_runners,
+    list_mantidimaging_runners,
 )
 from fia_api.core.session import get_db_session
 
@@ -112,3 +113,21 @@ async def get_mantid_runners(
         raise AuthError("User is not authorized to access this endpoint")
 
     return list_mantid_runners()
+
+
+@JobCreationRouter.get("/jobs/runners/mantidimaging", tags=["job creation"])
+async def get_mantidimaging_runners(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
+) -> dict[str, str]:
+    """
+    Return tagged Mantid Imaging container images if the user is authenticated.
+    \f
+    :param credentials: Bearer credentials verified by the authentication dependency.
+    :return: Mapping of image digests to their first tag.
+    """
+    user = get_user_from_token(credentials.credentials)
+
+    if user.role is None or user.user_number is None:
+        raise AuthError("User is not authorized to access this endpoint")
+
+    return list_mantidimaging_runners()
