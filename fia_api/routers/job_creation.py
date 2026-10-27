@@ -123,7 +123,7 @@ async def get_mantidimaging_runners(
     Return tagged Mantid Imaging container images if the user is authenticated.
     \f
     :param credentials: Bearer credentials verified by the authentication dependency.
-    :return: Mapping of image digests to their first tag.
+    :return: Mapping of image digests to release versions, newest first.
     """
     user = get_user_from_token(credentials.credentials)
 
