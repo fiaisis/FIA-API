@@ -18,6 +18,7 @@ from fia_api.core.models import Instrument, Job, JobOwner, JobType, Run, Script,
 from fia_api.core.repositories import Repo
 from fia_api.core.request_models import AutoreductionRequest, PartialJobUpdateRequest
 from fia_api.core.session import get_db_session
+from fia_api.core.specifications.base import Specification
 from fia_api.core.specifications.filters import apply_filters_to_spec
 from fia_api.core.specifications.instrument import InstrumentSpecification
 from fia_api.core.specifications.job import JobSpecification
@@ -54,6 +55,10 @@ class SimpleJob(BaseModel):
     script: str
 
 
+class FastStartJob(BaseModel):
+    script: str
+
+
 class RerunJob(BaseModel):
     job_id: int
     runner_image: str
@@ -83,6 +88,7 @@ def get_job_by_instrument(
     order_direction: Literal["asc", "desc"] = "desc",
     user_number: int | None = None,
     filters: Mapping[str, Any] | None = None,
+    include_fast_start_jobs: bool = False,
 ) -> Sequence[Job]:
     """
     Given an instrument name return a sequence of jobs for that instrument. Optionally providing a limit and
@@ -95,6 +101,7 @@ def get_job_by_instrument(
     :param order_by: (str) Field to order by.
     :param user_number: (optional[str]) The user number of who is making the request
     :param filters: Optional Mapping[str,Any] the filters to be applied to the query
+    :param include_fast_start_jobs: (bool) Whether to include fast start jobs
     :return: Sequence of Jobs for an instrument
     """
     specification = JobSpecification().by_instruments(
@@ -105,10 +112,13 @@ def get_job_by_instrument(
         order_direction=order_direction,
         user_number=user_number,
     )
+    spec: Specification[Job] = specification
     if filters:
-        specification = apply_filters_to_spec(filters, specification)
+        spec = apply_filters_to_spec(filters, spec)
+    if not include_fast_start_jobs:
+        spec = apply_filters_to_spec({"job_type_not_in": [JobType.FAST_START]}, spec)
     job_repo: Repo[Job] = Repo(session)
-    return job_repo.find(specification)
+    return job_repo.find(spec)
 
 
 def get_all_jobs(
@@ -119,6 +129,7 @@ def get_all_jobs(
     order_direction: Literal["asc", "desc"] = "desc",
     user_number: int | None = None,
     filters: Mapping[str, Any] | None = None,
+    include_fast_start_jobs: bool = False,
 ) -> Sequence[Job]:
     """
     Get all jobs, if a user number is provided then only the jobs that user has permission for will be
@@ -130,22 +141,35 @@ def get_all_jobs(
     :param order_direction: (str) Direction to der by "asc" | "desc"
     :param order_by: (str) Field to order by.
     :param filters: Optional Mapping[str,Any] the filters to be applied
+    :param include_fast_start_jobs: (bool) Whether to include fast start jobs
     :return: A Sequence of Jobs
     """
     specification = JobSpecification()
     if user_number is None:
-        specification = specification.all(
-            limit=limit, offset=offset, order_by=order_by, order_direction=order_direction
-        )
+        if include_fast_start_jobs:
+            specification = specification.all(
+                limit=limit,
+                offset=offset,
+                order_by=order_by,
+                order_direction=order_direction,
+                include_without_run=True,
+            )
+        else:
+            specification = specification.all(
+                limit=limit, offset=offset, order_by=order_by, order_direction=order_direction
+            )
     else:
         experiment_numbers = get_experiments_for_user_number(user_number)
         specification = specification.by_experiment_numbers(
             experiment_numbers, limit=limit, offset=offset, order_by=order_by, order_direction=order_direction
         )
+    spec: Specification[Job] = specification
     if filters:
-        apply_filters_to_spec(filters, specification)
+        spec = apply_filters_to_spec(filters, spec)
+    if not include_fast_start_jobs:
+        spec = apply_filters_to_spec({"job_type_not_in": [JobType.FAST_START]}, spec)
     job_repo: Repo[Job] = Repo(session)
-    return job_repo.find(specification)
+    return job_repo.find(spec)
 
 
 def get_job_by_id(
@@ -175,16 +199,24 @@ def get_job_by_id(
     return job
 
 
-def count_jobs_by_instrument(instrument: str, session: Session, filters: Mapping[str, Any] | None) -> int:
+def count_jobs_by_instrument(
+    instrument: str,
+    session: Session,
+    filters: Mapping[str, Any] | None,
+    include_fast_start_jobs: bool = False,
+) -> int:
     """
     Given an instrument name, count the jobs for that instrument
     :param instrument: Instruments to count from
     :param session: The current session of the request
+    :param include_fast_start_jobs: (bool) Whether to include fast start jobs
     :return: Number of jobs
     """
-    spec = JobSpecification().by_instruments(instruments=[instrument])
+    spec: Specification[Job] = JobSpecification().by_instruments(instruments=[instrument])
     if filters:
         spec = apply_filters_to_spec(filters, spec)
+    if not include_fast_start_jobs:
+        spec = apply_filters_to_spec({"job_type_not_in": [JobType.FAST_START]}, spec)
     job_repo: Repo[Job] = Repo(session)
     return job_repo.count(spec)
 
@@ -192,16 +224,22 @@ def count_jobs_by_instrument(instrument: str, session: Session, filters: Mapping
 def count_jobs(
     session: Session,
     filters: Mapping[str, Any] | None = None,
+    include_fast_start_jobs: bool = False,
 ) -> int:
     """
     Count the total number of jobs
     :param filters: Optional Mapping[str,Any] the filters to be applied
     :param session: The current session of the request
+    :param include_fast_start_jobs: (bool) Whether to include fast start jobs
     :return: (int) number of jobs
     """
-    spec = JobSpecification().all()
+    spec: Specification[Job] = (
+        JobSpecification().all(include_without_run=True) if include_fast_start_jobs else JobSpecification().all()
+    )
     if filters:
         spec = apply_filters_to_spec(filters, spec)
+    if not include_fast_start_jobs:
+        spec = apply_filters_to_spec({"job_type_not_in": [JobType.FAST_START]}, spec)
     job_repo: Repo[Job] = Repo(session)
     return job_repo.count(spec)
 
@@ -355,7 +393,11 @@ def resolve_job_files(
             continue
 
         for filename in filenames:
-            if job.job_type != JobType.SIMPLE and job.owner.experiment_number and job.instrument:
+            if (
+                job.job_type not in (JobType.SIMPLE, JobType.FAST_START)
+                and job.owner.experiment_number
+                and job.instrument
+            ):
                 filepath = find_file_instrument(
                     ceph_dir,
                     job.instrument.instrument_name,
@@ -403,7 +445,7 @@ def resolve_job_file_path(job_id: int, filename: str, user: User, ceph_dir: str,
     if job.owner is None:
         raise JobOwnerError("Job has no owner.")
 
-    if job.job_type != JobType.SIMPLE:
+    if job.job_type not in (JobType.SIMPLE, JobType.FAST_START):
         if job.owner.experiment_number is None:
             raise DataIntegrityError("Experiment number not found in scenario where it should be expected.")
         if job.instrument is None:

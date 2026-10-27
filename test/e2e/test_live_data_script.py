@@ -86,7 +86,7 @@ def test_stream_logs_success():
                 assert payload["msg"] == test_message["msg"]
                 assert payload["level"] == test_message["level"]
 
-                client.close()
+                break
 
 
 @patch("fia_api.core.cache.get_valkey_client")  # Adjust path as needed

@@ -15,6 +15,7 @@ from fia_api.core.exceptions import (
     GithubAPIRequestError,
     JobOwnerError,
     JobRequestError,
+    LLSPSubmissionFailureError,
     MissingRecordError,
     MissingScriptError,
     NoFilesAddedError,
@@ -29,6 +30,7 @@ from fia_api.exception_handlers import (
     data_integrity_handler,
     github_api_request_handler,
     job_owner_err_handler,
+    llsp_api_request_handler,
     missing_record_handler,
     missing_script_handler,
     no_files_added_handler,
@@ -98,3 +100,4 @@ app.add_exception_handler(GithubAPIRequestError, github_api_request_handler)
 app.add_exception_handler(BadRequestError, bad_request_handler)
 app.add_exception_handler(DataIntegrityError, data_integrity_handler)
 app.add_exception_handler(JobOwnerError, job_owner_err_handler)
+app.add_exception_handler(LLSPSubmissionFailureError, llsp_api_request_handler)

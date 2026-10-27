@@ -1,6 +1,7 @@
 import pytest
 
 from fia_api.core.exceptions import BadRequestError
+from fia_api.core.models import JobType
 from fia_api.core.specifications.filters import (
     ExperimentNumberAfterFilter,
     ExperimentNumberBeforeFilter,
@@ -12,13 +13,17 @@ from fia_api.core.specifications.filters import (
     JobStartAfterFilter,
     JobStartBeforeFilter,
     JobStateFilter,
+    JobTypeInFilter,
+    JobTypeNotInFilter,
     RunEndAfterFilter,
     RunEndBeforeFilter,
     RunStartAfterFilter,
     RunStartBeforeFilter,
     TitleFilter,
+    apply_filters_to_spec,
     get_filter,
 )
+from fia_api.core.specifications.job import JobSpecification
 
 
 def test_get_filter_invalid_key():
@@ -36,6 +41,8 @@ def test_get_filter_invalid_key():
         ("instrument_in", "value1", InstrumentInFilter),
         ("job_state_in", "value2", JobStateFilter),
         ("experiment_number_in", "value4", ExperimentNumberInFilter),
+        ("job_type_in", ["FAST_START"], JobTypeInFilter),
+        ("job_type_not_in", ["FAST_START"], JobTypeNotInFilter),
         ("title", "value5", TitleFilter),
         ("filename", "value6", FilenameFilter),
         ("job_start_before", "value7", JobStartBeforeFilter),
@@ -55,3 +62,15 @@ def test_get_filter(key, value, expected_class):
     result = get_filter(key, value)
     assert isinstance(result, expected_class)
     assert result.value == value
+
+
+def test_apply_job_type_filters():
+    """Test applying job_type_in and job_type_not_in filters to a JobSpecification."""
+    spec = JobSpecification().all()
+    spec = apply_filters_to_spec(
+        {"job_type_in": [JobType.FAST_START], "job_type_not_in": [JobType.SIMPLE]},
+        spec,
+    )
+    compiled = str(spec.value)
+    assert "jobs.job_type IN" in compiled
+    assert "jobs.job_type NOT IN" in compiled
