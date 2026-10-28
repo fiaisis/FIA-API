@@ -145,15 +145,9 @@ def test_count_jobs_by_instrument(mock_spec_class, mock_repo):
     mock_repo_instance.count.assert_called_once_with(spec.by_instruments(["TEST"]))
 
 
-@pytest.mark.parametrize(
-    ("list_runners", "org", "image_name"),
-    [
-        (list_mantid_runners, "fiaisis", "mantid"),
-        (list_mantidimaging_runners, "mantidproject", "mantidimaging"),
-    ],
-)
+@pytest.mark.parametrize("list_runners", [list_mantid_runners, list_mantidimaging_runners])
 @patch("fia_api.core.services.job.get_packages")
-def test_list_runners_filters_empty_tags(mock_get_packages, list_runners, org, image_name):
+def test_list_runners_filters_empty_tags(mock_get_packages, list_runners):
     mock_get_packages.return_value = [
         {"name": "sha256:aaa", "metadata": {"container": {"tags": ["1.0.0", "latest"]}}},
         {"name": "sha256:bbb", "metadata": {"container": {"tags": []}}},
@@ -164,7 +158,6 @@ def test_list_runners_filters_empty_tags(mock_get_packages, list_runners, org, i
     ]
 
     assert list_runners() == {"sha256:aaa": "1.0.0", "sha256:fff": "2.0.0"}
-    mock_get_packages.assert_called_once_with(org=org, image_name=image_name)
 
 
 @pytest.mark.parametrize("list_runners", [list_mantid_runners, list_mantidimaging_runners])
@@ -174,6 +167,23 @@ def test_list_runners_no_tagged_images(mock_get_packages, list_runners, packages
     mock_get_packages.return_value = packages
 
     assert list_runners() == {}
+
+
+@patch("fia_api.core.services.job.get_packages")
+def test_list_mantidimaging_runners_numeric_versions_newest_first(mock_get_packages):
+    mock_get_packages.return_value = [
+        {"name": "sha256:old", "metadata": {"container": {"tags": ["3.9.0"]}}},
+        {"name": "sha256:short", "metadata": {"container": {"tags": ["3.1"]}}},
+        {"name": "sha256:alias", "metadata": {"container": {"tags": ["latest"]}}},
+        {"name": "sha256:release", "metadata": {"container": {"tags": ["latest", "3.9.1", "3.10"]}}},
+        {"name": "sha256:preview", "metadata": {"container": {"tags": ["3.11.0rc1", "3.11.0-beta.1"]}}},
+    ]
+
+    assert list(list_mantidimaging_runners().items()) == [
+        ("sha256:release", "3.10"),
+        ("sha256:old", "3.9.0"),
+        ("sha256:short", "3.1"),
+    ]
 
 
 @patch("fia_api.core.services.job.Repo")

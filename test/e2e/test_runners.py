@@ -12,7 +12,7 @@ from fia_api.fia_api import app
 
 RUNNER_ENDPOINTS = {
     "/jobs/runners": ("fiaisis", "mantid"),
-    "/jobs/runners/mantidimaging": ("mantidproject", "mantidimaging"),
+    "/jobs/runners/mantidimaging": ("fiaisis", "mantidimaging"),
 }
 API_KEY_HEADER = {"Authorization": "Bearer test-api-key"}
 

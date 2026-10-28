@@ -489,26 +489,35 @@ def list_mantidimaging_runners() -> dict[str, str]:
     """
     Get tagged Mantid Imaging container images from GitHub Packages.
 
-    :return: Mapping of image digests to their first tag.
+    :return: Mapping of image digests to Mantid Imaging release versions.
     """
-    return _list_runners(org="mantidproject", image_name="mantidimaging")
+    return _list_runners(org="fiaisis", image_name="mantidimaging", release_tags_only=True)
 
 
-def _list_runners(org: str, image_name: str) -> dict[str, str]:
+def _list_runners(org: str, image_name: str, release_tags_only: bool = False) -> dict[str, str]:
     """
     List tagged container images from a GitHub package, omitting untagged images.
 
     :param org: GitHub organization that owns the container package.
     :param image_name: Name of the container package within the organization.
-    :return: Mapping of image digests to their first tag.
+    :param release_tags_only: Only include numeric version tags, choosing the newest tag per image.
+    :return: Mapping of image digests to tags, ordered by descending version when filtering release tags.
     """
     data = get_packages(org=org, image_name=image_name)
     versions: dict[str, str] = {}
     for item in data:
         name = str(item.get("name", ""))
         tags = item.get("metadata", {}).get("container", {}).get("tags", [])
+        if release_tags_only:
+            tags = sorted(
+                (str(tag) for tag in tags if all(part.isdecimal() for part in str(tag).split("."))),
+                key=lambda tag: tuple(map(int, tag.split("."))),
+                reverse=True,
+            )
         if not tags:
             continue
         versions[name] = str(tags[0])
 
+    if release_tags_only:
+        return dict(sorted(versions.items(), key=lambda item: tuple(map(int, item[1].split("."))), reverse=True))
     return versions
