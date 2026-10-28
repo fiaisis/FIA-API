@@ -1,7 +1,6 @@
 """Service Layer for jobs"""
 
 import os
-import re
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -501,7 +500,7 @@ def _list_runners(org: str, image_name: str, release_tags_only: bool = False) ->
 
     :param org: GitHub organization that owns the container package.
     :param image_name: Name of the container package within the organization.
-    :param release_tags_only: Only include stable major.minor.patch tags, choosing the newest tag per image.
+    :param release_tags_only: Only include numeric version tags, choosing the newest tag per image.
     :return: Mapping of image digests to tags, ordered by descending version when filtering release tags.
     """
     data = get_packages(org=org, image_name=image_name)
@@ -511,7 +510,7 @@ def _list_runners(org: str, image_name: str, release_tags_only: bool = False) ->
         tags = item.get("metadata", {}).get("container", {}).get("tags", [])
         if release_tags_only:
             tags = sorted(
-                (str(tag) for tag in tags if re.fullmatch(r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)", str(tag))),
+                (str(tag) for tag in tags if all(part.isdecimal() for part in str(tag).split("."))),
                 key=lambda tag: tuple(map(int, tag.split("."))),
                 reverse=True,
             )

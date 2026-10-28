@@ -170,17 +170,19 @@ def test_list_runners_no_tagged_images(mock_get_packages, list_runners, packages
 
 
 @patch("fia_api.core.services.job.get_packages")
-def test_list_mantidimaging_runners_only_releases_newest_first(mock_get_packages):
+def test_list_mantidimaging_runners_numeric_versions_newest_first(mock_get_packages):
     mock_get_packages.return_value = [
         {"name": "sha256:old", "metadata": {"container": {"tags": ["3.9.0"]}}},
-        {"name": "sha256:alias", "metadata": {"container": {"tags": ["latest", "ubuntu22", "rocky8"]}}},
-        {"name": "sha256:release", "metadata": {"container": {"tags": ["latest", "3.9.1", "3.10.0"]}}},
-        {"name": "sha256:preview", "metadata": {"container": {"tags": ["3.11.0rc1", "3.11.0-beta.1", "3.11"]}}},
+        {"name": "sha256:short", "metadata": {"container": {"tags": ["3.1"]}}},
+        {"name": "sha256:alias", "metadata": {"container": {"tags": ["latest"]}}},
+        {"name": "sha256:release", "metadata": {"container": {"tags": ["latest", "3.9.1", "3.10"]}}},
+        {"name": "sha256:preview", "metadata": {"container": {"tags": ["3.11.0rc1", "3.11.0-beta.1"]}}},
     ]
 
     assert list(list_mantidimaging_runners().items()) == [
-        ("sha256:release", "3.10.0"),
+        ("sha256:release", "3.10"),
         ("sha256:old", "3.9.0"),
+        ("sha256:short", "3.1"),
     ]
 
 
