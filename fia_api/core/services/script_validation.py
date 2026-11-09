@@ -7,7 +7,7 @@ import os
 import time
 from dataclasses import dataclass
 from http import HTTPStatus
-from typing import Any, Final, TypeGuard, cast
+from typing import Any, Final, TypeGuard
 
 import requests
 from redis.exceptions import RedisError
@@ -18,35 +18,19 @@ from fia_api.core.utility import positive_int_from_env
 
 logger = logging.getLogger(__name__)
 
-SCRIPT_LSP_URL_ENV: Final = "SCRIPT_LSP_URL"
-DEFAULT_SCRIPT_LSP_URL: Final = "http://mantid-python-script-lsp-service.fia.svc.cluster.local:80"
+SCRIPT_LSP_URL = os.environ.get("SCRIPT_LSP_URL", "http://mantid-python-script-lsp-service.fia.svc.cluster.local:80")
 
-#: The size cap. It has to mean the same thing here as it does in mantid-python-script-lsp, measured in
-#: UTF-8 bytes rather than characters, or a script passes one service and is refused by the other.
-MAX_SCRIPT_BYTES_ENV: Final = "MAX_SCRIPT_BYTES"
-DEFAULT_MAX_SCRIPT_BYTES: Final = 200_000
-MAX_SCRIPT_BYTES = positive_int_from_env(MAX_SCRIPT_BYTES_ENV, DEFAULT_MAX_SCRIPT_BYTES)
+#: Measured in UTF-8 bytes rather than characters, and has to mean the same thing here as it does in
+#: mantid-python-script-lsp, or a script passes one service and is refused by the other.
+MAX_SCRIPT_BYTES = positive_int_from_env("MAX_SCRIPT_BYTES", 200_000)
 
 #: Analysis is advisory and runs on every debounced edit, so it must never make the editor wait.
 SCRIPT_ANALYSE_TIMEOUT_SECONDS: Final = 5.0
-
-SCRIPT_ANALYSE_CACHE_TTL_ENV: Final = "SCRIPT_ANALYSE_CACHE_TTL_SECONDS"
-DEFAULT_SCRIPT_ANALYSE_CACHE_TTL_SECONDS: Final = 600
-SCRIPT_ANALYSE_CACHE_TTL_SECONDS = positive_int_from_env(
-    SCRIPT_ANALYSE_CACHE_TTL_ENV,
-    DEFAULT_SCRIPT_ANALYSE_CACHE_TTL_SECONDS,
-)
-
-SCRIPT_ANALYSE_RATE_LIMIT_MAX_ENV: Final = "SCRIPT_ANALYSE_RATE_LIMIT_MAX_REQUESTS"
-SCRIPT_ANALYSE_RATE_LIMIT_WINDOW_ENV: Final = "SCRIPT_ANALYSE_RATE_LIMIT_WINDOW_SECONDS"
-DEFAULT_RATE_LIMIT_MAX_REQUESTS: Final = 30
-DEFAULT_RATE_LIMIT_WINDOW_SECONDS: Final = 10
+SCRIPT_ANALYSE_CACHE_TTL_SECONDS = positive_int_from_env("SCRIPT_ANALYSE_CACHE_TTL_SECONDS", 600)
 
 #: The frontend debounces to one request per second per editor, so this leaves several times headroom.
-RATE_LIMIT_MAX_REQUESTS = positive_int_from_env(SCRIPT_ANALYSE_RATE_LIMIT_MAX_ENV, DEFAULT_RATE_LIMIT_MAX_REQUESTS)
-RATE_LIMIT_WINDOW_SECONDS = positive_int_from_env(
-    SCRIPT_ANALYSE_RATE_LIMIT_WINDOW_ENV, DEFAULT_RATE_LIMIT_WINDOW_SECONDS
-)
+RATE_LIMIT_MAX_REQUESTS = positive_int_from_env("SCRIPT_ANALYSE_RATE_LIMIT_MAX_REQUESTS", 30)
+RATE_LIMIT_WINDOW_SECONDS = positive_int_from_env("SCRIPT_ANALYSE_RATE_LIMIT_WINDOW_SECONDS", 10)
 
 
 @dataclass(frozen=True)
@@ -56,11 +40,6 @@ class UpstreamAnalysisResult:
     status_code: int
     body: dict[str, Any]
     retry_after_seconds: int | None = None
-
-
-def get_script_lsp_url() -> str:
-    """Return the configured base URL of mantid-python-script-lsp."""
-    return os.environ.get(SCRIPT_LSP_URL_ENV, DEFAULT_SCRIPT_LSP_URL).rstrip("/")
 
 
 def _cache_key(content: str) -> str:
@@ -82,8 +61,7 @@ def check_rate_limit(user_number: int) -> int | None:
     window = int(time.time() // RATE_LIMIT_WINDOW_SECONDS)
     key = f"script_analyse_rate:v1:{user_number}:{window}"
     try:
-        # redis-py types its command mixins so that every method could be awaitable, hence the cast.
-        count = cast("int", client.incr(key))
+        count = client.incr(key)
         if count == 1:
             client.expire(key, RATE_LIMIT_WINDOW_SECONDS)
     except RedisError as exc:
@@ -136,7 +114,7 @@ def analyse_script_for_user(request: AnalyseRequest, user_number: int) -> Upstre
         # back so the frontend's stale-response check still works.
         return UpstreamAnalysisResult(status_code=HTTPStatus.OK, body={**cached, "content_hash": request.content_hash})
 
-    url = f"{get_script_lsp_url()}/analyse"
+    url = f"{SCRIPT_LSP_URL.rstrip('/')}/analyse"
     try:
         response = requests.post(url, json=request.model_dump(), timeout=SCRIPT_ANALYSE_TIMEOUT_SECONDS)
     except requests.Timeout:

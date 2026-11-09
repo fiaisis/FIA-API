@@ -15,9 +15,8 @@ from starlette.testclient import TestClient
 
 from fia_api.core.auth.tokens import JWTAPIBearer
 from fia_api.core.request_models import AnalyseRequest
+from fia_api.core.services import script_validation
 from fia_api.core.services.script_validation import (
-    DEFAULT_MAX_SCRIPT_BYTES,
-    DEFAULT_SCRIPT_LSP_URL,
     MAX_SCRIPT_BYTES,
     RATE_LIMIT_MAX_REQUESTS,
     RATE_LIMIT_WINDOW_SECONDS,
@@ -25,18 +24,17 @@ from fia_api.core.services.script_validation import (
     SCRIPT_ANALYSE_TIMEOUT_SECONDS,
     analyse_script_for_user,
     check_rate_limit,
-    get_script_lsp_url,
 )
-from fia_api.core.utility import positive_int_from_env
 from fia_api.fia_api import app
 
 API_KEY = "script-analysis-test-api-key"
 
-#: Mirrors `DEFAULT_MAX_SCRIPT_BYTES` in mantid-python-script-lsp's `script_lsp/app.py`.
+#: Mirrors the cap in mantid-python-script-lsp, which is set by the same-named environment variable.
 SERVICE_MAX_SCRIPT_BYTES = 200_000
 
-#: And mirrors its 413 body, so the frontend sees one shape for "too big" whichever service refused it.
-TOO_LARGE = {"detail": {"reason": "too_large", "limit_bytes": MAX_SCRIPT_BYTES, "actual_bytes": MAX_SCRIPT_BYTES + 1}}
+#: A four-byte character, so a script can be over the cap in bytes and under it in characters.
+EMOJI = "\U0001f600"
+CAP_BYTES = 8
 
 CLEAN = {"content_hash": "hash-1", "parses": True, "diagnostics": [], "truncated": False}
 
@@ -67,6 +65,13 @@ def _upstream(status: int = HTTPStatus.OK, body: object = BROKEN) -> Mock:
     return response
 
 
+@contextmanager
+def cap_at(limit: int) -> Iterator[None]:
+    """Pin the size cap, so the boundary cases are readable rather than 200 KB of emoji."""
+    with patch.object(script_validation, "MAX_SCRIPT_BYTES", limit):
+        yield
+
+
 @pytest.fixture
 def cache_empty() -> Mock:
     """A Valkey with nothing cached, so the request actually reaches the analysis service."""
@@ -88,62 +93,52 @@ def valkey_off() -> None:
 
 
 def test_max_script_bytes_matches_the_analysis_service_default() -> None:
-    """The cap must mean the same thing on both sides, or scripts pass one service and are refused the other."""
-    assert DEFAULT_MAX_SCRIPT_BYTES == SERVICE_MAX_SCRIPT_BYTES
+    """The cap must mean the same thing on both sides, or scripts pass one service and are refused the other.
+
+    Both defaults are named `MAX_SCRIPT_BYTES` and set from the environment; nothing but this test keeps
+    the two defaults together, so changing one without the other fails here.
+    """
+    assert MAX_SCRIPT_BYTES == SERVICE_MAX_SCRIPT_BYTES
 
 
-@pytest.mark.parametrize(
-    ("raw", "expected"),
-    [
-        (None, DEFAULT_MAX_SCRIPT_BYTES),
-        ("", DEFAULT_MAX_SCRIPT_BYTES),
-        ("not-a-number", DEFAULT_MAX_SCRIPT_BYTES),
-        ("0", DEFAULT_MAX_SCRIPT_BYTES),
-        ("-1", DEFAULT_MAX_SCRIPT_BYTES),
-        ("12345", 12345),
-    ],
-)
-def test_positive_int_from_env_falls_back_rather_than_raising(
-    raw: str | None,
-    expected: int,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    if raw is None:
-        monkeypatch.delenv("MAX_SCRIPT_BYTES", raising=False)
-    else:
-        monkeypatch.setenv("MAX_SCRIPT_BYTES", raw)
-    assert positive_int_from_env("MAX_SCRIPT_BYTES", DEFAULT_MAX_SCRIPT_BYTES) == expected
+def test_the_size_cap_counts_bytes_not_characters(cache_empty: Mock, valkey_off: None) -> None:
+    """`len(content)` and the byte count disagree for any script with a non-ASCII character in it."""
+    under_cap = EMOJI * 2  # 2 characters, 8 bytes
+    over_cap = EMOJI * 3  # 3 characters, 12 bytes: over the cap by bytes, well under it by characters
+    with cap_at(CAP_BYTES), analysis_service() as post:
+        accepted = analyse_script_for_user(AnalyseRequest(content=under_cap, content_hash="two"), 1234)
+        refused = analyse_script_for_user(AnalyseRequest(content=over_cap, content_hash="three"), 1234)
+
+    assert accepted.status_code == HTTPStatus.OK
+    assert refused.status_code == HTTPStatus.REQUEST_ENTITY_TOO_LARGE
+    post.assert_called_once()  # only the script under the cap was worth forwarding
+    assert refused.body["detail"] == {
+        "reason": "too_large",
+        "limit_bytes": CAP_BYTES,
+        "actual_bytes": len(over_cap.encode("utf-8")),
+    }
 
 
-def test_the_size_cap_counts_bytes_not_characters(valkey_off: None) -> None:
-    """A script of multi-byte characters can be over the byte cap while being under the character count."""
-    # Each emoji is 4 bytes in UTF-8, so this is more than twice as many bytes as characters.
-    script = "\U0001f600" * (MAX_SCRIPT_BYTES // 4 + 1)
-    assert len(script) < MAX_SCRIPT_BYTES
-    assert len(script.encode("utf-8")) > MAX_SCRIPT_BYTES
-
-    result = analyse_script_for_user(AnalyseRequest(content=script, content_hash="emoji"), user_number=1234)
-
-    assert result.status_code == HTTPStatus.REQUEST_ENTITY_TOO_LARGE
-    assert result.body["detail"]["reason"] == "too_large"
-
-
-def test_an_ok_script_is_accepted(valkey_off: None) -> None:
-    with patch("fia_api.core.services.script_validation.requests.post", return_value=_upstream()):
+def test_an_ok_script_is_accepted(cache_empty: Mock, valkey_off: None) -> None:
+    with patch("requests.post", return_value=_upstream()) as post:
         result = analyse_script_for_user(REQUEST, user_number=1234)
 
     assert result.status_code == HTTPStatus.OK
+    assert post.call_args.args[0].endswith("/analyse")
 
 
 # --- configuration ----------------------------------------------------------------------------------
 
 
-def test_get_script_lsp_url_strips_a_trailing_slash(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("SCRIPT_LSP_URL", raising=False)
-    assert get_script_lsp_url() == DEFAULT_SCRIPT_LSP_URL
+def test_a_trailing_slash_on_the_service_url_does_not_double_up(cache_empty: Mock, valkey_off: None) -> None:
+    """The URL is a deployment value, and `//analyse` is a different path as far as anything downstream sees."""
+    with (
+        patch.object(script_validation, "SCRIPT_LSP_URL", "http://mantid-python-script-lsp-service:80/"),
+        patch("requests.post", return_value=_upstream()) as post,
+    ):
+        analyse_script_for_user(REQUEST, user_number=1234)
 
-    monkeypatch.setenv("SCRIPT_LSP_URL", "http://mantid-python-script-lsp-service:80/")
-    assert get_script_lsp_url() == "http://mantid-python-script-lsp-service:80"
+    assert post.call_args.args[0] == "http://mantid-python-script-lsp-service:80/analyse"
 
 
 # --- rate limiting ----------------------------------------------------------------------------------
@@ -190,7 +185,7 @@ def test_a_rate_limited_request_does_not_reach_the_analysis_service(cache_empty:
     over_limit.incr.return_value = RATE_LIMIT_MAX_REQUESTS + 1
     with (
         patch("fia_api.core.services.script_validation.get_valkey_client", return_value=over_limit),
-        patch("fia_api.core.services.script_validation.requests.post") as post,
+        patch("requests.post") as post,
     ):
         result = analyse_script_for_user(REQUEST, user_number=1234)
 
@@ -204,13 +199,13 @@ def test_a_rate_limited_request_does_not_reach_the_analysis_service(cache_empty:
 
 
 def test_the_upstream_status_and_body_are_forwarded_unchanged(cache_empty: Mock, valkey_off: None) -> None:
-    with patch("fia_api.core.services.script_validation.requests.post", return_value=_upstream()) as post:
+    with patch("requests.post", return_value=_upstream()) as post:
         result = analyse_script_for_user(REQUEST, user_number=1234)
 
     assert result.status_code == HTTPStatus.OK
     assert result.body == BROKEN
     post.assert_called_once_with(
-        f"{DEFAULT_SCRIPT_LSP_URL}/analyse",
+        f"{script_validation.SCRIPT_LSP_URL}/analyse",
         json={"content": REQUEST.content, "content_hash": "hash-1"},
         timeout=SCRIPT_ANALYSE_TIMEOUT_SECONDS,
     )
@@ -232,7 +227,7 @@ def test_upstream_failure_statuses_are_passed_through(
 ) -> None:
     """503 must not be flattened into 500: the frontend shows "still warming up" only because of it."""
     upstream = _upstream(status=upstream_status, body=upstream_body)
-    with patch("fia_api.core.services.script_validation.requests.post", return_value=upstream):
+    with patch("requests.post", return_value=upstream):
         result = analyse_script_for_user(REQUEST, user_number=1234)
 
     assert result.status_code == upstream_status
@@ -243,7 +238,7 @@ def test_an_ok_result_is_cached_under_the_content_hash(valkey_off: None) -> None
     with (
         patch("fia_api.core.services.script_validation.cache_get_json", return_value=None),
         patch("fia_api.core.services.script_validation.cache_set_json") as cache_set,
-        patch("fia_api.core.services.script_validation.requests.post", return_value=_upstream()),
+        patch("requests.post", return_value=_upstream()),
     ):
         analyse_script_for_user(REQUEST, user_number=1234)
 
@@ -258,7 +253,7 @@ def test_a_cache_hit_skips_the_analysis_service_but_echoes_the_callers_hash(valk
     request = AnalyseRequest(content=REQUEST.content, content_hash="my-hash")
     with (
         patch("fia_api.core.services.script_validation.cache_get_json", return_value=cached),
-        patch("fia_api.core.services.script_validation.requests.post") as post,
+        patch("requests.post") as post,
     ):
         result = analyse_script_for_user(request, user_number=1234)
 
@@ -285,7 +280,7 @@ def test_only_a_well_formed_ok_result_is_cached(
     with (
         patch("fia_api.core.services.script_validation.cache_get_json", return_value=None),
         patch("fia_api.core.services.script_validation.cache_set_json") as cache_set,
-        patch("fia_api.core.services.script_validation.requests.post", return_value=upstream),
+        patch("requests.post", return_value=upstream),
     ):
         analyse_script_for_user(REQUEST, user_number=1234)
 
@@ -294,7 +289,7 @@ def test_only_a_well_formed_ok_result_is_cached(
 
 def test_an_upstream_timeout_becomes_504(cache_empty: Mock, valkey_off: None) -> None:
     with patch(
-        "fia_api.core.services.script_validation.requests.post",
+        "requests.post",
         side_effect=requests.Timeout("too slow"),
     ):
         result = analyse_script_for_user(REQUEST, user_number=1234)
@@ -305,7 +300,7 @@ def test_an_upstream_timeout_becomes_504(cache_empty: Mock, valkey_off: None) ->
 
 def test_an_unreachable_service_becomes_503(cache_empty: Mock, valkey_off: None) -> None:
     with patch(
-        "fia_api.core.services.script_validation.requests.post",
+        "requests.post",
         side_effect=requests.ConnectionError("no route to host"),
     ):
         result = analyse_script_for_user(REQUEST, user_number=1234)
@@ -318,7 +313,7 @@ def test_a_non_json_response_becomes_502(cache_empty: Mock, valkey_off: None) ->
     upstream = Mock()
     upstream.status_code = HTTPStatus.BAD_GATEWAY
     upstream.json.side_effect = ValueError("not json")
-    with patch("fia_api.core.services.script_validation.requests.post", return_value=upstream):
+    with patch("requests.post", return_value=upstream):
         result = analyse_script_for_user(REQUEST, user_number=1234)
 
     assert result.status_code == HTTPStatus.BAD_GATEWAY
@@ -328,7 +323,7 @@ def test_a_non_json_response_becomes_502(cache_empty: Mock, valkey_off: None) ->
 def test_a_non_object_json_body_is_wrapped_in_detail_rather_than_dropped(cache_empty: Mock, valkey_off: None) -> None:
     """The contract says the body is an object; if that ever changes upstream, keep the payload rather
     than 500 on an unexpected shape."""
-    with patch("fia_api.core.services.script_validation.requests.post", return_value=_upstream(body=[1, 2, 3])):
+    with patch("requests.post", return_value=_upstream(body=[1, 2, 3])):
         result = analyse_script_for_user(REQUEST, user_number=1234)
 
     assert result.status_code == HTTPStatus.OK
@@ -360,18 +355,21 @@ def client(monkeypatch: pytest.MonkeyPatch, valkey_off: None) -> Iterator[TestCl
 def analysis_service(status: int = HTTPStatus.OK, body: object = BROKEN) -> Iterator[Mock]:
     """Stand in for mantid-python-script-lsp.
 
-    Patched on the `requests` module attribute rather than per-importing-module, because both the auth
-    code and this service layer call `requests.post` on the one shared module object: patching the two
-    separately would have the second patch silently replace the first.
+    Patched on `requests.post` itself rather than on the copy imported into this service's module, because
+    the JWT bearer calls `requests.post` too and both modules share the one module object: patching the two
+    separately means the second patch silently replaces the first, and the auth stub then sees editor
+    traffic. JWT tests stub `_is_jwt_access_token_valid` instead, leaving `requests.post` free for this.
     """
     with patch("requests.post", return_value=_upstream(status=status, body=body)) as post:
         yield post
 
 
 def test_the_route_requires_authentication(client: TestClient) -> None:
+    """`JWTAPIBearer` inherits `HTTPBearer(auto_error=True)`, which answers 401 with no header at all;
+    a present-but-invalid token is a 403 from `authentication_error_handler`, covered below."""
     response = client.post("/script/analyse", json={"content": "x = 1\n", "content_hash": "h"})
 
-    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 def test_a_jwt_user_can_analyse_a_script(client: TestClient) -> None:
@@ -423,15 +421,17 @@ def test_a_warming_service_still_answers_503_through_the_route(client: TestClien
 
 
 def test_an_oversized_script_is_refused_before_the_service_is_called(client: TestClient) -> None:
-    with analysis_service() as post:
+    with cap_at(CAP_BYTES), analysis_service() as post:
         response = client.post(
             "/script/analyse",
-            json={"content": "x" * (MAX_SCRIPT_BYTES + 1), "content_hash": "too-big"},
+            json={"content": EMOJI * 3, "content_hash": "too-big"},
             headers={"Authorization": f"Bearer {API_KEY}"},
         )
 
     assert response.status_code == HTTPStatus.REQUEST_ENTITY_TOO_LARGE
-    assert response.json() == TOO_LARGE
+    assert response.json() == {
+        "detail": {"reason": "too_large", "limit_bytes": CAP_BYTES, "actual_bytes": len((EMOJI * 3).encode())}
+    }
     post.assert_not_called()
 
 

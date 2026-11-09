@@ -1,5 +1,6 @@
 """Tests for utility functions"""
 
+import logging
 import shutil
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -22,11 +23,14 @@ from fia_api.core.utility import (
     find_file_user_number,
     forbid_path_characters,
     get_packages,
+    positive_int_from_env,
     safe_check_filepath,
     safe_check_filepath_plotting,
 )
 
 CEPH_DIR = Path(TemporaryDirectory().name)
+
+DEFAULT_SETTING = 7
 
 
 @pytest.fixture(autouse=True)
@@ -529,3 +533,38 @@ def test_find_file_in_archive_not_found_when_instrument_dir_missing():
         )
 
         assert found_file is None
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("12345", 12345),
+        ("42", 42),
+        ("", DEFAULT_SETTING),
+        ("not-a-number", DEFAULT_SETTING),
+        ("0", DEFAULT_SETTING),
+        ("-1", DEFAULT_SETTING),
+    ],
+)
+def test_positive_int_from_env(raw: str, expected: int, monkeypatch: pytest.MonkeyPatch) -> None:
+    """An unusable value degrades to the default rather than raising, because a typo in a deployment
+    manifest is not a reason for the API to refuse to start."""
+    monkeypatch.setenv("A_SETTING_SECONDS", raw)
+    assert positive_int_from_env("A_SETTING_SECONDS", DEFAULT_SETTING) == expected
+
+
+def test_positive_int_from_env_uses_the_default_when_unset(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("A_SETTING_SECONDS", raising=False)
+    assert positive_int_from_env("A_SETTING_SECONDS", DEFAULT_SETTING) == DEFAULT_SETTING
+
+
+def test_positive_int_from_env_says_which_setting_it_ignored(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Silently ignoring a manifest value is how you end up debugging the wrong cache TTL."""
+    monkeypatch.setenv("A_SETTING_SECONDS", "-1")
+    with caplog.at_level(logging.WARNING, logger="fia_api.core.utility"):
+        positive_int_from_env("A_SETTING_SECONDS", DEFAULT_SETTING)
+
+    assert "A_SETTING_SECONDS" in caplog.text
+    assert "-1" in caplog.text
