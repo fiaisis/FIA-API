@@ -14,7 +14,6 @@ from redis.exceptions import RedisError
 
 from fia_api.core.cache import cache_get_json, cache_set_json, get_valkey_client, hash_key
 from fia_api.core.request_models import AnalyseRequest
-from fia_api.core.utility import positive_int_from_env
 
 logger = logging.getLogger(__name__)
 
@@ -22,15 +21,25 @@ SCRIPT_LSP_URL = os.environ.get("SCRIPT_LSP_URL", "http://mantid-python-script-l
 
 #: Measured in UTF-8 bytes rather than characters, and has to mean the same thing here as it does in
 #: mantid-python-script-lsp, or a script passes one service and is refused by the other.
-MAX_SCRIPT_BYTES = positive_int_from_env("MAX_SCRIPT_BYTES", 200_000)
+MAX_SCRIPT_BYTES = int(os.environ.get("MAX_SCRIPT_BYTES", "200000"))
 
 #: Analysis is advisory and runs on every debounced edit, so it must never make the editor wait.
 SCRIPT_ANALYSE_TIMEOUT_SECONDS: Final = 5.0
-SCRIPT_ANALYSE_CACHE_TTL_SECONDS = positive_int_from_env("SCRIPT_ANALYSE_CACHE_TTL_SECONDS", 600)
+SCRIPT_ANALYSE_CACHE_TTL_SECONDS = int(os.environ.get("SCRIPT_ANALYSE_CACHE_TTL_SECONDS", "600"))
 
 #: The frontend debounces to one request per second per editor, so this leaves several times headroom.
-RATE_LIMIT_MAX_REQUESTS = positive_int_from_env("SCRIPT_ANALYSE_RATE_LIMIT_MAX_REQUESTS", 30)
-RATE_LIMIT_WINDOW_SECONDS = positive_int_from_env("SCRIPT_ANALYSE_RATE_LIMIT_WINDOW_SECONDS", 10)
+RATE_LIMIT_MAX_REQUESTS = int(os.environ.get("SCRIPT_ANALYSE_RATE_LIMIT_MAX_REQUESTS", "30"))
+RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get("SCRIPT_ANALYSE_RATE_LIMIT_WINDOW_SECONDS", "10"))
+
+logger.info(
+    "Script analysis: %s; %s bytes; %.1fs timeout; cache %ss; %s requests per %ss",
+    SCRIPT_LSP_URL,
+    MAX_SCRIPT_BYTES,
+    SCRIPT_ANALYSE_TIMEOUT_SECONDS,
+    SCRIPT_ANALYSE_CACHE_TTL_SECONDS,
+    RATE_LIMIT_MAX_REQUESTS,
+    RATE_LIMIT_WINDOW_SECONDS,
+)
 
 
 @dataclass(frozen=True)
