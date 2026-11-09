@@ -37,6 +37,7 @@ that data interactively:
   scigateway (Host App) ──► frontend (FIA React Plugin)
                                 ├──► fia-auth (UOWS login, JWT verify/refresh, `/experiments` RB lookup)
                                 ├──► FIA-API (THIS REPO) (runs, jobs, scripts, specifications, reruns -> `watched-files` / `scheduled-jobs`)
+                                │        └──► mantid-python-script-lsp (`POST /analyse`, script diagnostics)
                                 └──► plotting-service (h5grove NeXus/HDF5 & IMAT image serving from `/ceph` & `/imat`)
 
   Kafka (`<INST>_events`, `<INST>_sampleEnv`, `<INST>_runInfo`)
@@ -68,6 +69,21 @@ that data interactively:
 - **Downstream callees (who/what `fia-api` calls or publishes to)**:
   - `fia-auth` (`../fia-auth`) — JWT verification and experiment (RB number) lookups for
     authenticated requests (see `core/auth/`).
+  - `mantid-python-script-lsp` (`../mantid-python-script-lsp`) — cluster-internal script diagnostics
+    service (`SCRIPT_LSP_URL`), fronted by `POST /script/analyse` (`routers/script_validation.py`,
+    `core/services/script_validation.py`). Three contract caveats shared with that repo:
+    1. `fia-api` models only `AnalyseRequest` (`core/request_models.py`) and forwards the upstream status
+       code and JSON body **unchanged** — it never re-models `AnalysisResponse`. `frontend` branches on
+       the status (`200`/`413`/`429`/`503`), so re-wrapping a `503` as `200` or `500` silently breaks the
+       "still starting up" message in the editors.
+    2. `MAX_SCRIPT_BYTES` is measured in **UTF-8 bytes** (`len(content.encode("utf-8"))`), not character
+       count, and must equal `mantid-python-script-lsp`'s setting of the same name, or the two services
+       disagree about which scripts are acceptable. A refusal is answered in the same
+       `413 {"detail": {"reason": "too_large", ...}}` shape that service uses, so the editor sees one
+       answer for "too big" whichever side caught it.
+    3. Requests are cached in Valkey under `SHA-256(content)` (`script_analyse:v1:<hash>`), which is
+       shared across users, so the cached `content_hash` is replaced with the caller's own before
+       returning — otherwise the editor's stale-response check discards every cache hit.
   - RabbitMQ `watched-files` queue — resubmitting/rerunning jobs (`core/job_maker.py`) feeds back
     into the same queue consumed by `run-detection`.
   - Postgres — primary datastore (`core/models.py`, `core/repositories.py`).
@@ -77,7 +93,8 @@ that data interactively:
 - **Sibling repositories to check when changing contracts**: `../run-detection` (specification JSON
   shape), `../jobcontroller` (script/job payload shape), `../autoreduction-scripts` (scripts served
   via transforms), `../frontend` (any REST response shape consumers), `../fia-auth` (auth/JWT
-  contract), `../live-data` (live script endpoint), and `../gitops` (deployment manifests/env vars
+  contract), `../live-data` (live script endpoint), `../mantid-python-script-lsp` (`POST /script/analyse`
+  request/response contract and `MAX_SCRIPT_BYTES`), and `../gitops` (deployment manifests/env vars
   for `fia-api`).
 
 ### Core technologies
