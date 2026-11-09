@@ -326,11 +326,11 @@ the change complete:
    (`.github/pull_request_template.md` — no local override in this repo), which is just
    `Closes # <Issue Number>` followed by a `## Description` section. Ask the user for the issue
    number if one isn't evident from the task, or confirm there is none to link.
-4. **AI-assistance label**: attach a label to the PR indicating that it was made with the assistance
-   of AI. Check existing labels first with `gh label list` (e.g. `AI` or `AI_code` in this org) and
-   apply the matching label via `gh pr create --label <label>` or
-   `gh pr edit <number> --add-label <label>`; if the repo does not have an AI label yet, create one
-   first (`gh label create "AI" --description "Created with the assistance of AI"`).
+4. **AI-assistance label — apply it yourself, every time**: attach the `AI` label to any PR you open,
+   indicating that it was made with the assistance of AI (`gh pr create --label AI ...` or
+   `gh pr edit <number> --add-label AI`). Check existing labels first with `gh label list`; if the repo
+   does not have an AI label yet, create one first
+   (`gh label create "AI" --description "Created with the assistance of AI"`).
 
 ## Handling Dependabot PRs
 
