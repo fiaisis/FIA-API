@@ -47,6 +47,7 @@ from fia_api.routers.instrument_specs import InstrumentSpecRouter
 from fia_api.routers.job_creation import JobCreationRouter
 from fia_api.routers.jobs import JobsRouter
 from fia_api.routers.live_data import LiveDataRouter
+from fia_api.routers.script_validation import ScriptValidationRouter
 
 DEV_MODE = bool(os.environ.get("DEV_MODE", False))  # noqa: PLW1508
 
@@ -86,6 +87,7 @@ app.include_router(JobsRouter)
 app.include_router(health_router)
 app.include_router(FindFileRouter)
 app.include_router(LiveDataRouter)
+app.include_router(ScriptValidationRouter)
 
 app.add_exception_handler(MissingRecordError, missing_record_handler)
 app.add_exception_handler(MissingScriptError, missing_script_handler)

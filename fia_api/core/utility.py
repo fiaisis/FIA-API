@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import hashlib
+import logging
 import os
 from collections.abc import Callable
 from contextlib import suppress
@@ -19,8 +20,36 @@ from fia_api.core.exceptions import AuthError, GithubAPIRequestError, MissingRec
 
 FuncT = TypeVar("FuncT", bound=Callable[[str], Any])
 
+logger = logging.getLogger(__name__)
+
 GITHUB_PACKAGE_TOKEN = os.environ.get("GITHUB_PACKAGE_TOKEN", "shh")
 GITHUB_PACKAGES_CACHE_TTL_SECONDS = int(os.environ.get("GITHUB_PACKAGES_CACHE_TTL_SECONDS", "300"))
+
+
+def positive_int_from_env(name: str, default: int) -> int:
+    """
+    Read a positive integer setting from the environment, falling back to `default`.
+
+    Empty, non-numeric, zero, and negative values all fall back to `default` with a warning rather than
+    raising: these settings gate optional behaviour, and a typo in a deployment manifest should degrade
+    the service rather than stop it from starting.
+
+    :param name: the environment variable name
+    :param default: the value to use when unset or unusable
+    :return: the resolved positive integer
+    """
+    raw = os.environ.get(name)
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        logger.warning("%s=%r is not a number; using %s", name, raw, default)
+        return default
+    if value < 1:
+        logger.warning("%s=%r is below 1; using %s", name, raw, default)
+        return default
+    return value
 
 
 def forbid_path_characters(func: FuncT) -> FuncT:
