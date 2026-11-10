@@ -23,6 +23,7 @@ from fia_api.core.exceptions import (
     UnsafePathError,
     UploadFileError,
 )
+from fia_api.core.services.script_validation import log_effective_settings
 from fia_api.exception_handlers import (
     authentication_error_handler,
     bad_job_request_handler,
@@ -65,6 +66,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
+
+# After `basicConfig`, not at import: see `log_effective_settings`.
+log_effective_settings()
 
 app = FastAPI(title="FIA API", root_path="/" if DEV_MODE else "/api")
 

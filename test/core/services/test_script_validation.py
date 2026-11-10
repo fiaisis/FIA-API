@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterator
 from contextlib import contextmanager
 from http import HTTPStatus
@@ -22,8 +23,10 @@ from fia_api.core.services.script_validation import (
     RATE_LIMIT_WINDOW_SECONDS,
     SCRIPT_ANALYSE_CACHE_TTL_SECONDS,
     SCRIPT_ANALYSE_TIMEOUT_SECONDS,
+    SCRIPT_LSP_URL,
     analyse_script_for_user,
     check_rate_limit,
+    log_effective_settings,
 )
 from fia_api.fia_api import app
 
@@ -452,3 +455,21 @@ def test_a_rate_limited_user_gets_retry_after(client: TestClient) -> None:
     assert response.json()["detail"]["reason"] == "rate_limited"
     assert 0 < int(response.headers["retry-after"]) <= RATE_LIMIT_WINDOW_SECONDS
     post.assert_not_called()
+
+
+def test_the_settings_in_force_are_logged(caplog: pytest.LogCaptureFixture) -> None:
+    """What the process read from its environment has to be readable in the log.
+
+    These values are set in a manifest several repos away, and a non-numeric one raises on import rather
+    than falling back, so an operator needs the effective figures printed to confirm what a pod is actually
+    running with.
+    """
+    with caplog.at_level(logging.INFO, logger="fia_api.core.services.script_validation"):
+        log_effective_settings()
+
+    messages = [record.getMessage() for record in caplog.records if "Script analysis" in record.getMessage()]
+    assert len(messages) == 1
+    assert SCRIPT_LSP_URL in messages[0]
+    assert str(MAX_SCRIPT_BYTES) in messages[0]
+    assert str(RATE_LIMIT_MAX_REQUESTS) in messages[0]
+    assert str(RATE_LIMIT_WINDOW_SECONDS) in messages[0]

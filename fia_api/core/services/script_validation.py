@@ -31,15 +31,24 @@ SCRIPT_ANALYSE_CACHE_TTL_SECONDS = int(os.environ.get("SCRIPT_ANALYSE_CACHE_TTL_
 RATE_LIMIT_MAX_REQUESTS = int(os.environ.get("SCRIPT_ANALYSE_RATE_LIMIT_MAX_REQUESTS", "30"))
 RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get("SCRIPT_ANALYSE_RATE_LIMIT_WINDOW_SECONDS", "10"))
 
-logger.info(
-    "Script analysis: %s; %s bytes; %.1fs timeout; cache %ss; %s requests per %ss",
-    SCRIPT_LSP_URL,
-    MAX_SCRIPT_BYTES,
-    SCRIPT_ANALYSE_TIMEOUT_SECONDS,
-    SCRIPT_ANALYSE_CACHE_TTL_SECONDS,
-    RATE_LIMIT_MAX_REQUESTS,
-    RATE_LIMIT_WINDOW_SECONDS,
-)
+
+def log_effective_settings() -> None:
+    """Log what this process actually read, because a manifest value that is wrong is otherwise invisible.
+
+    Called from `fia_api.py` once logging has been configured, not from here at import time: module imports
+    run before `logging.basicConfig`, and a record emitted before there is a handler to receive it is
+    dropped without trace. Verified against the built image, where the import-time version of this line
+    never appeared in the container log at all.
+    """
+    logger.info(
+        "Script analysis: %s; %s bytes; %.1fs timeout; cache %ss; %s requests per %ss",
+        SCRIPT_LSP_URL,
+        MAX_SCRIPT_BYTES,
+        SCRIPT_ANALYSE_TIMEOUT_SECONDS,
+        SCRIPT_ANALYSE_CACHE_TTL_SECONDS,
+        RATE_LIMIT_MAX_REQUESTS,
+        RATE_LIMIT_WINDOW_SECONDS,
+    )
 
 
 @dataclass(frozen=True)
