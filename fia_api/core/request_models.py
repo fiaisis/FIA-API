@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from fia_api.core.models import State
 
@@ -44,3 +44,17 @@ class LiveDataScriptUpdateRequest(BaseModel):
     """
 
     value: str
+
+
+class AnalyseRequest(BaseModel):
+    """
+    Script analysis request forwarded to mantid-python-script-lsp.
+    """
+
+    content: str = Field(description="The script text, exactly as edited.")
+    content_hash: str = Field(
+        min_length=1,
+        max_length=128,
+        description="Client-computed digest of `content`, echoed back unchanged so the caller can "
+        "discard a response for text it has already moved on from.",
+    )

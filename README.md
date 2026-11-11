@@ -23,6 +23,16 @@ The required env vars to run are:
    full path (e.g. when resubmitting to the watched-files queue) - default: /archive
  - IMAT_DIR - The base path of the IMAT mount, used the same way as ARCHIVE_DIR but for IMAT, which is
    mounted separately from the rest of the instruments - default: /imat
+ - SCRIPT_LSP_URL - Base URL for `mantid-python-script-lsp`, used by `POST /script/analyse` - default:
+   `http://mantid-python-script-lsp-service.fia.svc.cluster.local:80`
+ - MAX_SCRIPT_BYTES - Largest script, in UTF-8 bytes, that `POST /script/analyse` will accept. Must match
+   the same setting on `mantid-python-script-lsp` - default: `200000`
+ - SCRIPT_ANALYSE_CACHE_TTL_SECONDS - How long an analysis result is cached in Valkey under the script's
+   SHA-256 - default: `600`
+ - SCRIPT_ANALYSE_RATE_LIMIT_MAX_REQUESTS - Per-user script analysis requests allowed per window; over it
+   the route answers `429` with `Retry-After`. Valkey holds the window, so it is shared across replicas,
+   and a Valkey outage lets requests through rather than breaking the editors - default: `30`
+ - SCRIPT_ANALYSE_RATE_LIMIT_WINDOW_SECONDS - The rate limit window length - default: `10`
 
 ```shell
 uvicorn fia_api.fia_api:app --reload  

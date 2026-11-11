@@ -23,6 +23,7 @@ from fia_api.core.exceptions import (
     UnsafePathError,
     UploadFileError,
 )
+from fia_api.core.services.script_validation import log_effective_settings
 from fia_api.exception_handlers import (
     authentication_error_handler,
     bad_job_request_handler,
@@ -47,6 +48,7 @@ from fia_api.routers.instrument_specs import InstrumentSpecRouter
 from fia_api.routers.job_creation import JobCreationRouter
 from fia_api.routers.jobs import JobsRouter
 from fia_api.routers.live_data import LiveDataRouter
+from fia_api.routers.script_validation import ScriptValidationRouter
 
 DEV_MODE = bool(os.environ.get("DEV_MODE", False))  # noqa: PLW1508
 
@@ -64,6 +66,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
+
+# After `basicConfig`, not at import: see `log_effective_settings`.
+log_effective_settings()
 
 app = FastAPI(title="FIA API", root_path="/" if DEV_MODE else "/api")
 
@@ -86,6 +91,7 @@ app.include_router(JobsRouter)
 app.include_router(health_router)
 app.include_router(FindFileRouter)
 app.include_router(LiveDataRouter)
+app.include_router(ScriptValidationRouter)
 
 app.add_exception_handler(MissingRecordError, missing_record_handler)
 app.add_exception_handler(MissingScriptError, missing_script_handler)
