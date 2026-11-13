@@ -6,8 +6,8 @@ from typing import Literal
 
 import jwt
 import requests
-from fastapi import Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from starlette.requests import HTTPConnection
 
 from fia_api.core.auth import AUTH_URL
 from fia_api.core.exceptions import AuthError
@@ -43,7 +43,7 @@ class JWTAPIBearer(HTTPBearer):
     """Extends the FastAPI `HTTPBearer` class to provide JSON Web Token (JWT)
     based authentication/authorization."""
 
-    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials | None:
+    async def __call__(self, request: HTTPConnection) -> HTTPAuthorizationCredentials | None:
         """Callable method for JWT access token authentication/authorization.
 
         This method is called when `JWTAPIBearer` is used as a dependency in a FastAPI route. It performs
