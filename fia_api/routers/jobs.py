@@ -144,6 +144,7 @@ async def get_jobs_by_instrument(  # noqa: PLR0913
     instrument: str,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(jwt_api_security)],
     session: Annotated[Session, Depends(get_db_session)],
+    *,
     limit: int = 0,
     offset: int = 0,
     order_by: OrderField = "start",
