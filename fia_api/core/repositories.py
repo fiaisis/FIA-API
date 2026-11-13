@@ -84,8 +84,8 @@ class Repo(Generic[T]):
         :param spec: A specification defining the query criteria.
         :return: The count of entities of type T that match the specification.
         """
-        result = self.session.execute(select(func.count()).select_from(spec.value))  # type: ignore
-        return result.scalar() if result else 0  # type: ignore
+        count_query = select(func.count()).select_from(spec.value.subquery())
+        return self.session.execute(count_query).scalar_one()
 
     def update_one(self, entity: T) -> T:
         """
