@@ -21,7 +21,7 @@ from fia_api.core.models import Base
 T = TypeVar("T", bound=Base)
 
 
-def apply_pagination(spec_value: Select[tuple[T]], limit: int, offset: int) -> Select[tuple[T]]:
+def apply_pagination(spec_value: Select[T], limit: int, offset: int) -> Select[T]:
     """
     Given a Select of T, apply given limits and offsets
     :param spec_value: The Select
@@ -37,11 +37,11 @@ def apply_pagination(spec_value: Select[tuple[T]], limit: int, offset: int) -> S
 
 
 def apply_ordering(
-    spec_value: Select[tuple[T]],
+    spec_value: Select[T],
     model: type[T],
     order_by: str,
     order_direction: str,
-) -> Select[tuple[T]]:
+) -> Select[T]:
     """
     Apply basic ordering to the specification value.
     Note: This can only be called when there are no joins. Orders based on relations should be implemented in the
@@ -88,7 +88,7 @@ class Specification(Generic[T], ABC):
     """
 
     def __init__(self) -> None:
-        self.value: Select[tuple[T]] = select(self.model)
+        self.value: Select[T] = select(self.model)
 
     @property
     @abstractmethod
