@@ -21,12 +21,35 @@ from fia_api.core.specifications.job import JobSpecification
 from fia_api.core.specifications.job_owner import JobOwnerSpecification
 from fia_api.core.specifications.script import ScriptSpecification
 from fia_api.core.utility import find_file_in_archive, hash_script
+from fia_api.scripts.transforms.imat_transforms import script_is_ngem
 
 logger = logging.getLogger(__name__)
 
 
 P = ParamSpec("P")
 R = TypeVar("R")
+
+
+def _rerun_inputs(original_job: Job, script: str) -> dict[str, Any]:
+    """
+    Work out the inputs to record against a rerun job.
+
+    A rerun arrives with a script that is already configured, so an IMAT nGEM rerun can only be told
+    apart from a reconstruction by reading the flag back out of that script. The flag has to be
+    recovered because jobcreator uses it to give the job the nGEM mount, the Mantid runner and ordinary
+    nodes instead of IMAT's imaging mount and the GPU workers.
+
+    :param original_job: The job that is being rerun.
+    :param script: The script the rerun will execute.
+    :return: The inputs to store on the new job, empty for everything but an nGEM run.
+    """
+    if original_job.run is None or original_job.run.instrument is None:
+        return {}
+    instrument = original_job.run.instrument.instrument_name
+    if instrument and instrument.lower() == "imat" and script_is_ngem(script):
+        logger.info("Script of rerun job %s is set up for nGEM", original_job.id)
+        return {"ngem": "true", "recon": "false"}
+    return {}
 
 
 def require_owner(func: Callable[Concatenate[JobMaker, P], R]) -> Callable[Concatenate[JobMaker, P], R]:
@@ -123,6 +146,8 @@ class JobMaker:
 
         script_object = self._get_or_create_script(script)
 
+        inputs = _rerun_inputs(original_job, script)
+
         rerun_job = Job(
             owner_id=job_owner.id,
             job_type=JobType.RERUN,
@@ -130,7 +155,7 @@ class JobMaker:
             script=script_object,
             state=State.NOT_STARTED,
             instrument_id=original_job.instrument_id,
-            inputs={},
+            inputs=inputs,
             run=original_job.run,
         )
 
@@ -156,6 +181,7 @@ class JobMaker:
             "job_id": rerun_job.id,
             "runner_image": runner_image,
             "script": script,
+            "additional_values": inputs,
         }
         self._send_message(json.dumps(json_dict))
         return rerun_job.id

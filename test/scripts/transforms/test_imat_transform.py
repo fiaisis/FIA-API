@@ -2,8 +2,10 @@
 
 from unittest.mock import Mock, patch
 
+import pytest
+
 from fia_api.scripts.pre_script import PreScript
-from fia_api.scripts.transforms.imat_transforms import IMATTransform, _extract_cycle_details
+from fia_api.scripts.transforms.imat_transforms import IMATTransform, _ngem_output_path, script_is_ngem
 
 SCRIPT = """
 FILTERS = {f.__name__: f for f in load_filter_packages()}
@@ -66,6 +68,21 @@ def test_imat_transform_all_inputs():
     apply_transform_and_verify(inputs, replacements, dev_mode=False)
 
 
+def test_imat_transform_prefers_published_ngem_output_path():
+    """Test IMAT transform uses the output folder run-detection published rather than deriving one"""
+    inputs = {
+        "ngem_path": "/ngem/nGEM-INES/DATA/IMAT_2026_01/IMAT00038896",
+        "ngem_output_path": "/ngem/nGEM-INES/DATA/IMAT_26_1_nxs",
+        "ngem": "true",
+    }
+    replacements = {
+        "ngem_path =": 'ngem_path = "/ngem/nGEM-INES/DATA/IMAT_2026_01/IMAT00038896"',
+        "ngem =": "ngem = True",
+        "output =": 'output = "/ngem/nGEM-INES/DATA/IMAT_26_1_nxs"',
+    }
+    apply_transform_and_verify(inputs, replacements, dev_mode=False)
+
+
 def test_imat_transform_dev_mode():
     """Test IMAT transform when DEV_MODE is True"""
     inputs = {
@@ -120,22 +137,47 @@ def test_imat_transform_partial_inputs():
     apply_transform_and_verify(inputs, replacements)
 
 
-def test_extract_cycle_details_standard():
-    """Test _extract_cycle_details with a standard path format"""
-    cycle_num, cycle_year = _extract_cycle_details("/some/path/IMAT_2024_1/file.txt")
-    assert cycle_num == "1"
-    assert cycle_year == "24"
+@pytest.mark.parametrize(
+    ("ngem_run_path", "expected"),
+    [
+        ("/ngem/nGEM-INES/DATA/IMAT_2026_01/IMAT00038896", "/ngem/nGEM-INES/DATA/IMAT_26_1_nxs"),
+        ("/ngem/nGEM-INES/DATA/IMAT_2026_04/IMAT00040389", "/ngem/nGEM-INES/DATA/IMAT_26_4_nxs"),
+        # The raw folder pads the cycle number, the reduced folder leaves two digit cycles alone.
+        ("/ngem/nGEM-INES/DATA/IMAT_2026_10/IMAT00040389", "/ngem/nGEM-INES/DATA/IMAT_26_10_nxs"),
+        ("/cycle/IMAT_2024_1/file.txt", "/cycle/IMAT_24_1_nxs"),
+    ],
+)
+def test_ngem_output_path(ngem_run_path, expected):
+    """Test _ngem_output_path maps a raw nGEM run folder to the reduced data folder of its cycle"""
+    assert _ngem_output_path(ngem_run_path) == expected
 
 
-def test_extract_cycle_details_different_year_and_cycle():
-    """Test _extract_cycle_details with a different year and cycle format"""
-    cycle_num, cycle_year = _extract_cycle_details("/data/IMAT_2023_02/data.nxs")
-    assert cycle_num == "02"
-    assert cycle_year == "23"
+@pytest.mark.parametrize(
+    ("script", "expected"),
+    [
+        ("ngem = True", True),
+        ("recon = False\nngem = True\n", True),
+        ('ngem = "true"', True),
+        ("    ngem = True", True),
+        ("ngem = False", False),
+        ("recon = True", False),
+        ("# ngem = True", False),
+        ("ngem_paths = True", False),
+        ("", False),
+    ],
+)
+def test_script_is_ngem(script, expected):
+    """Test script_is_ngem picks up the nGEM switch and nothing else"""
+    assert script_is_ngem(script) is expected
 
 
-def test_extract_cycle_details_multiple_underscores():
-    """Test _extract_cycle_details with multiple underscores in the path"""
-    cycle_num, cycle_year = _extract_cycle_details("/path/to/some_folder/IMAT_2022_3/my_file_name.txt")
-    assert cycle_num == "3"
-    assert cycle_year == "22"
+def test_script_is_ngem_after_transform():
+    """Test a script the transform has switched to nGEM is recognised as an nGEM script"""
+    job = Mock()
+    job.id = "job_test"
+    job.inputs = {"ngem": "true", "recon": "false"}
+    script = PreScript(value=SCRIPT.strip())
+    with patch("fia_api.scripts.transforms.imat_transforms.DEV_MODE", False):
+        IMATTransform().apply(script, job)
+
+    assert script_is_ngem(script.value) is True
