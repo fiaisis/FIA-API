@@ -82,6 +82,7 @@ def test_post_rerun_job(producer_channel):
             "script": 'print("Hello World!")',
             "filename": str(Path(original_job.run.filename).stem),
             "instrument": original_job.instrument.instrument_name,
+            "additional_values": {},
         }
     ]
 

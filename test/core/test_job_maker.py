@@ -8,6 +8,16 @@ from requests.exceptions import RequestException
 from fia_api.core.exceptions import JobRequestError, LLSPSubmissionFailureError
 from fia_api.core.job_maker import JobMaker
 
+NGEM_SCRIPT = """ngem = True
+recon = False
+ngem_path = "/ngem/nGEM-INES/DATA/IMAT_2026_01/IMAT00012345"
+"""
+
+RECON_SCRIPT = """ngem = False
+recon = True
+dataset_path = "/imat/RB123456/Tomo"
+"""
+
 
 @mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
 def test_send_message(broker):
@@ -97,9 +107,63 @@ def test_create_rerun_job_with_run(mock_connect, faker):
         "runner_image": runner_image,
         "script": script,
         "job_type": "rerun",
+        "additional_values": {},
     }
     sent_message = job_maker._send_message.call_args[0][0]
     assert json.loads(sent_message) == expected_dict
+
+
+def _rerun_job_maker_with_instrument(faker, instrument_name):
+    """
+    Build a job maker whose reruns always belong to the given instrument.
+    :param faker: The faker fixture, for the ids.
+    :param instrument_name: The instrument of the run being rerun.
+    :return: The job maker, with the message sender and repositories mocked out.
+    """
+    job_maker = JobMaker("", "", "", "test_queue", mock.Mock())
+    job_maker._send_message = mock.MagicMock()
+
+    dummy_run = mock.MagicMock()
+    dummy_run.filename = "run_file.nxs"
+    dummy_run.instrument.instrument_name = instrument_name
+    dummy_run.owner.experiment_number = faker.random.randint(1, 1000000)
+
+    original_job = mock.MagicMock()
+    original_job.run = dummy_run
+    job_maker._job_repo.find_one = mock.MagicMock(return_value=original_job)
+    job_maker._owner_repo.find_one = mock.MagicMock(return_value=None)
+    job_maker._script_repo.find_one = mock.MagicMock(return_value=None)
+
+    rerun_job = mock.MagicMock()
+    rerun_job.id = faker.random.randint(1000, 2000)
+    rerun_job.run = dummy_run
+    job_maker._job_repo.add_one = mock.MagicMock(return_value=rerun_job)
+    return job_maker
+
+
+@pytest.mark.parametrize(
+    ("instrument_name", "script", "expected_inputs"),
+    [
+        ("IMAT", NGEM_SCRIPT, {"ngem": "true", "recon": "false"}),
+        ("IMAT", RECON_SCRIPT, {}),
+        ("IRIS", NGEM_SCRIPT, {}),
+    ],
+)
+@mock.patch("fia_api.core.job_maker.JobMaker._connect_to_broker")
+def test_create_rerun_job_recovers_ngem_from_script(mock_connect, faker, instrument_name, script, expected_inputs):
+    job_maker = _rerun_job_maker_with_instrument(faker, instrument_name)
+
+    job_maker.create_rerun_job(
+        job_id=faker.random.randint(1, 10000),
+        runner_image="runner_img",
+        script=script,
+        experiment_number=faker.random.randint(1, 1000000),
+    )
+
+    created_job = job_maker._job_repo.add_one.call_args[0][0]
+    assert created_job.inputs == expected_inputs
+    sent_message = json.loads(job_maker._send_message.call_args[0][0])
+    assert sent_message["additional_values"] == expected_inputs
 
 
 def test_create_rerun_job_require_owner(faker):

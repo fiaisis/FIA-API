@@ -4,6 +4,7 @@ scripts.
 """
 
 import logging
+import re
 from pathlib import Path
 
 from fia_api.core.auth.tokens import DEV_MODE
@@ -13,12 +14,41 @@ from fia_api.scripts.transforms.transform import Transform
 
 logger = logging.getLogger(__name__)
 
+# Matches the nGEM switch as the transform writes it (`ngem = True`) and as a hand edited script may
+# spell it (`ngem = "true"`), while ignoring the `ngem = False` default the reduction ships with.
+NGEM_ENABLED = re.compile(r"""^\s*ngem\s*=\s*(?:true|["']true["'])\s*$""", re.IGNORECASE)
 
-def _extract_cycle_details(ngem_run_path: str) -> tuple[str, str]:
-    """An example path looks like: /ngem/nGEM-INES/DATA/IMAT_2026_01/IMAT00038896"""
-    ngem_run_parent_directory = Path(ngem_run_path).parent.name
-    _, cycle_year, cycle_num = ngem_run_parent_directory.split("_")
-    return cycle_num, cycle_year[-2:]
+
+def script_is_ngem(script: str) -> bool:
+    """
+    Report whether an IMAT script is configured for the nGEM detector rather than a reconstruction.
+
+    Reruns arrive with a script that is already configured and carry no inputs of their own, so this
+    is how an nGEM rerun is recognised.
+
+    :param script: The script text to inspect.
+    :return: True if the script turns the nGEM branch on.
+    """
+    return any(NGEM_ENABLED.match(line) for line in script.splitlines())
+
+
+def _ngem_output_path(ngem_run_path: str) -> str:
+    """
+    Return the folder that reduced nGEM runs of the given raw run belong in.
+
+    Reduced runs sit in a folder next to the raw cycle folder, named after it with a two digit year
+    and an unpadded cycle number, and the files go directly inside it:
+    /ngem/nGEM-INES/DATA/IMAT_2026_01/IMAT00038896 -> /ngem/nGEM-INES/DATA/IMAT_26_1_nxs
+
+    Run-detection normally publishes this as an input, so this is only used when it has not.
+
+    :param ngem_run_path: The raw nGEM run folder, e.g. .../DATA/IMAT_2026_01/IMAT00038896.
+    :return: The reduced data folder for that cycle.
+    """
+    cycle_folder = Path(ngem_run_path).parent.name
+    instrument, cycle_year, cycle_num = cycle_folder.split("_")
+    reduced_folder = f"{instrument}_{cycle_year[-2:]}_{int(cycle_num)}_nxs"
+    return str(Path(ngem_run_path).parent.parent / reduced_folder)
 
 
 class IMATTransform(Transform):
@@ -58,12 +88,12 @@ class IMATTransform(Transform):
                 continue
             if line.startswith("output ="):
                 if "ngem_path" in job.inputs and not DEV_MODE:  # type: ignore
-                    cycle_num, cycle_year = _extract_cycle_details(job.inputs["ngem_path"])  # type: ignore
-                    imat_nxs_folder = f"IMAT_{cycle_year}_{cycle_num}_nxs"
-                    output_path = f'"{Path(job.inputs["ngem_path"]).parent.parent / imat_nxs_folder}"'  # type: ignore
+                    # Run-detection publishes the cycle's reduced-data folder, so only derive one when
+                    # the request arrived without it.
+                    output_path = job.inputs.get("ngem_output_path") or _ngem_output_path(job.inputs["ngem_path"])  # type: ignore
+                    lines[index] = f'output = "{output_path}"'
                 else:
-                    output_path = '"/output"'
-                lines[index] = f"output = {output_path}"
+                    lines[index] = 'output = "/output"'
                 continue
 
         script.value = "\n".join(lines)
