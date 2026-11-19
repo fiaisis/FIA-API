@@ -6,11 +6,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from fia_api.scripts.pre_script import PreScript
-from fia_api.scripts.transforms.imat_transforms import (
-    IMATTransform,
-    _ngem_output_path,
-    script_is_ngem,
-)
+from fia_api.scripts.transforms.imat_transforms import IMATTransform, _ngem_output_path, script_is_ngem
 
 SCRIPT = """
 FILTERS = {f.__name__: f for f in load_filter_packages()}
