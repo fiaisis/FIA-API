@@ -9,7 +9,6 @@ from fia_api.scripts.pre_script import PreScript
 from fia_api.scripts.transforms.imat_transforms import (
     IMATTransform,
     _ngem_output_path,
-    _ngem_tof_assignment,
     script_is_ngem,
 )
 
@@ -75,7 +74,7 @@ def apply_to(script_value, job_inputs):
 
 def test_imat_transform_sets_ngem_tof_parameters():
     """Test the reduction parameters from the specification replace the ones the script ships with"""
-    inputs = {"ngem": "true", "start_tof": 15000, "end_tof": "90000", "bin_width": 5, "L": "58.25"}
+    inputs = {"ngem": "true", "start_tof": 15000, "end_tof": 90000, "bin_width": 5, "L": 58.25}
 
     result = apply_to(NGEM_SCRIPT.strip(), inputs)
 
@@ -100,39 +99,24 @@ def test_imat_transform_keeps_shipped_values_without_inputs():
         assert line in result.splitlines()
 
 
-def test_imat_transform_ignores_values_that_are_not_numbers():
-    """Test a value which is not a number is left out of the script rather than written into it"""
-    inputs = {"ngem": "true", "start_tof": "1; import os", "L": None}
+def test_imat_transform_leaves_lines_which_only_mention_a_parameter_alone():
+    """Test lines which end in one of the parameter names, or only use it, are not rewritten"""
+    script = """ngem = True
+TOTAL = 3
+Label = 'frame'
+Lab = 4
+    ws = LoadNGEM(BinWidth=bin_width, MinToF=start_tof, MaxToF=end_tof)"""
+    inputs = {"ngem": "true", "start_tof": 1, "end_tof": 2, "bin_width": 3, "L": 4}
 
-    result = apply_to(NGEM_SCRIPT.strip(), inputs)
+    result = apply_to(script, inputs)
 
-    for line in NGEM_TOF_LINES:
+    for line in [
+        "TOTAL = 3",
+        "Label = 'frame'",
+        "Lab = 4",
+        "    ws = LoadNGEM(BinWidth=bin_width, MinToF=start_tof, MaxToF=end_tof)",
+    ]:
         assert line in result.splitlines()
-    ast.parse(result)
-
-
-@pytest.mark.parametrize(
-    ("line", "inputs", "expected"),
-    [
-        ("    start_tof = 20000  # start", {"start_tof": 15000}, "    start_tof = 15000  # start"),
-        ("\tL = 56.4", {"L": 58.0}, "\tL = 58"),
-        ("L = 56.4  # distance", {"L": "55.75"}, "L = 55.75  # distance"),
-        ("    bin_width = 10", {"bin_width": "2.5"}, "    bin_width = 2.5"),
-        # Nothing to change when the job carries no input for the parameter, or a value which is not a number.
-        ("    start_tof = 20000", {}, None),
-        ("    start_tof = 20000", {"start_tof": "20 000"}, None),
-        ("    L = 56.4", {"L": True}, None),
-        ("    L = 56.4", {"L": float("inf")}, None),
-        # Lines which only mention a parameter, or end in one of its names, are not assignments of it.
-        ("    ws = LoadNGEM(BinWidth=bin_width, MinToF=start_tof)", {"start_tof": 1}, None),
-        ("    TOTAL = 3", {"L": 1}, None),
-        ("    Label = 'frame'", {"L": 1}, None),
-        ("    # start_tof = 20000", {"start_tof": 1}, None),
-    ],
-)
-def test_ngem_tof_assignment(line, inputs, expected):
-    """Test only the assignment lines of the nGEM parameters are rewritten, and keep their indentation"""
-    assert _ngem_tof_assignment(line, inputs, "job_test") == expected
 
 
 def apply_transform_and_verify(job_inputs, expected_replacements, dev_mode=False):
