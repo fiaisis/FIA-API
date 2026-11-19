@@ -4,8 +4,10 @@ scripts.
 """
 
 import logging
+import math
 import re
 from pathlib import Path
+from typing import Any
 
 from fia_api.core.auth.tokens import DEV_MODE
 from fia_api.core.models import Job
@@ -17,6 +19,57 @@ logger = logging.getLogger(__name__)
 # Matches the nGEM switch as the transform writes it (`ngem = True`) and as a hand edited script may
 # spell it (`ngem = "true"`), while ignoring the `ngem = False` default the reduction ships with.
 NGEM_ENABLED = re.compile(r"""^\s*ngem\s*=\s*(?:true|["']true["'])\s*$""", re.IGNORECASE)
+
+# Matches where the nGEM reduction parameters are assigned inside the `if ngem:` block of the script, keeping the
+# indentation and the trailing comment so the rewritten line stays valid Python and keeps its unit. The values come
+# from the IMAT specification via run-detection, which publishes start_tof, end_tof, bin_width and L as inputs.
+NGEM_TOF_LINE = re.compile(r"^(?P<indent>[ \t]*)(?P<name>start_tof|end_tof|bin_width|L)\s*=.*?(?P<comment>\s+#.*)?$")
+
+
+def _number(value: Any) -> int | float | None:
+    """
+    Return a reduction parameter as a number that is safe to write into the script.
+
+    Run-detection publishes these as numbers, but the value editor and a rerun can bring anything, and the
+    value is written straight into the script, so anything which is not a finite number is refused here.
+
+    :param value: The input value of the job.
+    :return: The value as an int when whole, a float when it has a fraction, or None when it is not a number.
+    """
+    if isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(number):
+        return None
+    return int(number) if number.is_integer() else number
+
+
+def _ngem_tof_assignment(line: str, inputs: dict[str, Any], job_id: int | str) -> str | None:
+    """
+    Return the given line with the nGEM reduction parameter the job asked for, if the line is one of them.
+
+    A line of the script which is not one of the parameters, a parameter the job does not carry an input for,
+    and an input which is not a number all leave the line alone, so the script keeps the value it ships with.
+
+    :param line: The line of the script to rewrite.
+    :param inputs: The inputs of the job, which hold the parameters from the instrument specification.
+    :param job_id: The id of the job, used to report a value which could not be used.
+    :return: The rewritten line, or None when the line should stay as it is.
+    """
+    match = NGEM_TOF_LINE.match(line)
+    if match is None:
+        return None
+    name = match["name"]
+    if name not in inputs:
+        return None
+    number = _number(inputs[name])
+    if number is None:
+        logger.warning("Ignoring the nGEM %s input of job %s, %r is not a number", name, job_id, inputs[name])
+        return None
+    return f"{match['indent']}{name} = {number}{match['comment'] or ''}"
 
 
 def script_is_ngem(script: str) -> bool:
@@ -95,6 +148,9 @@ class IMATTransform(Transform):
                 else:
                     lines[index] = 'output = "/output"'
                 continue
+            tof_assignment = _ngem_tof_assignment(line, job.inputs, job.id)  # type: ignore[arg-type]
+            if tof_assignment is not None:
+                lines[index] = tof_assignment
 
         script.value = "\n".join(lines)
         logger.info("Transform complete for job %s", job.id)
