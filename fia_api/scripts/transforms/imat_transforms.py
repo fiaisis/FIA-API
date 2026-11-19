@@ -95,6 +95,20 @@ class IMATTransform(Transform):
                 else:
                     lines[index] = 'output = "/output"'
                 continue
+            # The nGEM reduction parameters come from the IMAT specification, via run-detection. They are
+            # assigned inside the `if ngem:` block, so the four space indent and the unit comment are kept.
+            if line.lstrip().startswith("start_tof =") and "start_tof" in job.inputs:  # type: ignore
+                lines[index] = f"    start_tof = {job.inputs['start_tof']}  # start of the ToF range"  # type: ignore
+                continue
+            if line.lstrip().startswith("end_tof =") and "end_tof" in job.inputs:  # type: ignore
+                lines[index] = f"    end_tof = {job.inputs['end_tof']}  # end of the ToF range"  # type: ignore
+                continue
+            if line.lstrip().startswith("bin_width =") and "bin_width" in job.inputs:  # type: ignore
+                lines[index] = f"    bin_width = {job.inputs['bin_width']}  # TOF bin width in us"  # type: ignore
+                continue
+            if line.lstrip().startswith("L =") and "L" in job.inputs:  # type: ignore
+                lines[index] = f"    L = {job.inputs['L']}  # moderator to detector distance"  # type: ignore
+                continue
 
         script.value = "\n".join(lines)
         logger.info("Transform complete for job %s", job.id)
